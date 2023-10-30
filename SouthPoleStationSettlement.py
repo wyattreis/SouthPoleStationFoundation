@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[67]:
+# In[ ]:
 
 
 import pandas as pd
@@ -9,6 +9,7 @@ import numpy as np
 from scipy import interpolate
 import plotly.express as px
 import plotly.graph_objects as go
+import streamlit as st
 
 # Set the location of the South Pole Station excel survey file
 surveyfile = "C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP Settlement Analysis_2023.01.15.xlsx"
@@ -17,7 +18,7 @@ surveyfile = "C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/
 beamfile = "C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP_BeamArrowLabels.csv"
 
 
-# In[68]:
+# In[ ]:
 
 
 # Read in the data sheet from the survey excel file - limit to the data only
@@ -41,12 +42,6 @@ survey_long = pd.DataFrame.transpose(survey_clean)
 # In[ ]:
 
 
-
-
-
-# In[69]:
-
-
 # Identify the first non-NAN value for each support
 survey_long['dummy']= 1
 firstValue = survey_long.groupby('dummy').first()
@@ -66,12 +61,6 @@ settlement_delta_MP = pd.DataFrame.transpose(settlement_delta)
 
 
 # In[ ]:
-
-
-
-
-
-# In[70]:
 
 
 # Cumulative Settlement Forecasting
@@ -96,7 +85,7 @@ settlementProj = pd.concat([settlementInterp,settlementExtrap])
 settlementProj = settlementProj.interpolate(method="slinear", fill_value="extrapolate", limit_direction="both")
 
 
-# In[71]:
+# In[ ]:
 
 
 # Plot Cumulative Settlement
@@ -127,10 +116,10 @@ color_dict = {
 color = settlement.columns.map(color_dict)
 
 # plotly figure
-fig = go.Figure()
+figSettlement = go.Figure()
 
 for column in df:
-        fig.add_trace(go.Scatter(
+        figSettlement.add_trace(go.Scatter(
             x=df.index,
             y=df[column],
             name= column,
@@ -139,7 +128,7 @@ for column in df:
         ))
 
 for column in settlementProj:
-        fig.add_trace(go.Scatter(
+        figSettlement.add_trace(go.Scatter(
             x=settlementProj.index,
             y=settlementProj[column],
             name= column + ' Projection',
@@ -153,7 +142,7 @@ for column in settlementProj:
                 symbol='star'),
         ))
         
-fig.update_layout(xaxis_title="Survey Date",
+figSettlement.update_layout(xaxis_title="Survey Date",
                  yaxis_title="Cumulative Settlement [ft]")
 
 # groups and trace visibilities
@@ -186,7 +175,7 @@ buttons = [{'label': 'All Points',
                
 
 # update layout with buttons                       
-fig.update_layout(
+figSettlement.update_layout(
     updatemenus=[
         dict(
         type="dropdown",
@@ -202,10 +191,10 @@ fig.update_layout(
 )
 
 #fig.write_html("C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Figures/settlement.html")
-fig.show()
+figSettlement.show()
 
 
-# In[72]:
+# In[ ]:
 
 
 # Plot Change in Settlement between each survey
@@ -222,10 +211,10 @@ maps = {'A1':['A1-1', 'A1-2', 'A1-3', 'A1-4'],
         'B4':['B4-1', 'B4-2', 'B4-3', 'B4-4'],}
 
 # plotly figure
-fig = go.Figure()
+figSettlementDelta = go.Figure()
 
 for column in df:
-        fig.add_trace(go.Scatter(
+        figSettlementDelta.add_trace(go.Scatter(
             x=df.index,
             y=df[column],
             name= column,
@@ -233,7 +222,7 @@ for column in df:
             marker_color = color_dict[column]
         ))
 
-fig.update_layout(xaxis_title="Survey Date",
+figSettlementDelta.update_layout(xaxis_title="Survey Date",
                  yaxis_title="Settlement Change [in]")
 
 # groups and trace visibilities
@@ -265,7 +254,7 @@ buttons = [{'label': 'All Points',
                      
 
 # update layout with buttons                       
-fig.update_layout(
+figSettlementDelta.update_layout(
     updatemenus=[
         dict(
         type="dropdown",
@@ -281,10 +270,10 @@ fig.update_layout(
 )
 
 #fig.write_html("C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Figures/settlement_delta.html")
-fig.show()
+figSettlementDelta.show()
 
 
-# In[75]:
+# In[ ]:
 
 
 # Convert the beam length file to long format and make index the east or south Monitoring Point for each beam
@@ -300,31 +289,16 @@ beamSettlement = beamLength_long.join(survey_clean)#.sort_values(by=['beamName',
 beamDiff = beamSettlement.set_index(['beamName']).sort_values(by=['beamName', 'beamEnd']).drop(columns=['beamEnd', 'beamLength']).groupby(['beamName']).diff().mul(12)
 beamDiff = beamDiff[~beamDiff.index.duplicated(keep='last')]
 beamDiff.columns = pd.to_datetime(beamDiff.columns).astype(str)
-beamDiffPlot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['beamName']).join(beamDiff)
+beamDiffplot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['beamName']).join(beamDiff)
+beamDiff = beamDiffplot.drop(columns=['beamX', 'beamY'])
 
 # Calculate the slope for each beam, transpose for ploting 
 beamSlope = pd.DataFrame((beamDiff.values/(beamLength_sort.values)), columns=beamDiff.columns, index=beamDiff.index)
+beamSlopeplot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['beamName']).join(beamSlope)
+beamSlope = beamSlopeplot.drop(columns=['beamX', 'beamY'])
 
 
 # In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[76]:
 
 
 # Calculate the direction of arrow of each beam
@@ -359,7 +333,7 @@ choices = ['black','gold', 'orange', 'red']
 beamSlopeColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = beamDiff.index, columns = beamDiff.columns).replace('nan','blue')
 
 
-# In[77]:
+# In[ ]:
 
 
 # Create annotations for both plots
@@ -439,13 +413,13 @@ beamSlopeAnno = list([
    ])
 
 
-# In[79]:
+# In[ ]:
 
 
-df = beamDiffPlot
+df = beamDiffplot
 
 #create a figure from the graph objects (not plotly express) library
-fig = go.Figure()
+figBeamDiff = go.Figure()
 
 buttons = []
 dates = []
@@ -453,7 +427,7 @@ i = 0
 
 # Plot the beam locations as lines
 for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], beamInfo['startY'], beamInfo['endY']):
-    fig.add_trace(go.Scatter(
+    figBeamDiff.add_trace(go.Scatter(
         x=[startX, endX],
         y=[startY, endY],
         mode='lines',
@@ -466,7 +440,7 @@ for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], be
     ))
 
 # Plot the Marker Point (MP) labels in grey
-fig.add_trace(go.Scatter(
+figBeamDiff.add_trace(go.Scatter(
     x=beamInfo['labelX'],
     y=beamInfo['labelY'],
     text=beamInfo['MP_W_S'],
@@ -487,7 +461,7 @@ visList = []
 #iterate through columns in dataframe (not including the year column)
 for column in df.columns[2:]:
     # Beam Differental Settlement
-    fig.add_trace(go.Scatter(
+    figBeamDiff.add_trace(go.Scatter(
         x=df['beamX'],
         y=df['beamY'],
         text=abs(df[column].values.round(2)),
@@ -504,7 +478,7 @@ for column in df.columns[2:]:
     ))
         
         # Beam Differental Settlement Arrow - pointing in direction of low end 
-    fig.add_trace(go.Scatter(
+    figBeamDiff.add_trace(go.Scatter(
         x=beamInfo['arrowX'],
         y=beamInfo['arrowY'],
         mode = 'markers',
@@ -546,7 +520,7 @@ buttons = [{'label': 'Select Survey Date',
                  'args': ['visible', [False]*152]}] + buttons
 
 # update layout with buttons                       
-fig.update_layout(
+figBeamDiff.update_layout(
     updatemenus=[
         dict(
         type="dropdown",
@@ -560,24 +534,24 @@ fig.update_layout(
             yanchor="bottom")
     ],
     annotations = beamDiffAnno,
-    title = 'Differental Settlement [in] between Monitoring Points'
+    #title = 'Differental Settlement [in] between Monitoring Points'
 )
 
 # Set axes ranges
-fig.update_xaxes(range=[-25, 415])
-fig.update_yaxes(range=[-15, 140])
+figBeamDiff.update_xaxes(range=[-25, 415])
+figBeamDiff.update_yaxes(range=[-15, 140])
 
-fig.write_html("C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Figures/diffSettlementPlan.html")
-fig.show()
-
-
-# In[30]:
+#figBeamDiffPlot.write_html("C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Figures/diffSettlementPlan.html")
+figBeamDiff.show()
 
 
-df = beamSlope
+# In[ ]:
+
+
+df = beamSlopeplot
 
 #create a figure from the graph objects (not plotly express) library
-fig = go.Figure()
+figBeamSlope = go.Figure()
 
 buttons = []
 dates = []
@@ -585,7 +559,7 @@ i = 0
 
 # Plot the beam locations as lines
 for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], beamInfo['startY'], beamInfo['endY']):
-    fig.add_trace(go.Scatter(
+    figBeamSlope.add_trace(go.Scatter(
         x=[startX, endX],
         y=[startY, endY],
         mode='lines',
@@ -598,7 +572,7 @@ for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], be
     ))
 
 # Plot the Marker Point (MP) labels in grey
-fig.add_trace(go.Scatter(
+figBeamSlope.add_trace(go.Scatter(
     x=beamInfo['labelX'],
     y=beamInfo['labelY'],
     text=beamInfo['MP_W_S'],
@@ -617,11 +591,11 @@ visList = []
 
 
 #iterate through columns in dataframe (not including the year column)
-for column in df:
+for column in df.columns[2:]:
     # Beam Differental Settlement
-    fig.add_trace(go.Scatter(
-        x=beamInfo['beamX'],
-        y=beamInfo['beamY'],
+    figBeamSlope.add_trace(go.Scatter(
+        x=df['beamX'],
+        y=df['beamY'],
         text=abs(df[column].values.round(2)),
         mode = 'text',
         #name = column, 
@@ -635,7 +609,7 @@ for column in df:
     ))
         
         # Beam Differental Settlement Arrow - pointing in direction of low end 
-    fig.add_trace(go.Scatter(
+    figBeamSlope.add_trace(go.Scatter(
         x=beamInfo['arrowX'],
         y=beamInfo['arrowY'],
         mode = 'markers',
@@ -656,7 +630,7 @@ for column in df:
 vis = []
 visList = []
 
-for  i, col in enumerate(df.columns):
+for  i, col in enumerate(df.columns[2:]):
     vis = [True]*(len(df.index)+2) + ([False]*i*2 + [True]*2 + [False]*(len(df.columns)-(i+1))*2)
     visList.append(vis)
     vis = []
@@ -664,7 +638,7 @@ for  i, col in enumerate(df.columns):
 
 # buttons for each group
 buttons = []
-for idx, col in enumerate(df.columns):
+for idx, col in enumerate(df.columns[2:]):
     buttons.append(
         dict(
             label = col,
@@ -677,7 +651,7 @@ buttons = [{'label': 'Select Survey Date',
                  'args': ['visible', [False]*152]}] + buttons
 
 # update layout with buttons                       
-fig.update_layout(
+figBeamSlope.update_layout(
     updatemenus=[
         dict(
         type="dropdown",
@@ -691,14 +665,14 @@ fig.update_layout(
             yanchor="bottom")
     ],
     annotations = beamSlopeAnno,
-    title = 'Differental Slope [in/ft]'
+    #title = 'Differental Slope [in/ft]'
 )
 
 # Set axes ranges
-fig.update_xaxes(range=[-25, 415])
-fig.update_yaxes(range=[-15, 140])
+figBeamSlope.update_xaxes(range=[-25, 415])
+figBeamSlope.update_yaxes(range=[-15, 140])
 
-fig.show()
+figBeamSlope.show()
 
 
 # In[ ]:
@@ -721,7 +695,7 @@ settlement3D = settlement3D[settlement3D.index.notnull()]
 
 
 # Create 3D plot of South Pole Station settlement
-fig = go.Figure()
+fig3DSettlement = go.Figure()
 
 for col in settlementStart.columns:
     # Plot the beam locations as lines
@@ -729,7 +703,7 @@ for col in settlementStart.columns:
                                                           beamInfo['startY'], beamInfo['endY'], 
                                                           settlement3D['{0}_start'.format(col)], 
                                                           settlement3D['{0}_end'.format(col)]):
-        fig.add_trace(go.Scatter3d(
+        fig3DSettlement.add_trace(go.Scatter3d(
             x=[startX, endX],
             y=[startY, endY],
             z = [startZ, endZ],
@@ -746,7 +720,7 @@ for col in settlementStart.columns:
             visible = (col==beamDiff.columns[len(beamDiff.columns)-1])))
     
     # Plot the Marker Point (MP) labels in grey
-        fig.add_trace(go.Scatter3d(
+        fig3DSettlement.add_trace(go.Scatter3d(
             x=beamInfo['labelX'],
             y=beamInfo['labelY'],
             z=settlement3D['{0}_start'.format(col)],
@@ -760,14 +734,14 @@ for col in settlementStart.columns:
             #setting only the first dataframe to be visible as default
             visible = (col==beamDiff.columns[len(beamDiff.columns)-1])))
         
-fig.update_traces(
+fig3DSettlement.update_traces(
     hovertemplate="<br>".join([
         "MP: %{text}",
         "Settlement [in]: %{z}",
     ])
 )
     
-fig.update_scenes(xaxis_autorange="reversed", 
+fig3DSettlement.update_scenes(xaxis_autorange="reversed", 
                   yaxis_autorange="reversed",
                   zaxis_autorange="reversed")  
 
@@ -777,7 +751,7 @@ camera = dict(
     eye=dict(x=1.5, y=1.5, z=1.5)
 )
 
-fig.update_layout(
+fig3DSettlement.update_layout(
     autosize=False,
     width=800, 
     height=450,
@@ -816,7 +790,7 @@ buttons = [{'label': 'Select Survey Date',
                  'args': ['visible', [False]*len(beamDiff.columns)*len(settlement3D.index)]}] + buttons
 
 # update layout with buttons                       
-fig.update_layout(
+fig3DSettlement.update_layout(
     updatemenus=[
         dict(
         type="dropdown",
@@ -825,5 +799,33 @@ fig.update_layout(
     ],
 )
 
-fig.show()
+fig3DSettlement.show()
+
+
+# In[ ]:
+
+
+# Create Streamlit Plot objects - Settlement figure
+st.plotly_chart(figSettlement, use_container_width=True)
+
+
+# In[ ]:
+
+
+# Create Streamlit Plot objects - Plan Figure
+tab1, tab2 = st.tabs(["Differental Settlement [in]", "Differental Slope [in/ft]"])
+with tab1:
+    # Use the Streamlit theme.
+    # This is the default. So you can also omit the theme argument.
+    st.plotly_chart(figBeamDiff, use_container_width=True)
+with tab2:
+    # Use the native Plotly theme.
+    st.plotly_chart(figBeamSlope, use_container_width=True)
+
+
+# In[ ]:
+
+
+# Create Streamlit Plot objects - 3d FIGURE
+st.plotly_chart(fig3DSettlement, use_container_width=True)
 

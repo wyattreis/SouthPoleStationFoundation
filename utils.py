@@ -321,6 +321,7 @@ def plot_cumulative_settlement(settlement, settlementProj, color_dict, maps):
                 y=1.01,
                 yanchor="bottom")
         ],
+        height = 600
     )
     return fig
 
@@ -386,6 +387,7 @@ def plot_delta_settlement(settlement_delta, color_dict, maps):
                 y=1.01,
                 yanchor="bottom")
         ],
+        height = 600
     )
     return fig
 

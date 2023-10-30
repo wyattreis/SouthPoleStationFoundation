@@ -55,10 +55,10 @@ if st.sidebar.button('Compute Settlement'):
     with tab1:
         # Use the Streamlit theme.
         # This is the default. So you can also omit the theme argument.
-        st.plotly_chart(fig_diff_plan, use_container_width=True, height=750)
+        st.plotly_chart(fig_diff_plan, use_container_width=True, height=600)
     with tab2:
         # Use the native Plotly theme.
-        st.plotly_chart(fig_slope_plan, use_container_width=True, height=750)
+        st.plotly_chart(fig_slope_plan, use_container_width=True, height=600)
 
     # Cumulative settlement
     fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
@@ -71,14 +71,14 @@ if st.sidebar.button('Compute Settlement'):
     with tab1:
         # Use the Streamlit theme.
         # This is the default. So you can also omit the theme argument.
-        st.plotly_chart(fig_cumulative, use_container_width=True, height=1000)
+        st.plotly_chart(fig_cumulative, use_container_width=True, height=600)
     with tab2:
         # Use the native Plotly theme.
-        st.plotly_chart(fig_delta, use_container_width=True, height=1000)
+        st.plotly_chart(fig_delta, use_container_width=True, height=600)
 
     # Differental Settlement 3D
     fig_settlement_3d = plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff)
-    st.plotly_chart(fig_settlement_3d, use_container_width=True)
+    st.plotly_chart(fig_settlement_3d)
 
     
 

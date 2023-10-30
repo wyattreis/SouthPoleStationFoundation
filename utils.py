@@ -509,7 +509,7 @@ def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, 
                 yanchor="bottom")
         ],
         annotations = beamDiffAnno,
-        height = 1000
+        height = 750
         #title = 'Differental Settlement [in] between Monitoring Points'
     )
 
@@ -637,7 +637,7 @@ def plot_SlopeSttlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol
                 yanchor="bottom")
         ],
         annotations = beamSlopeAnno,
-        height = 1000
+        height = 750
         #title = 'Differental Slope [in/ft]'
     )
 

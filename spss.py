@@ -55,10 +55,10 @@ if st.sidebar.button('Compute Settlement'):
     with tab1:
         # Use the Streamlit theme.
         # This is the default. So you can also omit the theme argument.
-        st.plotly_chart(fig_diff_plan, use_container_width=True, height=1000)
+        st.plotly_chart(fig_diff_plan, use_container_width=True, height=750)
     with tab2:
         # Use the native Plotly theme.
-        st.plotly_chart(fig_slope_plan, use_container_width=True, height=1000)
+        st.plotly_chart(fig_slope_plan, use_container_width=True, height=750)
 
     # Cumulative settlement
     fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)

@@ -1,5 +1,5 @@
 # -------------------------------------------------------------------------------
-# Name          South Pole Station Settlement Visualization and Analysis
+# Name          South Pole Station Settlement Frontend
 # Description:  Collection of utilities to visulaize the historic settlement at 
 #               the South Pole Station as recorded by surveys at monitoring 
 #               points. Utilities also include analysis to project future 
@@ -24,13 +24,13 @@ import plotly.graph_objects as go
 
 st.set_page_config(layout="wide")
 
-st.title('South Pole Station Settlement visualization and Analysis')
+st.title('South Pole Station Settlement Visualization and Analysis')
 st.sidebar.title('Options')
 
-# Set the location of the South Pole Station excel survey file
-##"C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP Settlement Analysis_2023.01.15.xlsx"
+# Import the South Pole Station excel survey and beam information fils
 surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'xlsx')
-
-# Set the loaction of the South Pole Station beam lengths and labels file
-##"C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP_BeamArrowLabels.csv"
 beamfile = st.sidebar.file_uploader("South Pole Labels File", type = 'csv')
+
+# Set forecasting variables
+nsurvey = st.sidebar.number_input('Number of Past Surveys Used for Forecast', value=10)
+nyears = st.sidebar.number_input('Number of Years Forecasted', value=5)

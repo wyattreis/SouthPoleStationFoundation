@@ -750,5 +750,7 @@ def plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff):
             direction="down",
             buttons = buttons)
         ],
+        height = 600,
+        width = 600
     )
     return fig

@@ -78,7 +78,7 @@ if st.sidebar.button('Compute Settlement'):
 
     # Differental Settlement 3D
     fig_settlement_3d = plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff)
-    st.plotly_chart(fig_settlement_3d)
+    st.plotly_chart(fig_settlement_3d, width = 600, height = 600)
 
     
 

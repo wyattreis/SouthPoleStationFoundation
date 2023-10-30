@@ -40,8 +40,27 @@ if st.sidebar.button('Compute Settlement'):
     settlementProj = calc_forecast_settlement(settlement, nsurvey, nyears)
     beamDiff, beamDiffplot, beamSlope, beamSlopeplot = calc_differental_settlement(beamLength, survey_clean, beamInfo)
     
-    # Plot settlement
-    beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno = plot_annotations(beamInfo, beamDiff, beamSlope)
+    # Plots 
+    beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno, color_dict, maps = plot_annotations(beamInfo, beamDiff, beamSlope)
 
-    fig = plot_cumulative_settlement(settlement, settlementProj)
-    st.plotly_chart(fig)
+    # Cumulative settlement
+    fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
+    st.plotly_chart(fig_cumulative, use_container_width=True)
+
+    # Delta Settlement
+    fig_delta = plot_delta_settlement(settlement_delta, color_dict, maps)
+    st.plotly_chart(fig_delta, use_container_width=True)
+
+    # Differental Settlement Planview
+    fig_diff_plan = plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, beamDir, beamDiffAnno)
+    st.plotly_chart(fig_diff_plan, use_container_width=True)
+
+    # Differental Settlement Slope Planview
+    fig_slope_plan = plot_SlopeSttlement_plot(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno)
+    st.plotly_chart(fig_slope_plan, use_container_width=True)
+
+    # Differental Settlement 3D
+    fig_settlement_3d = plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff)
+    st.plotly_chart(fig_settlement_3d, use_container_width=True)
+
+    

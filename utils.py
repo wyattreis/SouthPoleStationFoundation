@@ -101,6 +101,20 @@ def calc_differental_settlement(beamLength, survey_clean, beamInfo):
     beamSlope = beamSlopeplot.drop(columns=['beamX', 'beamY', 'beamLength'])
     return beamDiff, beamDiffplot, beamSlope, beamSlopeplot
 
+# Create dataframe for 3D plotting
+def calc_3d_dataframe(beamInfo, settlement_points):
+    beamStart = beamInfo[['MP_W_S', 'beamName']].set_index('MP_W_S')
+    settlementStart = beamStart.join(settlement_points).set_index('beamName')
+    settlementStart.columns = pd.to_datetime(settlementStart.columns).astype(str)
+
+    beamEnd = beamInfo[['MP_E_N', 'beamName']].set_index('MP_E_N')
+    settlementEnd = beamEnd.join(settlement_points).set_index('beamName')
+    settlementEnd.columns = pd.to_datetime(settlementEnd.columns).astype(str)
+
+    settlement3D = settlementStart.join(settlementEnd, lsuffix='_start', rsuffix='_end')
+    settlement3D = settlement3D[settlement3D.index.notnull()]
+    return settlement3D
+
 # Annotation for plots
 def plot_annotations(beamInfo, beamDiff, beamSlope):
     beamDirLabels = beamInfo[['beamName','beamDir']].set_index(['beamName'])
@@ -207,22 +221,6 @@ def plot_annotations(beamInfo, beamDiff, beamSlope):
                 color = 'black')
            )
    ])
-    return beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno
-
-# Plot Cumulative Settlement
-def plot_cumulative_settlement(settlement, settlementProj):
-    df = settlement 
-
-    # Identify the monitor point groupings based on the pod
-    maps = {'A1':['A1-1', 'A1-2', 'A1-3', 'A1-4'],
-        'A2':['A2-1', 'A2-2', 'A2-3', 'A2-4', 'A2-5','A2-6'],
-        'A3':['A3-1', 'A3-2', 'A3-3', 'A3-4'],
-        'A4':['A4-1', 'A4-2', 'A4-3', 'A4-4'],
-       'B1':['B1-1', 'B1-2', 'B1-3', 'B1-4'],
-        'B2':['B2-1', 'B2-2', 'B2-3', 'B2-4', 'B2-5','B2-6'],
-        'B3':['B3-1', 'B3-2', 'B3-3', 'B3-4'],
-        'B4':['B4-1', 'B4-2', 'B4-3', 'B4-4']}
-
     # column: color - assign each monitor point a specifc color
     color_dict = {
     'A1-1': '#7fc97f', 'A1-2': '#beaed4', 'A1-3': '#fdc086', 'A1-4': '#ffff99',
@@ -234,7 +232,21 @@ def plot_cumulative_settlement(settlement, settlementProj):
     'B3-1': '#7fc97f', 'B3-2': '#beaed4', 'B3-3': '#fdc086', 'B3-4': '#ffff99',
     'B4-1': '#7fc97f', 'B4-2': '#beaed4', 'B4-3': '#fdc086', 'B4-4': '#ffff99'}
 
-    color = settlement.columns.map(color_dict)
+    # Identify the monitor point groupings based on the pod
+    maps = {'A1':['A1-1', 'A1-2', 'A1-3', 'A1-4'],
+        'A2':['A2-1', 'A2-2', 'A2-3', 'A2-4', 'A2-5','A2-6'],
+        'A3':['A3-1', 'A3-2', 'A3-3', 'A3-4'],
+        'A4':['A4-1', 'A4-2', 'A4-3', 'A4-4'],
+       'B1':['B1-1', 'B1-2', 'B1-3', 'B1-4'],
+        'B2':['B2-1', 'B2-2', 'B2-3', 'B2-4', 'B2-5','B2-6'],
+        'B3':['B3-1', 'B3-2', 'B3-3', 'B3-4'],
+        'B4':['B4-1', 'B4-2', 'B4-3', 'B4-4']}
+    
+    return beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno, color_dict, maps
+
+# Plot Cumulative Settlement
+def plot_cumulative_settlement(settlement, settlementProj, color_dict, maps):
+    df = settlement 
 
     # plotly figure
     fig = go.Figure()
@@ -312,5 +324,428 @@ def plot_cumulative_settlement(settlement, settlementProj):
     )
     return fig
 
+# Plot Delta Settlement
+def plot_delta_settlement(settlement_delta, color_dict, maps):
+     # Plot Change in Settlement between each survey
+    df = settlement_delta #change based on dataframe to plot
+
+    # plotly figure
+    fig = go.Figure()
+
+    for column in df:
+        fig.add_trace(go.Scatter(
+            x=df.index,
+            y=df[column],
+            name= column,
+            mode = 'lines+markers',
+            marker_color = color_dict[column]
+        ))
+
+    fig.update_layout(xaxis_title="Survey Date",
+                 yaxis_title="Settlement Change [in]")
+
+    # groups and trace visibilities
+    group = []
+    vis = []
+    visList = []
+    for m in maps.keys():
+        for col in df.columns:
+            if col in maps[m]:
+                vis.append(True)
+            else:
+                vis.append(False)
+        group.append(m)
+        visList.append(vis)
+        vis = []
+
+    # buttons for each group
+    buttons = []
+    for i, g in enumerate(group):
+        button =  dict(label=g,
+                    method = 'restyle',
+                        args = ['visible',visList[i]])
+        buttons.append(button)
+
+    buttons = [{'label': 'All Points',
+                    'method': 'restyle',
+                    'args': ['visible', [True, True, True, True, True, True]]}] + buttons
+
+                        
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+    )
+    return fig
+
+# Plot differental settlement in plan view
+def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, beamDir, beamDiffAnno):
+    df = beamDiffplot
+
+    #create a figure from the graph objects (not plotly express) library
+    fig = go.Figure()
+
+    buttons = []
+    dates = []
+    i = 0
+
+    # Plot the beam locations as lines
+    for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], beamInfo['startY'], beamInfo['endY']):
+        fig.add_trace(go.Scatter(
+            x=[startX, endX],
+            y=[startY, endY],
+            mode='lines',
+            line = dict(
+                color = 'black',
+                width = 1.5,
+                dash = 'solid'),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+
+        # Plot the Marker Point (MP) labels in grey
+        fig.add_trace(go.Scatter(
+            x=beamInfo['labelX'],
+            y=beamInfo['labelY'],
+            text=beamInfo['MP_W_S'],
+            mode = 'text',
+            textfont = dict(
+                size = 10,
+                color = 'grey'),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+
+        # Create a list to store the visibility lists for each dataframe
+    all_args = []
+    vis = []
+    visList = []
 
 
+    #iterate through columns in dataframe (not including the year column)
+    for column in df.columns[2:]:
+        # Beam Differental Settlement
+        fig.add_trace(go.Scatter(
+            x=df['beamX'],
+            y=df['beamY'],
+            text=abs(df[column].values.round(2)),
+            mode = 'text',
+            #name = column, 
+            textfont = dict(
+                size = 10,
+                color = beamDiffColor[column].values
+                ),
+            #hoverinfo='skip',
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==df.columns[len(df.columns)-1])
+        ))
+                
+                # Beam Differental Settlement Arrow - pointing in direction of low end 
+        fig.add_trace(go.Scatter(
+            x=beamInfo['arrowX'],
+            y=beamInfo['arrowY'],
+            mode = 'markers',
+            #name = column,
+            marker=dict(
+                color='red',
+                size=10,
+                symbol=beamSymbol[column].values,
+                angle=beamDir[column].values),
+            hoverinfo='skip',
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==df.columns[len(df.columns)-1])
+        ))
+                
+    # groups and trace visibilities
+    vis = []
+    visList = []
+
+    for  i, col in enumerate(df.columns[2:]):
+        vis = [True]*(len(df.index)+2) + ([False]*i*2 + [True]*2 + [False]*(len(df.columns)-2-(i+1))*2)
+        visList.append(vis)
+        vis = []
+
+
+    # buttons for each group
+    buttons = []
+    for idx, col in enumerate(df.columns[2:]):
+        buttons.append(
+            dict(
+                label = col,
+                method = "update",
+                args=[{"visible": visList[idx]}])
+        )
+
+    buttons = [{'label': 'Select Survey Date',
+                    'method': 'restyle',
+                    'args': ['visible', [False]*152]}] + buttons
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        annotations = beamDiffAnno,
+        #title = 'Differental Settlement [in] between Monitoring Points'
+    )
+
+    # Set axes ranges
+    fig.update_xaxes(range=[-25, 415])
+    fig.update_yaxes(range=[-15, 140])
+    return fig
+
+# Plot differental settlement slope in plan view
+def plot_SlopeSttlement_plot(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno):
+    df = beamSlopeplot
+
+    #create a figure from the graph objects (not plotly express) library
+    fig = go.Figure()
+
+    buttons = []
+    dates = []
+    i = 0
+
+    # Plot the beam locations as lines
+    for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], beamInfo['startY'], beamInfo['endY']):
+        fig.add_trace(go.Scatter(
+            x=[startX, endX],
+            y=[startY, endY],
+            mode='lines',
+            line = dict(
+                color = 'black',
+                width = 1.5,
+                dash = 'solid'),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+
+    # Plot the Marker Point (MP) labels in grey
+    fig.add_trace(go.Scatter(
+        x=beamInfo['labelX'],
+        y=beamInfo['labelY'],
+        text=beamInfo['MP_W_S'],
+        mode = 'text',
+        textfont = dict(
+            size = 10,
+            color = 'grey'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+
+    # Create a list to store the visibility lists for each dataframe
+    all_args = []
+    vis = []
+    visList = []
+
+
+    #iterate through columns in dataframe (not including the year column)
+    for column in df.columns[3:]:
+        # Beam Differental Settlement
+        fig.add_trace(go.Scatter(
+            x=df['beamX'],
+            y=df['beamY'],
+            text=abs(df[column].values.round(2)),
+            mode = 'text',
+            #name = column, 
+            textfont = dict(
+                size = 12,
+                color = beamSlopeColor[column].values),
+            hoverinfo='skip',
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==df.columns[len(df.columns)-1])
+        ))
+            
+            # Beam Differental Settlement Arrow - pointing in direction of low end 
+        fig.add_trace(go.Scatter(
+            x=beamInfo['arrowX'],
+            y=beamInfo['arrowY'],
+            mode = 'markers',
+            #name = column,
+            marker=dict(
+                color='red',
+                size=10,
+                symbol=beamSymbol[column].values,
+                angle=beamDir[column].values),
+            hoverinfo='skip',
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==df.columns[len(df.columns)-1])
+        ))
+            
+
+    # groups and trace visibilities
+    vis = []
+    visList = []
+
+    for  i, col in enumerate(df.columns[3:]):
+        vis = [True]*(len(df.index)+2) + ([False]*i*2 + [True]*2 + [False]*(len(df.columns)-(i+1))*2)
+        visList.append(vis)
+        vis = []
+
+
+    # buttons for each group
+    buttons = []
+    for idx, col in enumerate(df.columns[3:]):
+        buttons.append(
+            dict(
+                label = col,
+                method = "update",
+                args=[{"visible": visList[idx]}])
+        )
+
+    buttons = [{'label': 'Select Survey Date',
+                    'method': 'restyle',
+                    'args': ['visible', [False]*152]}] + buttons
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        annotations = beamSlopeAnno,
+        #title = 'Differental Slope [in/ft]'
+    )
+
+    # Set axes ranges
+    fig.update_xaxes(range=[-25, 415])
+    fig.update_yaxes(range=[-15, 140])
+    return fig
+
+# 3D Plot - settlement 
+def plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff):
+    fig = go.Figure()
+
+    for col in settlementStart.columns:
+        # Plot the beam locations as lines
+        for (startX, endX, startY, endY, startZ, endZ) in zip(beamInfo['startX'], beamInfo['endX'], 
+                                                            beamInfo['startY'], beamInfo['endY'], 
+                                                            settlement3D['{0}_start'.format(col)], 
+                                                            settlement3D['{0}_end'.format(col)]):
+            fig.add_trace(go.Scatter3d(
+                x=[startX, endX],
+                y=[startY, endY],
+                z = [startZ, endZ],
+                text = beamInfo['MP_W_S'],
+                #name="",
+                mode='lines',
+                line = dict(
+                    color = 'black',
+                    width = 1.5,
+                    dash = 'solid'),
+                #hoverinfo='skip',
+                showlegend=False, 
+                #setting only the first dataframe to be visible as default
+                visible = (col==beamDiff.columns[len(beamDiff.columns)-1])))
+        
+        # Plot the Marker Point (MP) labels in grey
+            fig.add_trace(go.Scatter3d(
+                x=beamInfo['labelX'],
+                y=beamInfo['labelY'],
+                z=settlement3D['{0}_start'.format(col)],
+                text=beamInfo['MP_W_S'],
+                mode = 'text',
+                textfont = dict(
+                    size = 10,
+                    color = 'grey'),
+                hoverinfo='skip',
+                showlegend=False, 
+                #setting only the first dataframe to be visible as default
+                visible = (col==beamDiff.columns[len(beamDiff.columns)-1])))
+            
+    fig.update_traces(
+        hovertemplate="<br>".join([
+            "MP: %{text}",
+            "Settlement [in]: %{z}",
+        ])
+    )
+        
+    fig.update_scenes(xaxis_autorange="reversed", 
+                    yaxis_autorange="reversed",
+                    zaxis_autorange="reversed")  
+
+    camera = dict(
+        up=dict(x=0, y=0, z=1),
+        center=dict(x=0, y=0, z=0),
+        eye=dict(x=1.5, y=1.5, z=1.5)
+    )
+
+    fig.update_layout(
+        autosize=False,
+        width=800, 
+        height=450,
+        margin=dict(l=0, r=0, b=0, t=0),
+        scene_camera=camera,
+        scene=dict(
+            xaxis_title='',
+            yaxis_title='',
+            zaxis_title='Cumulative Settlement [ft]',
+        ),
+    )
+
+    # groups and trace visibilities
+    vis = []
+    visList = []
+
+    for  i, col in enumerate(beamDiff.columns):
+        n = len(settlement3D.index)*2
+        vis = ([False]*i*n + [True]*n + [False]*(len(beamDiff.columns)-(i+1))*n)
+        visList.append(vis)
+        vis = []
+
+
+    # buttons for each group
+    buttons = []
+    for idx, col in enumerate(beamDiff.columns):
+        buttons.append(
+            dict(
+                label = col,
+                method = "update",
+                args=[{"visible": visList[idx]}])
+        )
+
+    buttons = [{'label': 'Select Survey Date',
+                    'method': 'restyle',
+                    'args': ['visible', [False]*len(beamDiff.columns)*len(settlement3D.index)]}] + buttons
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons)
+        ],
+    )
+    return fig

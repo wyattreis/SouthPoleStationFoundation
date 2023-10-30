@@ -30,3 +30,5 @@ beamfile = st.sidebar.file_uploader("South Pole Labels File", type = 'csv')
 # Set forecasting variables
 nsurvey = st.sidebar.number_input('Number of Past Surveys Used for Forecast', value=10)
 nyears = st.sidebar.number_input('Number of Years Forecasted', value=5)
+
+st.sidebar.button('Compute Settlement')

@@ -19,3 +19,9 @@ import numpy as np
 from scipy import interpolate
 import plotly.express as px
 import plotly.graph_objects as go
+
+# import dataframes functions
+def read_survey(surveyfile, xls):
+    xls = pd.ExcelFile(surveyfile)
+    survey = pd.read_excel(xls, 'Data', nrows=36, skiprows=[0,2,3])
+    return survey

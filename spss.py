@@ -35,15 +35,14 @@ nyears = st.sidebar.number_input('Number of Years Forecasted', value=5)
 if st.sidebar.button('Compute Settlement'):
 
     # Calculate settlement
-    # survey_clean, survey_long = read_survey(surveyfile)
+    survey_clean, survey_long = read_survey(surveyfile)
     beamInfo, beamLength = read_beamInfo(beamfile)
-    st.write(beamInfo)
-    # settlement, settlement_points, settlement_delta, settlement_delta_MP = calc_settlement(survey_long)
-    # settlementProj = calc_forecast_settlement(settlement, nsurvey, nyears)
-    # beamDiff, beamDiffplot, beamSlope, beamSlopeplot = calc_differental_settlement(beamLength, survey_clean, beamInfo)
+    settlement, settlement_points, settlement_delta, settlement_delta_MP = calc_settlement(survey_long)
+    settlementProj = calc_forecast_settlement(settlement, nsurvey, nyears)
+    beamDiff, beamDiffplot, beamSlope, beamSlopeplot = calc_differental_settlement(beamLength, survey_clean, beamInfo)
     
-    # # Plot settlement
-    # beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno = plot_annotations(beamInfo, beamDiff, beamSlope)
+    # Plot settlement
+    beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno = plot_annotations(beamInfo, beamDiff, beamSlope)
 
-    # fig = plot_cumulative_settlement(settlement, settlementProj)
-    # st.plotly_chart(fig, use_container_width=True)
+    fig = plot_cumulative_settlement(settlement, settlementProj)
+    st.plotly_chart(fig, use_container_width=True)

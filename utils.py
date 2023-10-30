@@ -27,7 +27,8 @@ def read_survey(surveyfile):
     survey = pd.read_csv(surveyfile, skiprows=[1], nrows=36)
     
     # rename second 2010/11/2 survey to 2010/11/3
-    survey_clean = survey.drop(columns=["DESCRIPTION", "Shims\nNote 13", "Unnamed: 52", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT", "2010-11-02 00:00:00.1":'2010-11-03 00:00:00'})
+    #survey_clean = survey.drop(columns=["DESCRIPTION", "Shims\nNote 13", "Unnamed: 52", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT", "2010-11-02 00:00:00.1":'2010-11-03 00:00:00'})
+    survey_clean = survey.drop(columns=["DESCRIPTION", "Shims\nNote 13", "Unnamed: 52", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"})
     survey_clean = survey_clean.set_index('MONITOR_POINT').rename_axis('date', axis=1)
     survey_clean.columns = pd.to_datetime(survey_clean.columns).astype(str)
 

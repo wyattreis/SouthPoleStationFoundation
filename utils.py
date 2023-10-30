@@ -113,7 +113,7 @@ def calc_3d_dataframe(beamInfo, settlement_points):
 
     settlement3D = settlementStart.join(settlementEnd, lsuffix='_start', rsuffix='_end')
     settlement3D = settlement3D[settlement3D.index.notnull()]
-    return settlement3D
+    return settlementStart, settlement3D
 
 # Annotation for plots
 def plot_annotations(beamInfo, beamDiff, beamSlope):

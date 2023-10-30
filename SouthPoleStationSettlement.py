@@ -1,18 +1,7 @@
-# -------------------------------------------------------------------------------
-# Name          South Pole Station Settlement Visualization and Analysis
-# Description:  Collection of utilities to visulaize the historic settlement at 
-#               the South Pole Station as recorded by surveys at monitoring 
-#               points. Utilities also include analysis to project future 
-#               settlement using existing patterns.
-# Author:       Wyatt Reis
-#               US Army Corps of Engineers
-#               Cold Regions Research and Engineering Laboratory (CRREL)
-#               Wyatt.K.Reis@usace.army.mil
-# Created:      31 October 2023
-# Updated:      -
-#
-# -------------------------------------------------------------------------------
+#!/usr/bin/env python
+# coding: utf-8
 
+# In[1]:
 
 
 import streamlit as st
@@ -30,7 +19,7 @@ surveyfile = "C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/
 beamfile = "C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP_BeamArrowLabels.csv"
 
 
-# In[ ]:
+# In[2]:
 
 
 # Read in the data sheet from the survey excel file - limit to the data only
@@ -51,7 +40,7 @@ survey_clean.columns = pd.to_datetime(survey_clean.columns).astype(str)
 survey_long = pd.DataFrame.transpose(survey_clean)
 
 
-# In[ ]:
+# In[3]:
 
 
 # Identify the first non-NAN value for each support
@@ -72,7 +61,7 @@ settlement_delta = settlement.drop(['2010-11-02', '2010-11-03'], axis = 0).diff(
 settlement_delta_MP = pd.DataFrame.transpose(settlement_delta)
 
 
-# In[ ]:
+# In[4]:
 
 
 # Cumulative Settlement Forecasting
@@ -285,7 +274,7 @@ figSettlementDelta.update_layout(
 figSettlementDelta.show()
 
 
-# In[ ]:
+# In[32]:
 
 
 # Convert the beam length file to long format and make index the east or south Monitoring Point for each beam
@@ -305,12 +294,19 @@ beamDiffplot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['bea
 beamDiff = beamDiffplot.drop(columns=['beamX', 'beamY'])
 
 # Calculate the slope for each beam, transpose for ploting 
-beamSlope = pd.DataFrame((beamDiff.values/(beamLength_sort.values)), columns=beamDiff.columns, index=beamDiff.index)
+beamSlope = beamLength_sort.join(beamDiff)
+beamSlope.iloc[:,1:] = beamSlope.iloc[:,1:].div(beamSlope.beamLength, axis=0)
 beamSlopeplot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['beamName']).join(beamSlope)
-beamSlope = beamSlopeplot.drop(columns=['beamX', 'beamY'])
+beamSlope = beamSlopeplot.drop(columns=['beamX', 'beamY', 'beamLength'])
 
 
-# In[ ]:
+# In[33]:
+
+
+beamSlope
+
+
+# In[34]:
 
 
 # Calculate the direction of arrow of each beam
@@ -345,7 +341,7 @@ choices = ['black','gold', 'orange', 'red']
 beamSlopeColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = beamDiff.index, columns = beamDiff.columns).replace('nan','blue')
 
 
-# In[ ]:
+# In[35]:
 
 
 # Create annotations for both plots
@@ -425,7 +421,7 @@ beamSlopeAnno = list([
    ])
 
 
-# In[ ]:
+# In[36]:
 
 
 df = beamDiffplot
@@ -557,7 +553,7 @@ figBeamDiff.update_yaxes(range=[-15, 140])
 figBeamDiff.show()
 
 
-# In[ ]:
+# In[37]:
 
 
 df = beamSlopeplot
@@ -603,7 +599,7 @@ visList = []
 
 
 #iterate through columns in dataframe (not including the year column)
-for column in df.columns[2:]:
+for column in df.columns[3:]:
     # Beam Differental Settlement
     figBeamSlope.add_trace(go.Scatter(
         x=df['beamX'],
@@ -642,7 +638,7 @@ for column in df.columns[2:]:
 vis = []
 visList = []
 
-for  i, col in enumerate(df.columns[2:]):
+for  i, col in enumerate(df.columns[3:]):
     vis = [True]*(len(df.index)+2) + ([False]*i*2 + [True]*2 + [False]*(len(df.columns)-(i+1))*2)
     visList.append(vis)
     vis = []
@@ -650,7 +646,7 @@ for  i, col in enumerate(df.columns[2:]):
 
 # buttons for each group
 buttons = []
-for idx, col in enumerate(df.columns[2:]):
+for idx, col in enumerate(df.columns[3:]):
     buttons.append(
         dict(
             label = col,

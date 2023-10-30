@@ -22,10 +22,14 @@ from scipy import interpolate
 import plotly.express as px
 import plotly.graph_objects as go
 
+st.set_page_config(layout="wide")
+
+st.title('South Pole Station Settlement visualization and Analysis')
+st.sidebar.title('Options')
 
 # Set the location of the South Pole Station excel survey file
 ##"C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP Settlement Analysis_2023.01.15.xlsx"
-surveyfile = st.sidebar.file_uploader("South Pole Survey File", type = 'xlsx')
+surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'xlsx')
 
 # Set the loaction of the South Pole Station beam lengths and labels file
 ##"C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP_BeamArrowLabels.csv"

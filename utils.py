@@ -414,20 +414,20 @@ def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, 
             showlegend=False
         ))
 
-        # Plot the Marker Point (MP) labels in grey
-        fig.add_trace(go.Scatter(
-            x=beamInfo['labelX'],
-            y=beamInfo['labelY'],
-            text=beamInfo['MP_W_S'],
-            mode = 'text',
-            textfont = dict(
-                size = 10,
-                color = 'grey'),
-            hoverinfo='skip',
-            showlegend=False
-        ))
+    # Plot the Marker Point (MP) labels in grey
+    fig.add_trace(go.Scatter(
+        x=beamInfo['labelX'],
+        y=beamInfo['labelY'],
+        text=beamInfo['MP_W_S'],
+        mode = 'text',
+        textfont = dict(
+            size = 10,
+            color = 'grey'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
 
-        # Create a list to store the visibility lists for each dataframe
+    # Create a list to store the visibility lists for each dataframe
     all_args = []
     vis = []
     visList = []
@@ -451,8 +451,8 @@ def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, 
             #setting only the first dataframe to be visible as default
             visible = (column==df.columns[len(df.columns)-1])
         ))
-                
-                # Beam Differental Settlement Arrow - pointing in direction of low end 
+            
+            # Beam Differental Settlement Arrow - pointing in direction of low end 
         fig.add_trace(go.Scatter(
             x=beamInfo['arrowX'],
             y=beamInfo['arrowY'],
@@ -468,7 +468,8 @@ def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, 
             #setting only the first dataframe to be visible as default
             visible = (column==df.columns[len(df.columns)-1])
         ))
-                
+            
+
     # groups and trace visibilities
     vis = []
     visList = []

@@ -44,6 +44,22 @@ if st.sidebar.button('Compute Settlement'):
     # Plots 
     beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno, color_dict, maps = plot_annotations(beamInfo, beamDiff, beamSlope)
 
+    # Differental Settlement Planview
+    fig_diff_plan = plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, beamDir, beamDiffAnno)
+    
+    # Differental Settlement Slope Planview
+    fig_slope_plan = plot_SlopeSttlement_plot(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno)
+    
+    # Create Streamlit Plot objects - Plan Figure
+    tab1, tab2 = st.tabs(["Differental Settlement [in]", "Differental Slope [in/ft]"])
+    with tab1:
+        # Use the Streamlit theme.
+        # This is the default. So you can also omit the theme argument.
+        st.plotly_chart(fig_diff_plan, use_container_width=True, height=2000)
+    with tab2:
+        # Use the native Plotly theme.
+        st.plotly_chart(fig_slope_plan, use_container_width=True, height=2000)
+
     # Cumulative settlement
     fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
     st.plotly_chart(fig_cumulative, use_container_width=True)
@@ -52,26 +68,10 @@ if st.sidebar.button('Compute Settlement'):
     fig_delta = plot_delta_settlement(settlement_delta, color_dict, maps)
     st.plotly_chart(fig_delta, use_container_width=True)
 
-    # Differental Settlement Planview
-    fig_diff_plan = plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, beamDir, beamDiffAnno)
-    st.plotly_chart(fig_diff_plan, use_container_width=True)
-
-    # Differental Settlement Slope Planview
-    fig_slope_plan = plot_SlopeSttlement_plot(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno)
-    st.plotly_chart(fig_slope_plan, use_container_width=True)
-
     # Differental Settlement 3D
     fig_settlement_3d = plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff)
     st.plotly_chart(fig_settlement_3d, use_container_width=True)
 
-    # Create Streamlit Plot objects - Plan Figure
-    tab1, tab2 = st.tabs(["Differental Settlement [in]", "Differental Slope [in/ft]"])
-    with tab1:
-        # Use the Streamlit theme.
-        # This is the default. So you can also omit the theme argument.
-        st.plotly_chart(fig_diff_plan, use_container_width=True, height=1000)
-    with tab2:
-        # Use the native Plotly theme.
-        st.plotly_chart(fig_slope_plan, use_container_width=True, height=1000)
+    
 
     

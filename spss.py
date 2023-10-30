@@ -25,8 +25,10 @@ st.title('South Pole Station Settlement Visualization and Analysis')
 st.sidebar.title('Options')
 
 # Import the South Pole Station excel survey and beam information fils
-surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'xlsx')
-beamfile = st.sidebar.file_uploader("South Pole Labels File", type = 'csv')
+surveyfile = "C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP Settlement Analysis_2023.01.15.xlsx"
+beamfile = "C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP_BeamArrowLabels.csv"
+#surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'xlsx')
+#beamfile = st.sidebar.file_uploader("South Pole Labels File", type = 'csv')
 
 # Set forecasting variables
 nsurvey = st.sidebar.number_input('Number of Past Surveys Used for Forecast', value=10)

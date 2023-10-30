@@ -26,7 +26,6 @@ st.sidebar.title('Options')
 
 # Import the South Pole Station excel survey and beam information fils
 surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'csv')
-beamfile = st.sidebar.file_uploader("South Pole Labels File", type = 'csv')
 
 # Set forecasting variables
 nsurvey = st.sidebar.number_input('Number of Past Surveys Used for Forecast', value=10)
@@ -36,7 +35,7 @@ if st.sidebar.button('Compute Settlement'):
 
     # Calculate settlement
     survey_clean, survey_long = read_survey(surveyfile)
-    beamInfo, beamLength = read_beamInfo(beamfile)
+    beamInfo, beamLength = read_beamInfo()
     settlement, settlement_points, settlement_delta, settlement_delta_MP = calc_settlement(survey_long)
     settlementProj = calc_forecast_settlement(settlement, nsurvey, nyears)
     beamDiff, beamDiffplot, beamSlope, beamSlopeplot = calc_differental_settlement(beamLength, survey_clean, beamInfo)
@@ -45,4 +44,4 @@ if st.sidebar.button('Compute Settlement'):
     beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno = plot_annotations(beamInfo, beamDiff, beamSlope)
 
     fig = plot_cumulative_settlement(settlement, settlementProj)
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig)

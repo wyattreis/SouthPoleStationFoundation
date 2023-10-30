@@ -37,7 +37,9 @@ def read_survey(surveyfile):
     return survey_clean, survey_long
 
 # import beam information and label location
-def read_beamInfo(beamfile):
+
+def read_beamInfo():
+    beamfile = 'https://raw.githubusercontent.com/wyattreis/SouthPoleStationFoundation/main/SP_BeamArrowLabels.csv'
     beamInfo = pd.read_csv(beamfile)
     beamLength = beamInfo[['MP_W_S', 'MP_E_N', 'beamName', 'beamLength']].dropna()
     return beamInfo, beamLength

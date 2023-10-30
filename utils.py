@@ -22,8 +22,9 @@ import plotly.graph_objects as go
 
 # import survey dataframe and return clean version
 def read_survey(surveyfile):
-    survey = pd.ExcelFile(surveyfile)
-    survey = pd.read_excel(survey, 'Data', nrows=36, skiprows=[0,2,3])
+    #survey = pd.ExcelFile(surveyfile)
+    #survey = pd.read_excel(survey, 'Data', nrows=36, skiprows=[0,2,3])
+    survey = pd.read_csv(surveyfile, skiprows=[1], nrows=36)
     
     # rename second 2010/11/2 survey to 2010/11/3
     survey_clean = survey.drop(columns=["DESCRIPTION", "Shims\nNote 13", "Unnamed: 52", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT", "2010-11-02 00:00:00.1":'2010-11-03 00:00:00'})

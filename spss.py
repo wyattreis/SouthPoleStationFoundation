@@ -64,4 +64,14 @@ if st.sidebar.button('Compute Settlement'):
     fig_settlement_3d = plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff)
     st.plotly_chart(fig_settlement_3d, use_container_width=True)
 
+    # Create Streamlit Plot objects - Plan Figure
+    tab1, tab2 = st.tabs(["Differental Settlement [in]", "Differental Slope [in/ft]"])
+    with tab1:
+        # Use the Streamlit theme.
+        # This is the default. So you can also omit the theme argument.
+        st.plotly_chart(fig_diff_plan, use_container_width=True, height=1000)
+    with tab2:
+        # Use the native Plotly theme.
+        st.plotly_chart(fig_slope_plan, use_container_width=True, height=1000)
+
     

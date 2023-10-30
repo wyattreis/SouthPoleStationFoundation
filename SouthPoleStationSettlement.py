@@ -4,12 +4,13 @@
 # In[ ]:
 
 
+import streamlit as st
 import pandas as pd
 import numpy as np
 from scipy import interpolate
 import plotly.express as px
 import plotly.graph_objects as go
-import streamlit as st
+
 
 # Set the location of the South Pole Station excel survey file
 surveyfile = "C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP Settlement Analysis_2023.01.15.xlsx"

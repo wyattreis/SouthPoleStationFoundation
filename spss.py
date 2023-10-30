@@ -48,25 +48,33 @@ if st.sidebar.button('Compute Settlement'):
     fig_diff_plan = plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, beamDir, beamDiffAnno)
     
     # Differental Settlement Slope Planview
-    fig_slope_plan = plot_SlopeSttlement_plot(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno)
+    fig_slope_plan = plot_SlopeSttlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno)
     
     # Create Streamlit Plot objects - Plan Figure
     tab1, tab2 = st.tabs(["Differental Settlement [in]", "Differental Slope [in/ft]"])
     with tab1:
         # Use the Streamlit theme.
         # This is the default. So you can also omit the theme argument.
-        st.plotly_chart(fig_diff_plan, use_container_width=True, height=2000)
+        st.plotly_chart(fig_diff_plan, use_container_width=True, height=1000)
     with tab2:
         # Use the native Plotly theme.
-        st.plotly_chart(fig_slope_plan, use_container_width=True, height=2000)
+        st.plotly_chart(fig_slope_plan, use_container_width=True, height=1000)
 
     # Cumulative settlement
     fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
-    st.plotly_chart(fig_cumulative, use_container_width=True)
-
+    
     # Delta Settlement
     fig_delta = plot_delta_settlement(settlement_delta, color_dict, maps)
-    st.plotly_chart(fig_delta, use_container_width=True)
+    
+    # Create Streamlit Plot objects - Plan Figure
+    tab1, tab2 = st.tabs(["Cumulative Settlement [ft]", "Change in Settlement [in]"])
+    with tab1:
+        # Use the Streamlit theme.
+        # This is the default. So you can also omit the theme argument.
+        st.plotly_chart(fig_cumulative, use_container_width=True, height=1000)
+    with tab2:
+        # Use the native Plotly theme.
+        st.plotly_chart(fig_delta, use_container_width=True, height=1000)
 
     # Differental Settlement 3D
     fig_settlement_3d = plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff)

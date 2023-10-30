@@ -171,7 +171,7 @@ def plot_annotations(beamInfo, beamDiff, beamSlope):
                  color = 'red')),
        dict(text="Note: Arrows point in the direction of increased settlement.",
             x=1, xref="paper", xanchor="right",
-            y=-0.1, yref="paper", yanchor="bottom",
+            y=-0.15, yref="paper", yanchor="bottom",
             align="right", 
             showarrow=False, 
             font = dict(
@@ -214,7 +214,7 @@ def plot_annotations(beamInfo, beamDiff, beamSlope):
            ),
        dict(text="Note: Arrows point in the direction of increased settlement.",
             x=1, xref="paper", xanchor="right",
-            y=-0.1, yref="paper", yanchor="bottom",
+            y=-0.15, yref="paper", yanchor="bottom",
             align="right", 
             showarrow=False, 
             font = dict(
@@ -509,6 +509,7 @@ def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, 
                 yanchor="bottom")
         ],
         annotations = beamDiffAnno,
+        height = 1000
         #title = 'Differental Settlement [in] between Monitoring Points'
     )
 
@@ -518,7 +519,7 @@ def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, 
     return fig
 
 # Plot differental settlement slope in plan view
-def plot_SlopeSttlement_plot(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno):
+def plot_SlopeSttlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno):
     df = beamSlopeplot
 
     #create a figure from the graph objects (not plotly express) library
@@ -636,6 +637,7 @@ def plot_SlopeSttlement_plot(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol
                 yanchor="bottom")
         ],
         annotations = beamSlopeAnno,
+        height = 1000
         #title = 'Differental Slope [in/ft]'
     )
 

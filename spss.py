@@ -36,13 +36,14 @@ if st.sidebar.button('Compute Settlement'):
 
     # Calculate settlement
     survey_clean, survey_long = read_survey(surveyfile)
-    beamInfo, beamLength = read_beamInfo(beamfile)
-    settlement, settlement_points, settlement_delta, settlement_delta_MP = calc_settlement(survey_long)
-    settlementProj = calc_forecast_settlement(settlement, nsurvey, nyears)
-    beamDiff, beamDiffplot, beamSlope, beamSlopeplot = calc_differental_settlement(beamLength, survey_clean, beamInfo)
+    st.write(survey_clean)
+    #beamInfo, beamLength = read_beamInfo(beamfile)
+    #settlement, settlement_points, settlement_delta, settlement_delta_MP = calc_settlement(survey_long)
+    #settlementProj = calc_forecast_settlement(settlement, nsurvey, nyears)
+    #beamDiff, beamDiffplot, beamSlope, beamSlopeplot = calc_differental_settlement(beamLength, survey_clean, beamInfo)
     
     # Plot settlement
-    beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno = plot_annotations(beamInfo, beamDiff, beamSlope)
+    #beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno = plot_annotations(beamInfo, beamDiff, beamSlope)
 
-    fig = plot_cumulative_settlement(settlement, settlementProj)
-    st.plotly_chart(fig, use_container_width=True)
+    #fig = plot_cumulative_settlement(settlement, settlementProj)
+    #st.plotly_chart(fig, use_container_width=True)

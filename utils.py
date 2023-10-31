@@ -61,7 +61,7 @@ def calc_settlement(survey_long):
 
 # Cumulative Settlement Forecasting
 def calc_forecast_settlement(settlement, nsurvey, nyears):
-    settlementInterp = settlement.iloc[[(len(settlement.index)-(nsurvey)),(len(settlement.index)-1)]]
+    settlementInterp = settlement.iloc[(len(settlement.index)-(nsurvey)):(len(settlement.index)-1)]
     currentYear = settlementInterp.index.year[1]
 
     projList = []
@@ -73,7 +73,7 @@ def calc_forecast_settlement(settlement, nsurvey, nyears):
     settlementExtrap = pd.DataFrame(columns=settlementInterp.columns, index = [projList]).reset_index().set_index('level_0')
     settlementProj = pd.concat([settlementInterp,settlementExtrap])
 
-    settlementProj = settlementProj.interpolate(method="slinear", fill_value="extrapolate", limit_direction="both")
+    settlementProj = settlementProj.interpolate(method="slinear", fill_value="extrapolate", limit_direction="forward")
     return settlementProj
 
 # Calculate differental settlement

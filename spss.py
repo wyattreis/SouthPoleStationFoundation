@@ -21,15 +21,15 @@ from utils import *
 
 st.set_page_config(layout="wide")
 
-left_co, cent_co,last_co = st.columns(3)
+left_co, cent_co,last_co = st.columns([0.1, 0.8, 0.1])
 with cent_co:
 
     htp = 'https://github.com/wyattreis/SouthPoleStationFoundation/blob/main/station.jpg?raw=true'
     #htp = 'https://github.com/wyattreis/SouthPoleStationFoundation/blob/main/SPS_withFlags.jpg?raw=true'
-    st.image(htp, width=1000, caption='Add caption with credits')
+    st.image(htp, use_column_width=True, caption='Add caption with credits')
 
-    st.title('South Pole Station Settlement Visualization and Analysis')
-    
+    st.title('South Pole Station Settlement Visualization and Analysis', anchor=False)
+
 st.sidebar.title('Survey and Forecast Options:')
 
 # Import the South Pole Station excel survey and beam information fils

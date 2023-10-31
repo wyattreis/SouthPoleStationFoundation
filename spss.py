@@ -21,11 +21,15 @@ from utils import *
 
 st.set_page_config(layout="wide")
 
-htp = 'https://github.com/wyattreis/SouthPoleStationFoundation/blob/main/station.jpg?raw=true'
-#htp = 'https://github.com/wyattreis/SouthPoleStationFoundation/blob/main/SPS_withFlags.jpg?raw=true'
-st.image(htp, width=1000, caption='Add caption with credits')
+left_co, cent_co,last_co = st.columns(3)
+with cent_co:
 
-st.title('South Pole Station Settlement Visualization and Analysis')
+    htp = 'https://github.com/wyattreis/SouthPoleStationFoundation/blob/main/station.jpg?raw=true'
+    #htp = 'https://github.com/wyattreis/SouthPoleStationFoundation/blob/main/SPS_withFlags.jpg?raw=true'
+    st.image(htp, width=1000, caption='Add caption with credits')
+
+    st.title('South Pole Station Settlement Visualization and Analysis')
+    
 st.sidebar.title('Survey and Forecast Options:')
 
 # Import the South Pole Station excel survey and beam information fils

@@ -25,7 +25,7 @@ left_co, cent_co,last_co = st.columns([0.05, 0.9, 0.05])
 with cent_co:
 
     htp = 'https://github.com/wyattreis/SouthPoleStationFoundation/blob/main/southpole_fromB_cropped.jpg?raw=true'
-    st.image(htp, use_column_width=True, caption='U.S. South Pole Station _Credit: Marc Ankenbauer (2013)_')
+    st.image(htp, use_column_width=True, caption='U.S. South Pole Station _Credit:_ _Marc_ _Ankenbauer_ _(2013)_')
 
     st.title('South Pole Station Settlement Visualization and Analysis', anchor=False)
 

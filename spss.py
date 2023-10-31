@@ -47,7 +47,7 @@ if st.sidebar.button('Compute Settlement'):
     settlement, settlement_points, settlement_delta, settlement_delta_MP = calc_settlement(survey_long)
     settlementProj = calc_forecast_settlement(settlement, nsurvey, nyears)
     beamDiff, beamDiffplot, beamSlope, beamSlopeplot = calc_differental_settlement(beamLength, survey_clean, beamInfo)
-    settlementStart, settlement3D = calc_3d_dataframe(beamInfo, settlement_points)
+    settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points)
     
     # Plots 
     beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno, color_dict, maps = plot_annotations(beamInfo, beamDiff, beamSlope)
@@ -85,8 +85,10 @@ if st.sidebar.button('Compute Settlement'):
         st.plotly_chart(fig_delta, use_container_width=True, height=600)
 
     # Differental Settlement 3D
-    fig_settlement_3d = plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff)
-    st.plotly_chart(fig_settlement_3d, width = 600, height = 600)
+    left_co, cent_co,last_co = st.columns([0.05, 0.9, 0.05])
+    with cent_co:
+        fig_settlement_3d = plot_3D_settlement(settlementStart, beamInfo3D)
+        st.plotly_chart(fig_settlement_3d, width = 900, height = 900)
 
     
 

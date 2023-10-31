@@ -128,8 +128,11 @@ def calc_3d_dataframe(beamInfo, settlement_points):
     settlementEnd.columns = pd.to_datetime(settlementEnd.columns).astype(str)
 
     settlement3D = settlementStart.join(settlementEnd, lsuffix='_start', rsuffix='_end')
-    settlement3D = settlement3D[settlement3D.index.notnull()]
-    return settlementStart, settlement3D
+
+    beamInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
+    beamInfo3D = beamInfo3D.join(settlement3D)
+    beamInfo3D = beamInfo3D[beamInfo3D.index.notnull()]
+    return settlementStart, beamInfo3D
 
 # Annotation for plots
 def plot_annotations(beamInfo, beamDiff, beamSlope):
@@ -666,20 +669,20 @@ def plot_SlopeSttlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol
     return fig
 
 # 3D Plot - settlement 
-def plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff):
+def plot_3D_settlement(settlementStart, beamInfo3D):
     fig = go.Figure()
 
     for col in settlementStart.columns:
         # Plot the beam locations as lines
-        for (startX, endX, startY, endY, startZ, endZ) in zip(beamInfo['startX'], beamInfo['endX'], 
-                                                            beamInfo['startY'], beamInfo['endY'], 
-                                                            settlement3D['{0}_start'.format(col)], 
-                                                            settlement3D['{0}_end'.format(col)]):
+        for (startX, endX, startY, endY, startZ, endZ) in zip(beamInfo3D['startX'], beamInfo3D['endX'], 
+                                                            beamInfo3D['startY'], beamInfo3D['endY'], 
+                                                            beamInfo3D['{0}_start'.format(col)], 
+                                                            beamInfo3D['{0}_end'.format(col)]):
             fig.add_trace(go.Scatter3d(
                 x=[startX, endX],
                 y=[startY, endY],
                 z = [startZ, endZ],
-                text = beamInfo['MP_W_S'],
+                text = beamInfo3D['MP_W_S'],
                 #name="",
                 mode='lines',
                 line = dict(
@@ -689,14 +692,14 @@ def plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff):
                 #hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
-                visible = (col==beamDiff.columns[len(beamDiff.columns)-1])))
+                visible = (col==settlementStart.columns[len(settlementStart.columns)-1])))
         
         # Plot the Marker Point (MP) labels in grey
             fig.add_trace(go.Scatter3d(
-                x=beamInfo['labelX'],
-                y=beamInfo['labelY'],
-                z=settlement3D['{0}_start'.format(col)],
-                text=beamInfo['MP_W_S'],
+                x=beamInfo3D['labelX'],
+                y=beamInfo3D['labelY'],
+                z=beamInfo3D['{0}_start'.format(col)],
+                text=beamInfo3D['MP_W_S'],
                 mode = 'text',
                 textfont = dict(
                     size = 10,
@@ -704,7 +707,7 @@ def plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff):
                 hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
-                visible = (col==beamDiff.columns[len(beamDiff.columns)-1])))
+                visible = (col==settlementStart.columns[len(settlementStart.columns)-1])))
             
     fig.update_traces(
         hovertemplate="<br>".join([
@@ -725,8 +728,6 @@ def plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff):
 
     fig.update_layout(
         autosize=False,
-        width=800, 
-        height=450,
         margin=dict(l=0, r=0, b=0, t=0),
         scene_camera=camera,
         scene=dict(
@@ -740,16 +741,16 @@ def plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff):
     vis = []
     visList = []
 
-    for  i, col in enumerate(beamDiff.columns):
-        n = len(settlement3D.index)*2
-        vis = ([False]*i*n + [True]*n + [False]*(len(beamDiff.columns)-(i+1))*n)
+    for  i, col in enumerate(settlementStart.columns):
+        n = len(beamInfo3D.index)*2
+        vis = ([False]*i*n + [True]*n + [False]*(len(settlementStart.columns)-(i+1))*n)
         visList.append(vis)
         vis = []
 
 
     # buttons for each group
     buttons = []
-    for idx, col in enumerate(beamDiff.columns):
+    for idx, col in enumerate(settlementStart.columns):
         buttons.append(
             dict(
                 label = col,
@@ -759,7 +760,7 @@ def plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff):
 
     buttons = [{'label': 'Select Survey Date',
                     'method': 'restyle',
-                    'args': ['visible', [False]*len(beamDiff.columns)*len(settlement3D.index)]}] + buttons
+                    'args': ['visible', [False]*len(settlementStart.columns)*len(beamInfo3D.index)]}] + buttons
 
     # update layout with buttons                       
     fig.update_layout(
@@ -769,7 +770,8 @@ def plot_3D_settlement(settlementStart, settlement3D, beamInfo, beamDiff):
             direction="down",
             buttons = buttons)
         ],
-        height = 600,
-        width = 600
+        width = 900,
+        height = 900
+
     )
     return fig

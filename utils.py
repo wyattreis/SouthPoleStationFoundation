@@ -448,7 +448,7 @@ def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, 
                 size = 10,
                 color = beamDiffColor[column].values
                 ),
-            #hoverinfo='skip',
+            hoverinfo='skip',
             showlegend=False, 
             #setting only the first dataframe to be visible as default
             visible = (column==df.columns[len(df.columns)-1])

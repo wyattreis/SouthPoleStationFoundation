@@ -16,18 +16,17 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from scipy import interpolate
+import scipy.stats as stats
 import plotly.express as px
 import plotly.graph_objects as go
+import datetime as dt
+
 
 # import survey dataframe and return clean version
 def read_survey(surveyfile):
-    #survey = pd.ExcelFile(surveyfile)
-    #survey = pd.read_excel(survey, 'Data', nrows=36, skiprows=[0,2,3])
     survey = pd.read_csv(surveyfile, skiprows=[1], nrows=36)
     
     # rename second 2010/11/2 survey to 2010/11/3
-    #survey_clean = survey.drop(columns=["DESCRIPTION", "Shims\nNote 13", "Unnamed: 52", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT", "2010-11-02 00:00:00.1":'2010-11-03 00:00:00'})
     survey_clean = survey.drop(columns=["DESCRIPTION", "Shims\nNote 13", "Unnamed: 52", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"})
     survey_clean = survey_clean.set_index('MONITOR_POINT').rename_axis('date', axis=1)
     survey_clean.columns = pd.to_datetime(survey_clean.columns).astype(str)
@@ -61,8 +60,8 @@ def calc_settlement(survey_long):
 
 # Cumulative Settlement Forecasting
 def calc_forecast_settlement(settlement, nsurvey, nyears):
-    settlementInterp = settlement.iloc[(len(settlement.index)-(nsurvey)):(len(settlement.index)-1)]
-    currentYear = settlementInterp.index.year[1]
+    settlementInterp = settlement.iloc[(len(settlement.index)-(nsurvey)):(len(settlement.index))]
+    currentYear = settlementInterp.index.year[-1]
 
     projList = []
     for year in range(nyears):
@@ -71,9 +70,26 @@ def calc_forecast_settlement(settlement, nsurvey, nyears):
         projList.append(projYear)
 
     settlementExtrap = pd.DataFrame(columns=settlementInterp.columns, index = [projList]).reset_index().set_index('level_0')
-    settlementProj = pd.concat([settlementInterp,settlementExtrap])
+    settlementExtrap.index = settlementExtrap.index.map(dt.datetime.toordinal)
+    settlementInterp.index = settlementInterp.index.map(dt.datetime.toordinal)
 
-    settlementProj = settlementProj.interpolate(method="slinear", fill_value="extrapolate", limit_direction="forward")
+    x_endpoints = list([settlementInterp.index[0], settlementInterp.index[nsurvey-1]]) + settlementExtrap.index.tolist()
+    x_enddates = pd.DataFrame(x_endpoints)
+
+    df_regression = settlementInterp.apply(lambda x: stats.linregress(settlementInterp.index, x), result_type='expand').rename(index={0: 'slope', 1: 
+                                                                                    'intercept', 2: 'rvalue', 3:
+                                                                                    'p-value', 4:'stderr'})
+
+    new_data_loc = {}
+    for column in df_regression.columns:   
+        slope = df_regression.loc['slope', column]  
+        intercept = df_regression.loc['intercept', column]  
+        new_data_loc[column] = [slope * val + intercept for val in x_endpoints]
+
+    settlementProj = pd.DataFrame([new_data_loc], columns=new_data_loc.keys()).apply(pd.Series.explode).reset_index().drop(['index'], axis = 1)
+    settlementProj = x_enddates.join(settlementProj).set_index(0)
+    settlementProj.index.names = ['date']
+    settlementProj.index = settlementProj.index.map(dt.datetime.fromordinal)
     return settlementProj
 
 # Calculate differental settlement
@@ -223,14 +239,15 @@ def plot_annotations(beamInfo, beamDiff, beamSlope):
    ])
     # column: color - assign each monitor point a specifc color
     color_dict = {
-    'A1-1': '#7fc97f', 'A1-2': '#beaed4', 'A1-3': '#fdc086', 'A1-4': '#ffff99',
-    'A2-1': '#7fc97f', 'A2-2': '#beaed4', 'A2-3': '#fdc086', 'A2-4': '#ffff99', 'A2-5': '#386cb0','A2-6': '#f0027f',
-    'A3-1': '#7fc97f', 'A3-2': '#beaed4', 'A3-3': '#fdc086', 'A3-4': '#ffff99',
-    'A4-1': '#7fc97f', 'A4-2': '#beaed4', 'A4-3': '#fdc086', 'A4-4': '#ffff99',
-    'B1-1': '#7fc97f', 'B1-2': '#beaed4', 'B1-3': '#fdc086', 'B1-4': '#ffff99',
-    'B2-1': '#7fc97f', 'B2-2': '#beaed4', 'B2-3': '#fdc086', 'B2-4': '#ffff99', 'B2-5': '#386cb0','B2-6': '#f0027f',
-    'B3-1': '#7fc97f', 'B3-2': '#beaed4', 'B3-3': '#fdc086', 'B3-4': '#ffff99',
-    'B4-1': '#7fc97f', 'B4-2': '#beaed4', 'B4-3': '#fdc086', 'B4-4': '#ffff99'}
+    'A1-1': '#1b9e77', 'A1-2': '#d95f02', 'A1-3': '#7570b3', 'A1-4': '#e7298a',
+    'A2-1': '#1b9e77', 'A2-2': '#d95f02', 'A2-3': '#7570b3', 'A2-4': '#e7298a', 'A2-5': '#66a61e','A2-6': '#e6ab02',
+    'A3-1': '#1b9e77', 'A3-2': '#d95f02', 'A3-3': '#7570b3', 'A3-4': '#e7298a',
+    'A4-1': '#1b9e77', 'A4-2': '#d95f02', 'A4-3': '#7570b3', 'A4-4': '#e7298a',
+    'B1-1': '#1b9e77', 'B1-2': '#d95f02', 'B1-3': '#7570b3', 'B1-4': '#e7298a',
+    'B2-1': '#1b9e77', 'B2-2': '#d95f02', 'B2-3': '#7570b3', 'B2-4': '#e7298a', 'B2-5': '#66a61e','B2-6': '#e6ab02',
+    'B3-1': '#1b9e77', 'B3-2': '#d95f02', 'B3-3': '#7570b3', 'B3-4': '#e7298a',
+    'B4-1': '#1b9e77', 'B4-2': '#d95f02', 'B4-3': '#7570b3', 'B4-4': '#e7298a'
+}
 
     # Identify the monitor point groupings based on the pod
     maps = {'A1':['A1-1', 'A1-2', 'A1-3', 'A1-4'],

@@ -22,7 +22,7 @@ from utils import *
 st.set_page_config(layout="wide")
 
 st.title('South Pole Station Settlement Visualization and Analysis')
-st.sidebar.title('Options')
+st.sidebar.title('Survey and Forecast Options:')
 
 # Import the South Pole Station excel survey and beam information fils
 surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'csv')

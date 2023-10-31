@@ -91,7 +91,7 @@ if st.sidebar.button('Compute Settlement'):
         st.plotly_chart(fig_settlement_3d, width = 700, height = 700)
 
         fig_3d_slider = plot_3D_settlement_slider(settlementStart, beamInfo3D)
-        st.plotly_chart(fig_settlement_3d, width = 700, height = 700)
+        st.plotly_chart(fig_3d_slider, width = 700, height = 700)
 
     
 

@@ -23,7 +23,7 @@ st.set_page_config(layout="wide")
 
 
 htp = 'https://github.com/wyattreis/SouthPoleStationFoundation/blob/main/station.jpg?raw=true'
-st.image(htp, use_column_width=True)
+st.image(htp, use_column_width=True, caption='Add caption with credits')
 
 st.title('South Pole Station Settlement Visualization and Analysis')
 st.sidebar.title('Survey and Forecast Options:')

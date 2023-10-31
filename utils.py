@@ -423,7 +423,7 @@ def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, 
         text=beamInfo['MP_W_S'],
         mode = 'text',
         textfont = dict(
-            size = 10,
+            size = 12,
             color = 'grey'),
         hoverinfo='skip',
         showlegend=False
@@ -445,7 +445,7 @@ def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, 
             mode = 'text',
             #name = column, 
             textfont = dict(
-                size = 10,
+                size = 16,
                 color = beamDiffColor[column].values
                 ),
             hoverinfo='skip',
@@ -552,7 +552,7 @@ def plot_SlopeSttlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol
         text=beamInfo['MP_W_S'],
         mode = 'text',
         textfont = dict(
-            size = 10,
+            size = 12,
             color = 'grey'),
         hoverinfo='skip',
         showlegend=False
@@ -574,7 +574,7 @@ def plot_SlopeSttlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol
             mode = 'text',
             #name = column, 
             textfont = dict(
-                size = 12,
+                size = 16,
                 color = beamSlopeColor[column].values),
             hoverinfo='skip',
             showlegend=False, 

@@ -878,6 +878,8 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
     fig.update_layout(
         sliders=sliders,
         width = 1100,
-        height = 800
+        height = 800,
+        xaxis_range=[datetime.datetime(2000, 11, 10),
+                               datetime.datetime(2023, 1, 20)]
     )
     return fig

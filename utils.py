@@ -877,7 +877,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
 
     fig.update_layout(
         sliders=sliders,
-        width = 800,
-        height = 700
+        width = 1000,
+        height = 800
     )
     return fig

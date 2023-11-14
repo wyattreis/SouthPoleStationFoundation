@@ -1020,7 +1020,7 @@ def plot_3D_settlement_animation(settlementStart, beamInfo3D):
                     "pad": {"r": 10, "t": 20},
                     "type": "buttons",
                     "x": 0.1,
-                    "y": -0.05,
+                    "y": 0,
                 }
         ],
         sliders=sliders,

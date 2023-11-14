@@ -1002,29 +1002,29 @@ def plot_3D_settlement_animation(settlementStart, beamInfo3D):
             }
 
     fig.update_layout(
-        # updatemenus = [
-        #         {
-        #             "buttons": [
-        #                 {
-        #                     "args": [None, frame_args(50)],
-        #                     "label": "&#9654;", # play symbol
-        #                     "method": "animate",
-        #                 },
-        #                 {
-        #                     "args": [[None], frame_args(0)],
-        #                     "label": "&#9724;", # pause symbol
-        #                     "method": "animate",
-        #                 },
-        #             ],
-        #             "direction": "left",
-        #             "pad": {"r": 10, "t": 20},
-        #             "type": "buttons",
-        #             "x": 0.1,
-        #             "y": -0.05,
-        #         }
-        # ],
+        updatemenus = [
+                {
+                    "buttons": [
+                        {
+                            "args": [None, frame_args(50)],
+                            "label": "&#9654;", # play symbol
+                            "method": "animate",
+                        },
+                        {
+                            "args": [[None], frame_args(0)],
+                            "label": "&#9724;", # pause symbol
+                            "method": "animate",
+                        },
+                    ],
+                    "direction": "left",
+                    "pad": {"r": 10, "t": 20},
+                    "type": "buttons",
+                    "x": 0.1,
+                    "y": -0.05,
+                }
+        ],
         sliders=sliders,
-        width = 600,
-        height = 500
+        width = 1100,
+        height = 800
     )
     return fig

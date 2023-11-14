@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
-
-
+# In[]:
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -11,17 +9,14 @@ from scipy import interpolate
 import plotly.express as px
 import plotly.graph_objects as go
 
-
+# In[]:
 # Set the location of the South Pole Station excel survey file
 surveyfile = "C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP Settlement Analysis_2023.01.15.xlsx"
 
 # Set the loaction of the South Pole Station beam lengths and labels file
 beamfile = "C:/Users/RDCRLWKR/Documents/Active Projects/South Pole Foundation/Technical/Data/SP_BeamArrowLabels.csv"
 
-
-# In[2]:
-
-
+# In[]:
 # Read in the data sheet from the survey excel file - limit to the data only
 xls = pd.ExcelFile(surveyfile)
 survey = pd.read_excel(xls, 'Data', nrows=36, skiprows=[0,2,3])
@@ -698,6 +693,9 @@ settlementEnd.columns = pd.to_datetime(settlementEnd.columns).astype(str)
 settlement3D = settlementStart.join(settlementEnd, lsuffix='_start', rsuffix='_end')
 settlement3D = settlement3D[settlement3D.index.notnull()]
 
+beamInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
+beamInfo3D = beamInfo3D.join(settlement3D)
+beamInfo3D = beamInfo3D[beamInfo3D.index.notnull()]
 
 # In[ ]:
 
@@ -769,7 +767,7 @@ fig3DSettlement.update_layout(
         xaxis_title='',
         yaxis_title='',
         zaxis_title='Cumulative Settlement [ft]',
-    ),
+    )
 )
 
 # groups and trace visibilities
@@ -811,29 +809,421 @@ fig3DSettlement.show()
 
 
 # In[ ]:
+# Create animation of the 3d plot 
+
+fig = go.Figure()
+
+for col in settlementStart.columns:
+    # Plot the beam locations as lines
+    for (startX, endX, startY, endY, startZ, endZ) in zip(beamInfo3D['startX'], beamInfo3D['endX'], 
+                                                        beamInfo3D['startY'], beamInfo3D['endY'], 
+                                                        beamInfo3D['{0}_start'.format(col)], 
+                                                        beamInfo3D['{0}_end'.format(col)]):
+        fig.add_trace(go.Scatter3d(
+            x=[startX, endX],
+            y=[startY, endY],
+            z = [startZ, endZ],
+            text = beamInfo3D['MP_W_S'],
+            #name="",
+            mode='lines',
+            line = dict(
+                color = 'black',
+                width = 1.5,
+                dash = 'solid'),
+            #hoverinfo='skip',
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (col==settlementStart.columns[len(settlementStart.columns)-1])))
+    
+    # Plot the Marker Point (MP) labels in grey
+        fig.add_trace(go.Scatter3d(
+            x=beamInfo3D['labelX'],
+            y=beamInfo3D['labelY'],
+            z=beamInfo3D['{0}_start'.format(col)],
+            text=beamInfo3D['MP_W_S'],
+            mode = 'text',
+            textfont = dict(
+                size = 10,
+                color = 'grey'),
+            hoverinfo='skip',
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (col==settlementStart.columns[len(settlementStart.columns)-1])))
+        
+frames = []
+for i, col in enumerate(settlementStart.columns):
+    frames.append(go.Frame(data=[go.Scatter3d(z = [startZ, endZ]),
+                                go.Scatter3d(z = beamInfo3D['{0}_start'.format(col)])],
+                                name=f"fr{i}"))
+
+fig.update(frames=frames)
+              
+fig.update_traces(
+    hovertemplate="<br>".join([
+        "MP: %{text}",
+        "Settlement [in]: %{z}",
+    ])
+)
+    
+fig.update_scenes(xaxis_autorange="reversed", 
+                yaxis_autorange="reversed",
+                zaxis_autorange="reversed")  
+
+camera = dict(
+    up=dict(x=0, y=0, z=1),
+    center=dict(x=0, y=0, z=0),
+    eye=dict(x=1.5, y=1.5, z=1.5)
+)
+
+fig.update_layout(
+    autosize=False,
+    width=800, 
+    height=450,
+    margin=dict(l=0, r=0, b=0, t=0),
+    scene_camera=camera,
+    scene=dict(
+        xaxis_title='',
+        yaxis_title='',
+        zaxis_title='Cumulative Settlement [ft]',
+    ),
+)
+
+# groups and trace visibilities
+vis = []
+visList = []
+
+for  i, col in enumerate(settlementStart.columns):
+    n = len(beamInfo3D.index)*2
+    vis = ([False]*i*n + [True]*n + [False]*(len(settlementStart.columns)-(i+1))*n)
+    visList.append(vis)
+    vis = []
 
 
-# Create Streamlit Plot objects - Settlement figure
-st.plotly_chart(figSettlement, use_container_width=True)
+# buttons for each group
+steps = []
+for idx, col in enumerate(settlementStart.columns):
+    steps.append(
+        dict(
+            label = col, #.split('-')[0],
+            method = "update",
+            args=[{"visible": visList[idx]}])
+    )
+
+sliders = [dict(
+    active=len(settlementStart.columns)-1,
+    currentvalue={"prefix": "Survey Date: "},
+    pad={"t": 20, "b":10},
+    len = 0.85,
+    x = 0.095,
+    steps=steps
+)]
+
+def frame_args(duration):
+    return {
+            "frame": {"duration": duration},
+            "mode": "immediate",
+            "fromcurrent": True,
+            "transition": {"duration": duration, "easing": "linear"},
+        }
+
+fig.update_layout(
+    # updatemenus = [
+    #         {
+    #             "buttons": [
+    #                 {
+    #                     "args": [None, frame_args(50)],
+    #                     "label": "&#9654;", # play symbol
+    #                     "method": "animate",
+    #                 },
+    #                 {
+    #                     "args": [[None], frame_args(0)],
+    #                     "label": "&#9724;", # pause symbol
+    #                     "method": "animate",
+    #                 },
+    #             ],
+    #             "direction": "left",
+    #             "pad": {"r": 10, "t": 20},
+    #             "type": "buttons",
+    #             "x": 0.1,
+    #             "y": -0.05,
+    #         }
+    # ],
+    sliders=sliders,
+    width = 600,
+    height = 500
+)
+
+fig.show()
 
 
-# In[ ]:
+# %%
+fig=go.Figure().set_subplots(2,1, vertical_spacing=0.05,
+                             specs=[[{"type": "polar"}], [{"type":"bar"}]])
+
+r=[3.5, 1.5, 2.5, 4.5, 4.5, 4, 3]
+theta=[65, 15, 210, 110, 312.5, 180, 270]
+width=[20,15,10,20,15,30,15]
+x= np.arange(1, 8)
+bh = [4, 6, 3, 7, 8, 5, 9]
 
 
-# Create Streamlit Plot objects - Plan Figure
-tab1, tab2 = st.tabs(["Differental Settlement [in]", "Differental Slope [in/ft]"])
-with tab1:
-    # Use the Streamlit theme.
-    # This is the default. So you can also omit the theme argument.
-    st.plotly_chart(figBeamDiff, use_container_width=True)
-with tab2:
-    # Use the native Plotly theme.
-    st.plotly_chart(figBeamSlope, use_container_width=True)
+fig.add_trace(go.Barpolar(r=r[:1], theta=theta[:1], width=width[:1], 
+                          marker_color="#ff8c00",
+                          marker_line_color="black",
+                          marker_line_width=1),1, 1)
+fig.add_trace(go.Bar(x=x[:1], y=bh[:1], marker_color="green", width=0.95), 2,1);
+
+fig.update_layout(width=600, height=500, xaxis_range=[0.5, 7.5], yaxis_range=[0, max(bh)+0.5]);
+
+frames=[go.Frame(data=[go.Barpolar(r=r[:k+1], theta=theta[:k+1], width=width[:k+1]),
+                       go.Bar(x=x[:k+1], y=bh[:k+1])],
+                 name=f"fr{k}",
+                 traces=[0,1]) for k in range(len(r))]  #r, theta, width, x, bh must have the same len=number of frames
+
+fig.update(frames=frames)
+
+def frame_args(duration):
+    return {
+            "frame": {"duration": duration},
+            "mode": "immediate",
+            "fromcurrent": True,
+            "transition": {"duration": duration, "easing": "linear"},
+        }
+
+fr_duration=50  # customize this frame duration according to your data!!!!!
+sliders = [
+            {
+                "pad": {"b": 10, "t": 50},
+                "len": 0.9,
+                "x": 0.1,
+                "y": 0,
+                "steps": [
+                    {
+                        "args": [[f.name], frame_args(fr_duration)],
+                        "label": f"fr{k+1}",
+                        "method": "animate",
+                    }
+                    for k, f in enumerate(fig.frames)
+                ],
+            }
+        ]
 
 
-# In[ ]:
+fig.update_layout(sliders=sliders,
+                  updatemenus = [
+                        {
+                        "buttons": [
+                            {
+                             "args": [None, frame_args(fr_duration)],
+                             "label": "&#9654;", # play symbol
+                             "method": "animate",
+                            },
+                            {
+                             "args": [[None], frame_args(fr_duration)],
+                             "label": "&#9724;", # pause symbol
+                             "method": "animate",
+                            }],
+                        "direction": "left",
+                        "pad": {"r": 10, "t": 70},
+                        "type": "buttons",
+                        "x": 0.1,
+                        "y": 0,
+                        }])
 
+# %%
+A = np.random.randn(30).reshape((15, 2))
+centroids = np.random.randint(10, size=10).reshape((5, 2))
+clusters = [1, 2, 3, 4, 5]
+colors = ['red', 'green', 'blue', 'yellow', 'magenta']
 
-# Create Streamlit Plot objects - 3d FIGURE
-st.plotly_chart(fig3DSettlement, use_container_width=True)
+fig = go.Figure(
+    data=[go.Scatter(x=A[:3][:,0],
+                     y=A[:3][:,1],
+                     mode='markers',
+                     name='cluster 1',
+                     marker_color=colors[0]),
+          go.Scatter(x=[centroids[0][0]],
+                     y=[centroids[0][1]],
+                     mode='markers',
+                     name='centroid of cluster 1',
+                     marker_color=colors[0],
+                     marker_symbol='x')
+         ],
+    layout=go.Layout(
+        xaxis=dict(range=[-10, 10], autorange=False),
+        yaxis=dict(range=[-10, 10], autorange=False),
+        title="Start Title",
+        updatemenus=[dict(
+            type="buttons",
+            buttons=[dict(label="Play",
+                          method="animate",
+                          args=[None]),
+                     dict(label="Pause",
+                          method="animate",
+                          args=[None,
+                               {"frame": {"duration": 0, "redraw": False},
+                                "mode": "immediate",
+                                "transition": {"duration": 0}}],
+                         )])]
+    ),
+    frames=[
+    go.Frame(
+    data=[go.Scatter(x=A[:3][:,0],
+                     y=A[:3][:,1],
+                     mode='markers',
+                     name='cluster 1',
+                     marker_color=colors[0]),
+          go.Scatter(x=[centroids[0][0]],
+                     y=[centroids[0][1]],
+                     mode='markers',
+                     name='centroid of cluster 1',
+                     marker_color=colors[0],
+                     marker_symbol='x')
+         ]),
+    go.Frame(
+        data=[
+            go.Scatter(x=A[:3][:,0],
+                       y=A[:3][:,1],
+                       mode='markers',
+                       name='cluster 2',
+                       marker_color=colors[1]),
+            go.Scatter(x=[centroids[1][0]],
+                       y=[centroids[1][1]],
+                       mode='markers',
+                       name='centroid of cluster 2',
+                       marker_color=colors[1],
+                       marker_symbol='x')
+        ]),
+    go.Frame(
+        data=[
+            go.Scatter(x=A[3:5][:,0],
+                       y=A[3:5][:,1],
+                       mode='markers',
+                       name='cluster 3',
+                       marker_color=colors[2]),
+            go.Scatter(x=[centroids[2][0]],
+                       y=[centroids[2][1]],
+                       mode='markers',
+                       name='centroid of cluster 3',
+                       marker_color=colors[2],
+                       marker_symbol='x')
+        ]),
+    go.Frame(
+        data=[
+            go.Scatter(x=A[5:8][:,0],
+                       y=A[5:8][:,1],
+                       mode='markers',
+                       name='cluster 4',
+                       marker_color=colors[3]),
+        go.Scatter(x=[centroids[3][0]],
+                   y=[centroids[3][1]],
+                   mode='markers',
+                   name='centroid of cluster 4',
+                   marker_color=colors[3],
+                   marker_symbol='x')]),
+    go.Frame(
+        data=[
+            go.Scatter(x=A[8:][:,0],
+                       y=A[8:][:,1],
+                       mode='markers',
+                       name='cluster 5',
+                       marker_color=colors[4]),
+            go.Scatter(x=[centroids[4][0]],
+                       y=[centroids[4][1]],
+                       mode='markers',
+                       name='centroid of cluster 5',
+                       marker_color=colors[4],
+                       marker_symbol='x')
+        ]),
+    ])
+            
+fig.show()
 
+# In[]
+
+import plotly.graph_objects as go
+import numpy as np
+#from plotly.offline import iplot
+def rndata():
+    return np.random.randint(1,10,10)
+
+n_frames=10
+my_colors = ["RoyalBlue", "#09ffff", "#19d3f3", "#e763fa", "#ab63fa", 
+             "#636efa", "#00cc96", "#EF553B", "#119DFF", "#0D76BF" ]    
+
+my_symbols= ['circle', 'circle-open', 'cross', 'diamond',
+            'diamond-open', 'square', 'square-open', 'x', 'circle', 'diamond']
+
+fig = go.Figure(go.Scatter3d(x=rndata(),y=rndata(),z=rndata(), name='Nodes1',  mode="lines",
+                             line_color="RoyalBlue", line_width=2
+                             ))
+fig.add_scatter3d(x=rndata(),y=rndata(),z=rndata(), 
+                  mode="markers", marker_symbol=["circle"]*10, 
+                  name='Nodes2', marker_size=6)
+
+#Store Names and their corresponding order of the 
+nameDataindexdict={}
+for dt in fig.data:
+    nameDataindexdict[dt['name']]=fig.data.index(dt)
+
+frames = []
+
+for k in range(n_frames):
+    frames.append(go.Frame(data=[go.Scatter3d(z=rndata(), line_color=my_colors[k]),
+                                 go.Scatter3d(marker_symbol=[my_symbols[k]]*10)],
+                            #traces=[0,1], #This means that the above trace updates (within go.Frame definition)  #are performed for fig.data[0], fig.data[1]
+                            traces=[nameDataindexdict['Nodes1'],nameDataindexdict['Nodes2']], #This means that the above trace updates are for traces with name ...          
+                            name=f"fr{k}"))      
+    
+
+fig.update(frames=frames)
+updatemenus = [dict(
+        buttons = [
+            dict(
+                args = [None, {"frame": {"duration": 50, "redraw": True},
+                                "fromcurrent": True}],
+                label = "Play",
+                method = "animate"
+                ),
+            dict(
+                 args = [[None], {"frame": {"duration": 0, "redraw": False},
+                                  "mode": "immediate",
+                                  "transition": {"duration": 0}}],
+                label = "Pause",
+                method = "animate"
+                )
+        ],
+        direction = "left",
+        pad = {"r": 10, "t": 87},
+        showactive = False,
+        type = "buttons",
+        x = 0.1,
+        xanchor = "right",
+        y = 0,
+        yanchor = "top"
+    )]  
+
+sliders = [dict(steps = [dict(method= 'animate',
+                              args= [[f'frame{k}'],                           
+                              dict(mode= 'immediate',
+                                   frame= dict(duration=400, redraw=True),
+                                   transition=dict(duration= 0))
+                                 ],
+                              label=f'{k+1}'
+                             ) for k in range(n_frames)], 
+                active=0,
+                transition= dict(duration= 0 ),
+                x=0, # slider starting position  
+                y=0, 
+                currentvalue=dict(font=dict(size=12), 
+                                  prefix='frame: ', 
+                                  visible=True, 
+                                  xanchor= 'center'
+                                 ),  
+                len=1.0) #slider length
+           ]
+fig.update_layout(width=1000, height=600,  
+                  
+                  updatemenus=updatemenus,
+                  sliders=sliders)
+fig.show()

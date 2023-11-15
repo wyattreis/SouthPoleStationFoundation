@@ -58,7 +58,7 @@ if st.sidebar.button('Compute Settlement'):
     fig_diff_plan = plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, beamDir, beamDiffAnno)
     
     # Differental Settlement Slope Planview
-    fig_slope_plan = plot_SlopeSttlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno)
+    fig_slope_plan = plot_SlopeSettlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno)
     
     # Create Streamlit Plot objects - Plan Figure
     tab1, tab2 = st.tabs(["Differental Settlement [in]", "Differental Slope [in/ft]"])

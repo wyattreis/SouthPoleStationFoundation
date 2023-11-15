@@ -118,7 +118,7 @@ def calc_differental_settlement(beamLength, survey_clean, beamInfo):
     return beamDiff, beamDiffplot, beamSlope, beamSlopeplot
 
 # Create dataframe for 3D plotting
-def calc_3d_dataframe(beamInfo, settlement_points):
+def calc_3d_dataframe(beamInfo, settlement_points, beamSlopeColor):
     beamStart = beamInfo[['MP_W_S', 'beamName']].set_index('MP_W_S')
     settlementStart = beamStart.join(settlement_points).set_index('beamName')
     settlementStart.columns = pd.to_datetime(settlementStart.columns).astype(str)
@@ -132,6 +132,7 @@ def calc_3d_dataframe(beamInfo, settlement_points):
     beamInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
     beamInfo3D = beamInfo3D.join(settlement3D)
     beamInfo3D = beamInfo3D[beamInfo3D.index.notnull()]
+    beamInfo3D = beamInfo3D.join(beamSlopeColor)
     return settlementStart, beamInfo3D
 
 # Annotation for plots
@@ -541,7 +542,7 @@ def plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, 
     return fig
 
 # Plot differental settlement slope in plan view
-def plot_SlopeSttlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno):
+def plot_SlopeSettlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno):
     df = beamSlopeplot
 
     #create a figure from the graph objects (not plotly express) library
@@ -882,24 +883,24 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
     )
     return fig
 
-
-
 # Create animation of the 3d plot 
-def plot_3D_settlement_animation(settlementStart, beamInfo3D):
+def plot_3D_settlement_animation(settlementStart, beamInfo3D, beamSlopeAnno):
     fig = go.Figure()
 
     for col in settlementStart.columns:
         # Plot the beam locations as lines
-        for (startX, endX, startY, endY, startZ, endZ) in zip(beamInfo3D['startX'], beamInfo3D['endX'], 
-                                                            beamInfo3D['startY'], beamInfo3D['endY'], 
-                                                            beamInfo3D['{0}_start'.format(col)], 
-                                                            beamInfo3D['{0}_end'.format(col)]):
+        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor) in zip(beamInfo3D['startX'], beamInfo3D['endX'], 
+                                                                                    beamInfo3D['startY'], beamInfo3D['endY'], 
+                                                                                    beamInfo3D['{0}_start'.format(col)], 
+                                                                                    beamInfo3D['{0}_end'.format(col)],
+                                                                                    beamInfo3D[col],beamInfo3D[col]):
             fig.add_trace(go.Scatter3d(
                 x=[startX, endX],
                 y=[startY, endY],
                 z = [startZ, endZ],
                 text = beamInfo3D['MP_W_S'],
-                #name="",
+                line_color= [startColor, endColor],
+                name="",
                 mode='lines',
                 line = dict(
                     color = 'black',
@@ -960,7 +961,7 @@ def plot_3D_settlement_animation(settlementStart, beamInfo3D):
             xaxis_title='',
             yaxis_title='',
             zaxis_title='Cumulative Settlement [ft]',
-        ),
+        )
     )
 
     # groups and trace visibilities
@@ -1025,6 +1026,7 @@ def plot_3D_settlement_animation(settlementStart, beamInfo3D):
         ],
         sliders=sliders,
         width = 1100,
-        height = 800
+        height = 800,
+        annotations = beamSlopeAnno
     )
     return fig

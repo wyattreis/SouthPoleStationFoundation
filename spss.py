@@ -49,11 +49,9 @@ if st.sidebar.button('Compute Settlement'):
     settlement, settlement_points, settlement_delta, settlement_delta_MP = calc_settlement(survey_long)
     settlementProj = calc_forecast_settlement(settlement, nsurvey, nyears)
     beamDiff, beamDiffplot, beamSlope, beamSlopeplot = calc_differental_settlement(beamLength, survey_clean, beamInfo)
-    settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points)
-    
-    # Plots 
     beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno, color_dict, maps = plot_annotations(beamInfo, beamDiff, beamSlope)
-
+    settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, beamSlopeColor)
+    
     # Differental Settlement Planview
     fig_diff_plan = plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, beamDir, beamDiffAnno)
     

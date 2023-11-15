@@ -1029,7 +1029,7 @@ def plot_3D_settlement_animation(settlementStart, beamInfo3D):
         height = 800,
         annotations = dict(text="Note: Color indicates beam slopes, using the same scale as the plan view of differental slope.",
             x=1, xref="paper", xanchor="right",
-            y=-0.25, yref="paper", yanchor="bottom",
+            y=-0.5, yref="paper", yanchor="bottom",
             align="right", 
             showarrow=False, 
             font = dict(

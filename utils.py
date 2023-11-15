@@ -884,7 +884,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
     return fig
 
 # Create animation of the 3d plot 
-def plot_3D_settlement_animation(settlementStart, beamInfo3D, beamSlopeAnno):
+def plot_3D_settlement_animation(settlementStart, beamInfo3D):
     fig = go.Figure()
 
     for col in settlementStart.columns:
@@ -1027,6 +1027,13 @@ def plot_3D_settlement_animation(settlementStart, beamInfo3D, beamSlopeAnno):
         sliders=sliders,
         width = 1100,
         height = 800,
-        annotations = beamSlopeAnno
+        annotations = dict(text="Note: Color indicates beam slopes, using the same scale as the plan view of differental slope.",
+            x=1, xref="paper", xanchor="right",
+            y=-0.25, yref="paper", yanchor="bottom",
+            align="right", 
+            showarrow=False, 
+            font = dict(
+                color = 'black')
+           )
     )
     return fig

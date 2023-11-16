@@ -757,6 +757,8 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
     #     eye=dict(x=1.5, y=1.5, z=1.5)
     # )
 
+    maxSettlement = settlementStart[settlementStart.columns[len(settlementStart.columns)-1]].max()
+    
     fig.update_layout(
         autosize=False,
         margin=dict(l=0, r=0, b=0, t=0),
@@ -767,7 +769,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
             yaxis_title='',
             yaxis= dict(range=[130,-10]),
             zaxis_title='Cumulative Settlement [ft]',
-            zaxis = dict(range = [5.5,0])
+            zaxis = dict(range = [maxSettlement,0])
         ),
         sliders=sliders,
         width = 1100,

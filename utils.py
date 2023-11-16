@@ -753,8 +753,8 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
 
     camera = dict(
         up=dict(x=0, y=0, z=1),
-        center=dict(x=200, y=60, z=0),
-        eye=dict(x=1.5, y=1.5, z=1.5)
+        center=dict(x=0, y=0, z=0),
+        eye=dict(x=0, y=5, z=3)
     )
 
     maxSettlement = settlementStart[settlementStart.columns[len(settlementStart.columns)-1]].max()

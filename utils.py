@@ -719,9 +719,10 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         ])
     )
         
-    fig.update_scenes(xaxis_autorange="reversed", 
-                    yaxis_autorange="reversed",
-                    zaxis_autorange="reversed")  
+    fig.update_scenes(zaxis_autorange="reversed")  
+
+    # xaxis_autorange="reversed", 
+    # yaxis_autorange="reversed",
 
     camera = dict(
         up=dict(x=0, y=0, z=1),
@@ -758,7 +759,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
     for idx, col in enumerate(settlementStart.columns):
         steps.append(
             dict(
-                label = col, #.split('-')[0],
+                label = col,
                 method = "update",
                 args=[{"visible": visList[idx]}])
         )

@@ -785,6 +785,6 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         width = 1100,
         height = 800,
         scene_aspectmode='manual',
-        scene_aspectmode=dict(x=3.5, y=1, z=1)
+        scene_aspectratio=dict(x=3.5, y=1, z=1)
     )
     return fig

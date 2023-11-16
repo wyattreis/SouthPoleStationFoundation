@@ -698,13 +698,13 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                 visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
                 ))
             
-            # fig.update_traces(
-            #     hovertemplate="<br>".join([
-            #     "MP: %{text}",
-            #     "Settlement [ft]: %{z}"])
-            #     )
+            fig.update_traces(
+                hovertemplate="<br>".join([
+                "MP: %{text}",
+                "Settlement [ft]: %{z}"])
+                )
         
-        # Plot the Marker Point (MP) labels in grey
+            # Plot the Marker Point (MP) labels in grey
             fig.add_trace(go.Scatter3d(
                 x=beamInfo3D['labelX'],
                 y=beamInfo3D['labelY'],

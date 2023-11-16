@@ -767,7 +767,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
             xaxis_title='',
             xaxis= dict(range=[400,0]), 
             yaxis_title='',
-            xaxis= dict(range=[120,0]),
+            yaxis= dict(range=[120,0]),
             zaxis_title='Cumulative Settlement [ft]',
             zaxis = dict(range = [5.5,0])
         ),

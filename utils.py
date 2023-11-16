@@ -783,16 +783,18 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
 
     for col in settlementStart.columns:
         # Plot the beam locations as lines
-        for (startX, endX, startY, endY, startZ, endZ) in zip(beamInfo3D['startX'], beamInfo3D['endX'], 
-                                                            beamInfo3D['startY'], beamInfo3D['endY'], 
-                                                            beamInfo3D['{0}_start'.format(col)], 
-                                                            beamInfo3D['{0}_end'.format(col)]):
+        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor) in zip(beamInfo3D['startX'], beamInfo3D['endX'], 
+                                                                                    beamInfo3D['startY'], beamInfo3D['endY'], 
+                                                                                    beamInfo3D['{0}_start'.format(col)], 
+                                                                                    beamInfo3D['{0}_end'.format(col)],
+                                                                                    beamInfo3D[col],beamInfo3D[col]):
             fig.add_trace(go.Scatter3d(
                 x=[startX, endX],
                 y=[startY, endY],
                 z = [startZ, endZ],
                 text = beamInfo3D['MP_W_S'],
-                #name="",
+                line_color= [startColor, endColor],
+                name="",
                 mode='lines',
                 line = dict(
                     color = 'black',
@@ -817,11 +819,11 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
                 visible = (col==settlementStart.columns[len(settlementStart.columns)-1])))
-            
+                          
     fig.update_traces(
         hovertemplate="<br>".join([
             "MP: %{text}",
-            "Settlement [in]: %{z}",
+            "Settlement [ft]: %{z}",
         ])
     )
         
@@ -845,7 +847,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
             xaxis_title='',
             yaxis_title='',
             zaxis_title='Cumulative Settlement [ft]',
-        ),
+        )
     )
 
     # groups and trace visibilities
@@ -864,7 +866,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
     for idx, col in enumerate(settlementStart.columns):
         steps.append(
             dict(
-                label = col,
+                label = col, #.split('-')[0],
                 method = "update",
                 args=[{"visible": visList[idx]}])
         )
@@ -872,7 +874,9 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
     sliders = [dict(
         active=len(settlementStart.columns)-1,
         currentvalue={"prefix": "Survey Date: "},
-        pad={"t": 50, "b":50},
+        pad={"t": 20, "b":10},
+        len = 0.85,
+        x = 0.095,
         steps=steps
     )]
 

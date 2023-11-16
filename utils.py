@@ -692,10 +692,11 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                     color = 'black',
                     width = 1.5,
                     dash = 'solid'),
-                #hoverinfo='skip',
+                hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
-                visible = (col==settlementStart.columns[len(settlementStart.columns)-1])))
+                #visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
+                ))
         
         # Plot the Marker Point (MP) labels in grey
             fig.add_trace(go.Scatter3d(
@@ -710,7 +711,8 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                 hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
-                visible = (col==settlementStart.columns[len(settlementStart.columns)-1])))
+                #visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
+                ))
                           
     fig.update_traces(
         hovertemplate="<br>".join([
@@ -749,9 +751,9 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         steps=steps
     )]
 
-    fig.update_scenes(xaxis_autorange="reversed", 
-                      yaxis_autorange="reversed",
-                      zaxis_autorange="reversed")  
+    # fig.update_scenes(xaxis_autorange="reversed", 
+    #                   yaxis_autorange="reversed",
+    #                   zaxis_autorange="reversed")  
 
     # camera = dict(
     #     up=dict(x=0, y=0, z=1),

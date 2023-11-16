@@ -692,7 +692,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                     color = 'black',
                     width = 1.5,
                     dash = 'solid'),
-                hoverinfo='skip',
+                #hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
                 visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
@@ -708,7 +708,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                 textfont = dict(
                     size = 10,
                     color = 'grey'),
-                hoverinfo='skip',
+                #hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
                 visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
@@ -751,18 +751,18 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         steps=steps
     )]
 
-    # camera = dict(
-    #     up=dict(x=0, y=0, z=1),
-    #     center=dict(x=0, y=0, z=0),
-    #     eye=dict(x=1.5, y=1.5, z=1.5)
-    # )
+    camera = dict(
+        up=dict(x=0, y=0, z=1),
+        center=dict(x=0, y=0, z=0),
+        eye=dict(x=1.5, y=1.5, z=1.5)
+    )
 
     maxSettlement = settlementStart[settlementStart.columns[len(settlementStart.columns)-1]].max()
     
     fig.update_layout(
         autosize=False,
         margin=dict(l=0, r=0, b=0, t=0),
-        #scene_camera=camera,
+        scene_camera=camera,
         scene=dict(
             xaxis_title='',
             xaxis= dict(range=[400,-10]), 

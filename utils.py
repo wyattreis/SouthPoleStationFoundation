@@ -692,12 +692,11 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                     color = 'black',
                     width = 1.5,
                     dash = 'solid'),
-                #hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
                 visible = (col==settlementStart.columns[len(settlementStart.columns)-1]),
                 hovertemplate="<br>".join([
-                    "MP: %{text}",
+                    "MP: %{mpLabel}",
                     "Settlement [ft]: %{z}"])
                 ))
                    

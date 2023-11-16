@@ -753,7 +753,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
 
     camera = dict(
         up=dict(x=0, y=0, z=1),
-        center=dict(x=0, y=5, z=0),
+        center=dict(x=0, y=0, z=0),
         eye=dict(x=0, y=5, z=3)
     )
 

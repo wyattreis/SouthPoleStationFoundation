@@ -131,7 +131,7 @@ def calc_3d_dataframe(beamInfo, settlement_points, beamSlopeColor):
 
     beamInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
     beamInfo3D = beamInfo3D.join(settlement3D)
-    #beamInfo3D = beamInfo3D[beamInfo3D.index.notnull()]
+    beamInfo3D = beamInfo3D[beamInfo3D.index.notnull()]
     beamInfo3D = beamInfo3D.join(beamSlopeColor)
     return settlementStart, beamInfo3D
 
@@ -757,7 +757,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
     #     eye=dict(x=1.5, y=1.5, z=1.5)
     # )
 
-    maxSettlement = settlementStart[settlementStart.columns[len(settlementStart.columns)-1]].max()
+    #maxSettlement = settlementStart[settlementStart.columns[len(settlementStart.columns)-1]].max()
     
     fig.update_layout(
         autosize=False,
@@ -769,7 +769,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
             yaxis_title='',
             yaxis= dict(range=[130,-10]),
             zaxis_title='Cumulative Settlement [ft]',
-            zaxis = dict(range = [maxSettlement,0])
+            zaxis = dict(range = [5.5,0])
         ),
         sliders=sliders,
         width = 1100,

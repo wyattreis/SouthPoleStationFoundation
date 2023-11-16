@@ -723,24 +723,11 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                       yaxis_autorange="reversed",
                       zaxis_autorange="reversed")  
 
-    camera = dict(
-        up=dict(x=0, y=0, z=1),
-        center=dict(x=0, y=0, z=0),
-        eye=dict(x=1.5, y=1.5, z=1.5)
-    )
-
-    fig.update_layout(
-        autosize=False,
-        width=800, 
-        height=450,
-        margin=dict(l=0, r=0, b=0, t=0),
-        scene_camera=camera,
-        scene=dict(
-            xaxis_title='',
-            yaxis_title='',
-            zaxis_title='Cumulative Settlement [ft]',
-        )
-    )
+    # camera = dict(
+    #     up=dict(x=0, y=0, z=1),
+    #     center=dict(x=0, y=0, z=0),
+    #     eye=dict(x=1.5, y=1.5, z=1.5)
+    # )
 
     # groups and trace visibilities
     vis = []
@@ -785,6 +772,6 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         width = 1100,
         height = 800,
         scene_aspectmode='manual',
-        scene_aspectratio=dict(x=3.5, y=1, z=1)
+        scene_aspectratio=dict(x=7, y=2, z=1)
     )
     return fig

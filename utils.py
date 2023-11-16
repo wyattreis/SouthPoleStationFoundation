@@ -751,10 +751,6 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         steps=steps
     )]
 
-    fig.update_scenes(xaxis_autorange="reversed", 
-                      yaxis_autorange="reversed",
-                      zaxis_autorange="reversed")  
-
     # camera = dict(
     #     up=dict(x=0, y=0, z=1),
     #     center=dict(x=0, y=0, z=0),

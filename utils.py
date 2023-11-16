@@ -749,9 +749,9 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         steps=steps
     )]
 
-    fig.update_scenes(xaxis_autorange="reversed", 
-                      yaxis_autorange="reversed",
-                      zaxis_autorange="reversed")  
+    # fig.update_scenes(xaxis_autorange="reversed", 
+    #                   yaxis_autorange="reversed",
+    #                   zaxis_autorange="reversed")  
 
     # camera = dict(
     #     up=dict(x=0, y=0, z=1),
@@ -765,9 +765,11 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         #scene_camera=camera,
         scene=dict(
             xaxis_title='',
+            xaxis= dict(range=[400,0]), 
             yaxis_title='',
+            xaxis= dict(range=[120,0]),
             zaxis_title='Cumulative Settlement [ft]',
-            zaxis = dict(range = [0,5.5])
+            zaxis = dict(range = [5.5,0])
         ),
         sliders=sliders,
         width = 1100,

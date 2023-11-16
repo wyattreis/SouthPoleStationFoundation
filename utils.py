@@ -773,9 +773,18 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
     )]
 
     fig.update_layout(
+        autosize=False,
+        margin=dict(l=0, r=0, b=0, t=0),
+        scene_camera=camera,
+        scene=dict(
+            xaxis_title='',
+            yaxis_title='',
+            zaxis_title='Cumulative Settlement [ft]',
+        ),
         sliders=sliders,
         width = 1100,
         height = 800,
-        scene_aspectmode='data'
+        scene_aspectmode='manual',
+        scene_aspectmode=dict(x=3.5, y=1, z=1)
     )
     return fig

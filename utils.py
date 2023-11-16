@@ -684,7 +684,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                 x=[startX, endX],
                 y=[startY, endY],
                 z = [startZ, endZ],
-                #text = beamInfo3D['MP_W_S'],
+                hovertext = beamInfo3D['MP_W_S'],
                 line_color= [startColor, endColor],
                 name="",
                 mode='lines',
@@ -692,7 +692,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                     color = 'black',
                     width = 1.5,
                     dash = 'solid'),
-                hoverinfo='skip',
+                #hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
                 visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
@@ -708,7 +708,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                 textfont = dict(
                     size = 10,
                     color = 'grey'),
-                #hoverinfo='skip',
+                hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
                 visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
@@ -716,7 +716,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                           
     fig.update_traces(
         hovertemplate="<br>".join([
-            "MP: %{text}",
+            "MP: %{hovertext}",
             "Settlement [ft]: %{z}",
         ])
     )
@@ -753,7 +753,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
 
     camera = dict(
         up=dict(x=0, y=0, z=1),
-        center=dict(x=0, y=0, z=0),
+        center=dict(x=0, y=5, z=0),
         eye=dict(x=0, y=5, z=3)
     )
 

@@ -131,7 +131,7 @@ def calc_3d_dataframe(beamInfo, settlement_points, beamSlopeColor):
 
     beamInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
     beamInfo3D = beamInfo3D.join(settlement3D)
-    beamInfo3D = beamInfo3D[beamInfo3D.index.notnull()]
+    #beamInfo3D = beamInfo3D[beamInfo3D.index.notnull()]
     beamInfo3D = beamInfo3D.join(beamSlopeColor)
     return settlementStart, beamInfo3D
 
@@ -695,7 +695,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                 hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
-                #visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
+                visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
                 ))
         
         # Plot the Marker Point (MP) labels in grey
@@ -711,7 +711,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                 hoverinfo='skip',
                 showlegend=False, 
                 #setting only the first dataframe to be visible as default
-                #visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
+                visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
                 ))
                           
     fig.update_traces(
@@ -751,9 +751,9 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         steps=steps
     )]
 
-    # fig.update_scenes(xaxis_autorange="reversed", 
-    #                   yaxis_autorange="reversed",
-    #                   zaxis_autorange="reversed")  
+    fig.update_scenes(xaxis_autorange="reversed", 
+                      yaxis_autorange="reversed",
+                      zaxis_autorange="reversed")  
 
     # camera = dict(
     #     up=dict(x=0, y=0, z=1),

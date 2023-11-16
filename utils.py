@@ -697,7 +697,7 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
                 #setting only the first dataframe to be visible as default
                 visible = (col==settlementStart.columns[len(settlementStart.columns)-1]),
                 hovertemplate="<br>".join([
-                    "MP: %{text}",
+                    #"MP: %{text}",
                     "Settlement [ft]: %{z}"])
                 ))
                    

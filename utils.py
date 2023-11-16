@@ -675,16 +675,16 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
 
     for col in settlementStart.columns:
         # Plot the beam locations as lines
-        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor) in zip(beamInfo3D['startX'], beamInfo3D['endX'], 
+        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor, mpLabel) in zip(beamInfo3D['startX'], beamInfo3D['endX'], 
                                                                                     beamInfo3D['startY'], beamInfo3D['endY'], 
                                                                                     beamInfo3D['{0}_start'.format(col)], 
                                                                                     beamInfo3D['{0}_end'.format(col)],
-                                                                                    beamInfo3D[col],beamInfo3D[col]):
+                                                                                    beamInfo3D[col],beamInfo3D[col], beamInfo3D['MP_W_S']):
             fig.add_trace(go.Scatter3d(
                 x=[startX, endX],
                 y=[startY, endY],
                 z = [startZ, endZ],
-                text = beamInfo3D['MP_W_S'],
+                text = mpLabel,
                 line_color= [startColor, endColor],
                 name="",
                 mode='lines',

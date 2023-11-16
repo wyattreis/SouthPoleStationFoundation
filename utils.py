@@ -719,16 +719,6 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         ])
     )
         
-    fig.update_scenes(xaxis_autorange="reversed", 
-                      yaxis_autorange="reversed",
-                      zaxis_autorange="reversed")  
-
-    # camera = dict(
-    #     up=dict(x=0, y=0, z=1),
-    #     center=dict(x=0, y=0, z=0),
-    #     eye=dict(x=1.5, y=1.5, z=1.5)
-    # )
-
     # groups and trace visibilities
     vis = []
     visList = []
@@ -759,10 +749,20 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         steps=steps
     )]
 
+    fig.update_scenes(xaxis_autorange="reversed", 
+                      yaxis_autorange="reversed",
+                      zaxis_autorange="reversed")  
+
+    # camera = dict(
+    #     up=dict(x=0, y=0, z=1),
+    #     center=dict(x=0, y=0, z=0),
+    #     eye=dict(x=1.5, y=1.5, z=1.5)
+    # )
+
     fig.update_layout(
         autosize=False,
         margin=dict(l=0, r=0, b=0, t=0),
-        scene_camera=camera,
+        #scene_camera=camera,
         scene=dict(
             xaxis_title='',
             yaxis_title='',

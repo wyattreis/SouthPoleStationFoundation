@@ -741,8 +741,8 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         active=len(settlementStart.columns)-1,
         currentvalue={"prefix": "Survey Date: "},
         pad={"t": 20, "b":10},
-        len = 0.85,
-        x = 0.095,
+        len = 0.945,
+        x = 0.0,
         steps=steps
     )]
 

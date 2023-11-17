@@ -873,7 +873,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
             showactive=False,
             buttons=[play_button, pause_button],
             x=0,  # x and y determine the position of the buttons
-            y=0,
+            y=-0.15,
             xanchor="right",
             yanchor="top",
             direction="left"

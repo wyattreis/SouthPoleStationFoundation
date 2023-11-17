@@ -822,12 +822,11 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
             hoverinfo='skip', 
             showlegend=False
         )
-        
         frame_traces.append(label_trace)
  
         # Ensure the frame has the same number of traces as the figure
         while len(frame_traces) < max_traces_per_frame:
-            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode='lines', textfont=[]))
+            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode='lines', textfont=dict(size=10, color='grey')))
  
         # Add the frame
         frames.append(go.Frame(data=frame_traces, name=col))

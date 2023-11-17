@@ -773,3 +773,130 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         scene_aspectratio=dict(x=7, y=2, z=1)
     )
     return fig
+
+
+def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
+    # Calculate the maximum number of traces required for any frame
+    max_traces_per_frame = len(beamInfo3D['startX']) + 1  # +1 for the label trace
+ 
+    # Initialize the figure with the maximum number of empty traces
+    fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], mode='lines') for _ in range(max_traces_per_frame)])
+ 
+    # Creating frames
+    frames = []
+    for col in settlementStart.columns:
+        frame_traces = []  # List to hold all traces for this frame
+ 
+        # Create a separate trace for each line segment
+        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor) in zip(beamInfo3D['startX'], beamInfo3D['endX'], 
+                                                                                    beamInfo3D['startY'], beamInfo3D['endY'], 
+                                                                                    beamInfo3D['{0}_start'.format(col)], 
+                                                                                    beamInfo3D['{0}_end'.format(col)],
+                                                                                    beamInfo3D[col],beamInfo3D[col]):
+ 
+            line_trace = go.Scatter3d(
+                x=[startX, endX],
+                y=[startY, endY],
+                z = [startZ, endZ],
+                text = beamInfo3D['MP_W_S'],
+                line_color= [startColor, endColor],
+                name="",
+                mode='lines',
+                line = dict(
+                    color = 'black',
+                    width = 1.5,
+                    dash = 'solid'),
+                #hoverinfo='skip',
+                showlegend=False, 
+            )
+            frame_traces.append(line_trace)
+ 
+        # Create the label trace for this frame
+        label_trace = go.Scatter3d(
+            x=beamInfo3D['labelX'], 
+            y=beamInfo3D['labelY'], 
+            z=beamInfo3D[f'{col}_start'], 
+            text=beamInfo3D['MP_W_S'], 
+            mode='text', 
+            textfont=dict(size=10, color='grey'), 
+            hoverinfo='skip', 
+            showlegend=False
+        )
+        frame_traces.append(label_trace)
+ 
+        # Ensure the frame has the same number of traces as the figure
+        while len(frame_traces) < max_traces_per_frame:
+            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode='lines'))
+ 
+        # Add the frame
+        frames.append(go.Frame(data=frame_traces, name=col))
+ 
+    fig.frames = frames
+ 
+    fig.update_traces(
+        hovertemplate="<br>".join([
+            #"MP: %{text}",
+            "Settlement [ft]: %{z}",
+        ])
+    )
+ 
+    # Slider
+    sliders = [{"steps": [{"args": [[f.name], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}],
+                           "label": col, "method": "animate"} for col, f in zip(settlementStart.columns, fig.frames)]}]
+ 
+    camera = dict(
+        up=dict(x=0, y=0, z=1),
+        center=dict(x=0, y=0, z=0),
+        eye=dict(x=0, y=4, z=3)
+    )
+ 
+   # Define the play and pause buttons
+    play_button = dict(
+        label="Play",
+        method="animate",
+        args=[None, {"frame": {"duration": 100, "redraw": True}, "fromcurrent": True, "transition": {"duration": 100, "easing": "quadratic-in-out"}}]
+    )
+ 
+    pause_button = dict(
+        label="Pause",
+        method="animate",
+        args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate", "transition": {"duration": 0}}]
+    )
+ 
+    # Update layout with play and pause buttons
+    fig.update_layout(
+        updatemenus=[dict(
+            type="buttons",
+            showactive=False,
+            buttons=[play_button, pause_button],
+            x=0.1,  # x and y determine the position of the buttons
+            y=0,
+            xanchor="right",
+            yanchor="top"
+        )]
+    )
+ 
+    maxSettlement = settlementStart[settlementStart.columns[len(settlementStart.columns)-1]].max()
+ 
+    # Update layout for slider and set consistent y-axis range
+    fig.update_layout(autosize=False,
+        margin=dict(l=0, r=0, b=0, t=0),
+        scene_camera=camera,
+        scene=dict(
+            xaxis_title='',
+            xaxis= dict(range=[400,-10]), 
+            yaxis_title='',
+            yaxis= dict(range=[130,-10]),
+            zaxis_title='Cumulative Settlement [ft]',
+            zaxis = dict(range = [maxSettlement,0])
+        ),
+        sliders=sliders,
+        width = 1100,
+        height = 500,
+        scene_aspectmode='manual',
+        scene_aspectratio=dict(x=7, y=2, z=1))
+ 
+    # Set initial view
+    fig.update_traces(x=frames[0].data[0].x, y=frames[0].data[0].y, z=frames[0].data[0].z)
+ 
+    return fig

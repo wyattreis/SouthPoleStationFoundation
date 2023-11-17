@@ -845,7 +845,8 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
     sliders = [{"steps": [{"args": [[f.name], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}],
                            "label": col, "method": "animate"} for col, f in zip(settlementStart.columns, fig.frames)],
                 "len": 0.95,
-                "x": 0.035}]
+                "x": 0.035,
+                "y": 0}]
  
     camera = dict(
         up=dict(x=0, y=0, z=1),
@@ -873,7 +874,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
             showactive=False,
             buttons=[play_button, pause_button],
             x=0,  # x and y determine the position of the buttons
-            y=-0.05,
+            y=-0.06,
             xanchor="right",
             yanchor="top",
             direction="left"

@@ -809,6 +809,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
                 #hoverinfo='skip',
                 showlegend=False, 
             )
+            
             frame_traces.append(line_trace)
  
             # Create the label trace for this frame
@@ -818,12 +819,13 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
                 z=beamInfo3D[f'{col}_start'], 
                 text=beamInfo3D['MP_W_S'], 
                 mode='text', 
-                textfont=dict(size=10, color='grey'), 
+                textfont=dict(size=10,
+                              color='grey'), 
                 hoverinfo='skip', 
                 showlegend=False
             )
-        
-        frame_traces.append(label_trace)
+            
+            frame_traces.append(label_trace)
  
         # Ensure the frame has the same number of traces as the figure
         while len(frame_traces) < max_traces_per_frame:
@@ -844,8 +846,8 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
     # Slider
     sliders = [{"steps": [{"args": [[f.name], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}],
                            "label": col, "method": "animate"} for col, f in zip(settlementStart.columns, fig.frames)],
-                "len": 0.85,
-                "x": 0.095}]
+                "len": 0.95,
+                "x": 0.015}]
  
     camera = dict(
         up=dict(x=0, y=0, z=1),
@@ -873,7 +875,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
             showactive=False,
             buttons=[play_button, pause_button],
             x=0,  # x and y determine the position of the buttons
-            y=0,
+            y=-0.25,
             xanchor="right",
             yanchor="top",
             direction="left"

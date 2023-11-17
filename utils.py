@@ -811,17 +811,17 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
             )
             frame_traces.append(line_trace)
  
-            # Create the label trace for this frame
-            label_trace = go.Scatter3d(
-                x=beamInfo3D['labelX'], 
-                y=beamInfo3D['labelY'], 
-                z=beamInfo3D[f'{col}_start'], 
-                text=beamInfo3D['MP_W_S'], 
-                mode='text', 
-                textfont=dict(size=10, color='grey'), 
-                hoverinfo='skip', 
-                showlegend=False
-            )
+        # Create the label trace for this frame
+        label_trace = go.Scatter3d(
+            x=beamInfo3D['labelX'], 
+            y=beamInfo3D['labelY'], 
+            z=beamInfo3D[f'{col}_start'], 
+            text=beamInfo3D['MP_W_S'], 
+            mode='text', 
+            textfont=dict(size=10, color='grey'), 
+            hoverinfo='skip', 
+            showlegend=False
+        )
         
         frame_traces.append(label_trace)
  

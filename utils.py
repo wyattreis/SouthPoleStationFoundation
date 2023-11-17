@@ -827,7 +827,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
  
         # Ensure the frame has the same number of traces as the figure
         while len(frame_traces) < max_traces_per_frame:
-            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode='lines'))
+            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode='lines', textfont=[]))
  
         # Add the frame
         frames.append(go.Frame(data=frame_traces, name=col))
@@ -846,7 +846,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
                            "label": col, "method": "animate"} for col, f in zip(settlementStart.columns, fig.frames)],
                 "len": 0.95,
                 "x": 0.035,
-                "y": 0.05}]
+                "y": 0}]
  
     camera = dict(
         up=dict(x=0, y=0, z=1),

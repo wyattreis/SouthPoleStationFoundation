@@ -811,17 +811,18 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
             )
             frame_traces.append(line_trace)
  
-        # Create the label trace for this frame
-        label_trace = go.Scatter3d(
-            x=beamInfo3D['labelX'], 
-            y=beamInfo3D['labelY'], 
-            z=beamInfo3D[f'{col}_start'], 
-            text=beamInfo3D['MP_W_S'], 
-            mode='text', 
-            textfont=dict(size=10, color='grey'), 
-            hoverinfo='skip', 
-            showlegend=False
-        )
+            # Create the label trace for this frame
+            label_trace = go.Scatter3d(
+                x=beamInfo3D['labelX'], 
+                y=beamInfo3D['labelY'], 
+                z=beamInfo3D[f'{col}_start'], 
+                text=beamInfo3D['MP_W_S'], 
+                mode='text', 
+                textfont=dict(size=10, color='grey'), 
+                hoverinfo='skip', 
+                showlegend=False
+            )
+        
         frame_traces.append(label_trace)
  
         # Ensure the frame has the same number of traces as the figure
@@ -856,7 +857,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
     play_button = dict(
         label="&#9654;",
         method="animate",
-        args=[None, {"frame": {"duration": 100, "redraw": True}, "fromcurrent": True, "transition": {"duration": 200, "easing": "quadratic-in-out"}}]
+        args=[None, {"frame": {"duration": 200, "redraw": True}, "fromcurrent": True, "transition": {"duration": 200, "easing": "quadratic-in-out"}}]
     )
  
     pause_button = dict(
@@ -895,7 +896,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
         ),
         sliders=sliders,
         width = 1100,
-        height = 500,
+        height = 600,
         scene_aspectmode='manual',
         scene_aspectratio=dict(x=7, y=2, z=1))
  

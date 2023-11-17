@@ -856,7 +856,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
     play_button = dict(
         label="&#9654;",
         method="animate",
-        args=[None, {"frame": {"duration": 100, "redraw": True}, "fromcurrent": True, "transition": {"duration": 100, "easing": "quadratic-in-out"}}]
+        args=[None, {"frame": {"duration": 100, "redraw": True}, "fromcurrent": True, "transition": {"duration": 200, "easing": "quadratic-in-out"}}]
     )
  
     pause_button = dict(
@@ -874,7 +874,8 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
             x=0,  # x and y determine the position of the buttons
             y=0,
             xanchor="right",
-            yanchor="top"
+            yanchor="top",
+            direction="left"
         )]
     )
  

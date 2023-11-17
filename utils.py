@@ -780,7 +780,11 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
     max_traces_per_frame = len(beamInfo3D['startX']) + 1  # +1 for the label trace
  
     # Initialize the figure with the maximum number of empty traces
-    fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], mode='lines') for _ in range(max_traces_per_frame)])
+    fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], 
+                                       mode='lines', 
+                                       showlegend=False,
+                                       textfont=dict(size=10,
+                                                     color='grey')) for _ in range(max_traces_per_frame)])
  
     # Creating frames
     frames = []
@@ -875,7 +879,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
             showactive=False,
             buttons=[play_button, pause_button],
             x=0,  # x and y determine the position of the buttons
-            y=-0.25,
+            y=-0.1,
             xanchor="right",
             yanchor="top",
             direction="left"

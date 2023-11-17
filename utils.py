@@ -807,9 +807,12 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
                     width = 1.5,
                     dash = 'solid'),
                 #hoverinfo='skip',
-                showlegend=False, 
+                showlegend=False,
+                textfont=dict(size=10, color='grey') 
             )
             frame_traces.append(line_trace)
+            
+            print(f"Line Trace Font Size: {line_trace['textfont']['size']}")
  
         # Create the label trace for this frame
         label_trace = go.Scatter3d(
@@ -823,10 +826,14 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
             showlegend=False
         )
         frame_traces.append(label_trace)
+
+        print(f"Label Trace Font Size: {label_trace['textfont']['size']}")
  
         # Ensure the frame has the same number of traces as the figure
         while len(frame_traces) < max_traces_per_frame:
             frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode=[], textfont=dict(size=10, color='grey')))
+
+            print(f"Empty Trace Font Size: {frame_traces[-1]['textfont']['size']}")
  
         # Add the frame
         frames.append(go.Frame(data=frame_traces, name=col))
@@ -898,7 +905,8 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
         width = 1100,
         height = 600,
         scene_aspectmode='manual',
-        scene_aspectratio=dict(x=7, y=2, z=1))
+        scene_aspectratio=dict(x=7, y=2, z=1),
+        uniformtext_minsize=10)
  
     # Set initial view
     fig.update_traces(x=frames[0].data[0].x, y=frames[0].data[0].y, z=frames[0].data[0].z)

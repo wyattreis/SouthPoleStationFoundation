@@ -85,7 +85,7 @@ if st.sidebar.button('Compute Settlement'):
         st.plotly_chart(fig_delta, use_container_width=True, height=600)
 
     # Differental Settlement 3D
-    left_co, cent_co,last_co = st.columns([0.05, 0.9, 0.05])
+    left_co, cent_co,last_co = st.columns([0.025, 0.95, 0.025])
     with cent_co:
         fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D)
         st.plotly_chart(fig_3d_slider, width = 1100, height = 800)

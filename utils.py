@@ -782,9 +782,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
     # Initialize the figure with the maximum number of empty traces
     fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], 
                                        mode='lines', 
-                                       showlegend=False,
-                                       textfont=dict(size=10,
-                                                     color='grey')) for _ in range(max_traces_per_frame)])
+                                       showlegend=False) for _ in range(max_traces_per_frame)])
  
     # Creating frames
     frames = []

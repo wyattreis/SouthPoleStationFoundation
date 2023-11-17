@@ -846,7 +846,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
                            "label": col, "method": "animate"} for col, f in zip(settlementStart.columns, fig.frames)],
                 "len": 0.95,
                 "x": 0.035,
-                "y": 0}]
+                "y": 0.05}]
  
     camera = dict(
         up=dict(x=0, y=0, z=1),

@@ -1646,11 +1646,11 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
                 mode='lines',
                 line = dict(
                     color = 'black',
-                    width = 1.5,
+                    width = 3,
                     dash = 'solid'),
                 #hoverinfo='skip',
                 showlegend=False,
-                textfont=dict(size=10, color='grey') 
+                textfont=dict(size=12, color='grey') 
             )
             frame_traces.append(line_trace)
 
@@ -1661,7 +1661,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
             z=beamInfo3D[f'{col}_start'], 
             text=beamInfo3D['MP_W_S'], 
             mode='text', 
-            textfont=dict(size=10, color='grey'), 
+            textfont=dict(size=12, color='grey'), 
             hoverinfo='skip', 
             showlegend=False
         )

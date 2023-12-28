@@ -338,7 +338,7 @@ def plot_annotations(beamInfo, beamDiff, beamSlope, floorDiff, floorDiffplot, fl
                  color = 'red')),
        dict(text="Note: Arrows point in the direction of lower elevation.",
             x=1, xref="paper", xanchor="right",
-            y=-0.1, yref="paper", yanchor="bottom",
+            y=-0.2, yref="paper", yanchor="bottom",
             align="right", 
             showarrow=False, 
             font = dict(
@@ -379,9 +379,9 @@ def plot_annotations(beamInfo, beamDiff, beamSlope, floorDiff, floorDiffplot, fl
             font = dict(
                 color = 'red')
            ),
-       dict(text="Note: Arrows point in the direction of lower elevation.",
+       dict(text="Note: Arrows point in the direction of lower elevation. Slopes are rounded, arrows show difference in elevation.",
             x=1, xref="paper", xanchor="right",
-            y=-0.1, yref="paper", yanchor="bottom",
+            y=-0.2, yref="paper", yanchor="bottom",
             align="right", 
             showarrow=False, 
             font = dict(
@@ -576,7 +576,7 @@ def plot_settlementRate(settlement_rate, color_dict, maps):
             ))
 
     fig.update_layout(xaxis_title="Survey Date",
-                    yaxis_title="Settlement [in per year]")
+                    yaxis_title="Settlement [in/year]")
 
     # groups and trace visibilities
     group = []
@@ -878,6 +878,7 @@ def plot_SlopeSettlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbo
     fig.update_yaxes(range=[-15, 140])
     return fig
 
+# Plot the lug elevations
 def plot_lugElev_plan(lugElevPlot, beamInfo):
     df = lugElevPlot
 
@@ -931,7 +932,7 @@ def plot_lugElev_plan(lugElevPlot, beamInfo):
             x=df['mpX'],
             y=df['mpY'],
             text=df.index,
-            # name="",
+            name="",
             marker=dict(
                 color = df[column].values,
                 colorscale=custom_colors,
@@ -1052,7 +1053,7 @@ def plot_lugFloorHeight_plan(lugFloorPlot, beamInfo):
             x=df['mpX'],
             y=df['mpY'],
             text=df.index,
-            # name="",
+            name="",
             marker=dict(
                 color = df[column].values,
                 colorscale=custom_colors,

@@ -1718,7 +1718,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
             direction="left"
         )],
         autosize=False,
-        margin=dict(l=0, r=0, b=0, t=0),
+        margin=dict(l=0, r=0, b=10, t=0),
         scene_camera=camera,
         scene=dict(
             xaxis_title='',

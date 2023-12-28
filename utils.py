@@ -1574,7 +1574,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
                 mode='lines',
                 line = dict(
                     color = 'black',
-                    width = 1.5,
+                    width = 2,
                     dash = 'solid'),
                 #hoverinfo='skip',
                 showlegend=False,

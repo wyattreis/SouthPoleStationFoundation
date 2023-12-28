@@ -35,13 +35,21 @@ def read_survey(surveyfile):
     survey_long = pd.DataFrame.transpose(survey_clean)
     return survey_clean, survey_long
 
-# import beam information and label location
+# import lug to truss measurements
+def read_trussHeight(trussfile):
+    truss = pd.read_csv(trussfile, skiprows=[1], nrows=36)
+    # Clean up the imported truss to survey point file 
+    truss_clean = truss.rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
+    truss_clean.columns = pd.to_datetime(truss_clean.columns).astype(str)
+    return truss_clean
 
+# import beam information and label location
 def read_beamInfo():
     beamfile = 'https://raw.githubusercontent.com/wyattreis/SouthPoleStationFoundation/main/SP_BeamArrowLabels.csv'
     beamInfo = pd.read_csv(beamfile)
     beamLength = beamInfo[['MP_W_S', 'MP_E_N', 'beamName', 'beamLength']].dropna()
-    return beamInfo, beamLength
+    MPlocations = beamInfo[['MP_W_S', 'mpX', 'mpY']].rename(columns={"MP_W_S":"MONITOR_POINT"}).dropna().set_index('MONITOR_POINT')
+    return beamInfo, beamLength, MPlocations
 
 # Calculate the cumulative settlement in feet for each column by survey data
 def calc_settlement(survey_long):
@@ -56,7 +64,13 @@ def calc_settlement(survey_long):
     # Calculate the change in settlement in inches for each monitoring point - skip 2010/11/02 surveys, like in excel workbook
     settlement_delta = settlement.drop(['2010-11-02', '2010-11-03'], axis = 0).diff().mul(12)
     settlement_delta_MP = pd.DataFrame.transpose(settlement_delta)
-    return settlement, settlement_points, settlement_delta, settlement_delta_MP
+
+    # Calculate the annual settlement rate for each column 
+    diffDays = pd.DataFrame(index=settlement_delta.index)
+    diffDays["diffDays"] = settlement_delta.index.to_series().diff().dt.days
+
+    settlement_rate = settlement_delta.iloc[:,:].div(diffDays.diffDays, axis=0).mul(365)
+    return settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate
 
 # Cumulative Settlement Forecasting
 def calc_forecast_settlement(settlement, nsurvey, nyears):
@@ -115,7 +129,34 @@ def calc_differental_settlement(beamLength, survey_clean, beamInfo):
     beamSlope.iloc[:,1:] = beamSlope.iloc[:,1:].div(beamSlope.beamLength, axis=0)
     beamSlopeplot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['beamName']).join(beamSlope)
     beamSlope = beamSlopeplot.drop(columns=['beamX', 'beamY', 'beamLength'])
-    return beamDiff, beamDiffplot, beamSlope, beamSlopeplot
+    return beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamLength_long, beamLength_sort
+
+# Create dataframes for planview plotting 
+# (lug and floor elevations, lug to truss measurement, differential settlement)
+def calc_plan_dataframe (survey_clean, truss_clean, MPlocations, beamLength_long, beamLength_sort, beamLength, beamInfo):
+    # Lug elevation for each survey date
+    lugElevPlot = MPlocations.join(survey_clean)
+
+    # Lug to truss height for each survey date (shim stack)
+    lugFloorPlot = MPlocations.join(truss_clean).dropna(axis=1, how='all')
+
+    # Calculate floor elevation for each survey date
+    floorElev = survey_clean.add(truss_clean)
+    floorElev_clean = floorElev.dropna(axis=1, how='all')
+    floorElevPlot = MPlocations.join(floorElev_clean)
+
+    # Calculate the elevation difference of the floor at each column
+    floorSettlement = beamLength_long.join(floorElev_clean)
+    floorDiff = floorSettlement.set_index(['beamName']).sort_values(by=['beamName', 'beamEnd']).drop(columns=['beamEnd', 'beamLength']).groupby(['beamName']).diff().mul(12)
+    floorDiff = floorDiff[~floorDiff.index.duplicated(keep='last')]
+    floorDiff.columns = pd.to_datetime(floorDiff.columns).astype(str)
+    floorDiffplot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['beamName']).join(floorDiff)
+
+    # Calculate the floor slope between columns 
+    floorSlope = beamLength_sort.join(floorDiff)
+    floorSlope.iloc[:,1:] = floorSlope.iloc[:,1:].div(floorSlope.beamLength, axis=0)
+    floorSlopeplot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['beamName']).join(floorSlope)
+    return lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot
 
 # Create dataframe for 3D plotting
 def calc_3d_dataframe(beamInfo, settlement_points, beamSlopeColor):
@@ -136,7 +177,9 @@ def calc_3d_dataframe(beamInfo, settlement_points, beamSlopeColor):
     return settlementStart, beamInfo3D
 
 # Annotation for plots
-def plot_annotations(beamInfo, beamDiff, beamSlope):
+def plot_annotations(beamInfo, beamDiff, beamSlope, floorDiff, floorDiffplot, floorSlope, floorSlopeplot):
+    #---------BEAM ANNOTATIONS--------------------------------
+    # Calculate the direction of arrow of each beam
     beamDirLabels = beamInfo[['beamName','beamDir']].set_index(['beamName'])
     beamDir = pd.DataFrame(np.where(beamDiff >= 0, 0, 180), index = beamDiff.index, columns = beamDiff.columns)
     beamDir = beamDirLabels.join(beamDir).dropna()
@@ -152,21 +195,50 @@ def plot_annotations(beamInfo, beamDiff, beamSlope):
     # Create dataframe for conditional text color for differental settlement values
     conditions = [abs(beamDiff)>0, abs(beamDiff)==0]
     choices = ['triangle-right', 'circle-open']
-
     beamSymbol = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = beamDiff.index, columns = beamDiff.columns).replace('nan','x')
 
     # Create dataframe for conditional text color for differental settlement values
     conditions = [abs(beamDiff)<1.5, (abs(beamDiff)>=1.5) & (abs(beamDiff)<2), abs(beamDiff)>=2]
     choices = ['black', 'orange', 'red']
-
     beamDiffColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = beamDiff.index, columns = beamDiff.columns).replace('nan','blue')
 
     # Create dataframe for conditional text color for differental settlement slope values
     conditions = [abs(beamSlope)<(1/32), (abs(beamSlope)>=(1/32)) & (abs(beamSlope)<(1/16)), (abs(beamSlope)>=(1/16)) & (abs(beamSlope)<(1/8)), abs(beamDiff)>=(1/8)]
     choices = ['black','gold', 'orange', 'red']
-
     beamSlopeColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = beamDiff.index, columns = beamDiff.columns).replace('nan','blue')
     
+    #-----------FLOOR ANNOTATIONS------------------------------
+    # Calculate the direction of arrow of the floor
+    floorDir = pd.DataFrame(np.where(floorDiff >= 0, 0, 180), index = floorDiff.index, columns = floorDiff.columns)
+    floorDir = beamDirLabels.join(floorDir).dropna()
+
+    # Add 90 degrees to the vertical columns, leave horizontal columns as is - for the floor
+    cols = floorDir.columns[1:]
+    for col in cols:
+        floorDir.loc[floorDir['beamDir'] != 'h', col] -= 90
+        
+    floorDir = floorDir.drop(columns=['beamDir'])
+    floorDir.columns = pd.to_datetime(floorDir.columns).astype(str)
+
+    # Create dataframe for conditional marker symbol for floor differental settlement
+    conditions = [abs(floorDiff.round(2))>0, abs(floorDiff.round(2))==0]
+    choices = ['triangle-right','circle-open']
+    floorSymbol = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = floorDiff.index, columns = floorDiff.columns).replace('nan','x')
+    floorSymbolplot = beamInfo[['beamName', 'arrowX', 'arrowY']].dropna().set_index(['beamName']).join(floorSymbol)
+
+    # Create dataframe for conditional text color for floor differental settlement values
+    conditions = [abs(floorDiff)<1.5, (abs(floorDiff)>=1.5) & (abs(floorDiff)<2), abs(floorDiff)>=2]
+    choices = ['black', 'orange', 'red']
+    floorDiffColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = floorDiff.index, columns = floorDiff.columns).replace('nan','blue')
+    floorDiffColorplot = floorDiffplot.join(floorDiffColor, rsuffix='_color')
+
+    # Create dataframe for conditional text color for differental settlement slope values
+    conditions = [abs(floorSlope)<(1/32), ((abs(floorSlope)>=(1/32)) & (abs(floorSlope)<(1/16))), ((abs(floorSlope)>=(1/16)) & (abs(floorSlope)<(1/8))), abs(floorSlope)>=(1/8)]
+    choices = ['black','gold', 'orange', 'red']
+    floorSlopeColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = floorSlope.index, columns = floorSlope.columns).replace('nan','blue')
+    floorSlopeColorplot = floorSlopeplot.join(floorSlopeColor, rsuffix='_color')
+    
+    #----------PLOT NOTES AND ANNOTATIONS-----------------------
     beamDiffAnno = list([
         dict(text="Differental Settlement less than 1.5 inches",
              x=1, xref="paper", xanchor="right",
@@ -241,6 +313,82 @@ def plot_annotations(beamInfo, beamDiff, beamSlope):
                 color = 'black')
            )
    ])
+    
+    diffAnno = list([
+        dict(text="Differental Floor Elevation less than 1.5 inches",
+             x=1, xref="paper", xanchor="right",
+             y=1.09, yref="paper", yanchor="bottom",
+             align="right", 
+             showarrow=False, 
+             font = dict(
+                 color = 'black')),
+        dict(text="Differental Floor Elevation between 1.5 and 2.0 inches",
+             x=1, xref="paper", xanchor="right",
+             y=1.05, yref="paper", yanchor="bottom",
+             align="right", 
+             showarrow=False, 
+             font = dict(
+                 color = 'orange')),
+        dict(text="Differental Floor Elevation greater than 2.0 inches",
+             x=1, xref="paper", xanchor="right",
+             y=1.01, yref="paper", yanchor="bottom",
+             align="right", 
+             showarrow=False, 
+             font = dict(
+                 color = 'red')),
+       dict(text="Note: Arrows point in the direction of lower elevation.",
+            x=1, xref="paper", xanchor="right",
+            y=-0.1, yref="paper", yanchor="bottom",
+            align="right", 
+            showarrow=False, 
+            font = dict(
+                color = 'black')
+           )
+    ])
+
+    slopeAnno = list([
+       dict(text="Differental Floor Slope less than 1/32 inch per foot",
+            x=1, xref="paper", xanchor="right",
+            y=1.13, yref="paper", yanchor="bottom",
+            align="right",
+            showarrow=False, 
+            font = dict(
+                color = 'black')
+           ),
+       dict(text="Differental Floor Slope between 1/32 and 1/16 inch per foot",
+            x=1, xref="paper", xanchor="right",
+            y=1.09, yref="paper", yanchor="bottom",
+            align="right", 
+            showarrow=False,
+            font = dict(
+                color = 'gold')
+           ),
+       dict(text="Differental Floor Slope between 1/16 and 1/8 inch per foot", 
+            x=1, xref="paper", xanchor="right",
+            y=1.05, yref="paper", yanchor="bottom",
+            align="right", 
+            showarrow=False, 
+            font = dict(
+                color = 'orange')
+           ),
+       dict(text="Differental Floor Slope greater than 1/8 inch per foot",
+            x=1, xref="paper", xanchor="right",
+            y=1.01, yref="paper", yanchor="bottom",
+            align="right", 
+            showarrow=False, 
+            font = dict(
+                color = 'red')
+           ),
+       dict(text="Note: Arrows point in the direction of lower elevation.",
+            x=1, xref="paper", xanchor="right",
+            y=-0.1, yref="paper", yanchor="bottom",
+            align="right", 
+            showarrow=False, 
+            font = dict(
+                color = 'black')
+           )
+   ])
+
     # column: color - assign each monitor point a specifc color
     color_dict = {
     'A1-1': '#1b9e77', 'A1-2': '#d95f02', 'A1-3': '#7570b3', 'A1-4': '#e7298a',
@@ -263,7 +411,7 @@ def plot_annotations(beamInfo, beamDiff, beamSlope):
         'B3':['B3-1', 'B3-2', 'B3-3', 'B3-4'],
         'B4':['B4-1', 'B4-2', 'B4-3', 'B4-4']}
     
-    return beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno, color_dict, maps
+    return beamDir, beamSymbol, beamDiffColor, beamSlopeColor, floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot, beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, color_dict, maps
 
 # Plot Cumulative Settlement
 def plot_cumulative_settlement(settlement, settlementProj, color_dict, maps):
@@ -409,6 +557,67 @@ def plot_delta_settlement(settlement_delta, color_dict, maps):
                 yanchor="bottom")
         ],
         height = 600
+    )
+    return fig
+
+# Plot settlement rate between each survey
+def plot_settlementRate(settlement_rate, color_dict, maps):
+    df = settlement_rate
+
+    fig = go.Figure()
+
+    for column in df:
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df[column],
+                name= column,
+                mode = 'lines+markers',
+                marker_color = color_dict[column]
+            ))
+
+    fig.update_layout(xaxis_title="Survey Date",
+                    yaxis_title="Settlement [in per year]")
+
+    # groups and trace visibilities
+    group = []
+    vis = []
+    visList = []
+    for m in maps.keys():
+        for col in df.columns:
+            if col in maps[m]:
+                vis.append(True)
+            else:
+                vis.append(False)
+        group.append(m)
+        visList.append(vis)
+        vis = []
+
+    # buttons for each group
+    buttons = []
+    for i, g in enumerate(group):
+        button =  dict(label=g,
+                    method = 'restyle',
+                        args = ['visible',visList[i]])
+        buttons.append(button)
+
+    buttons = [{'label': 'All Points',
+                    'method': 'restyle',
+                    'args': ['visible', [True, True, True, True, True, True]]}] + buttons
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
     )
     return fig
 
@@ -669,6 +878,567 @@ def plot_SlopeSettlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbo
     fig.update_yaxes(range=[-15, 140])
     return fig
 
+def plot_lugElev_plan(lugElevPlot, beamInfo):
+    df = lugElevPlot
+
+    #create a figure from the graph objects (not plotly express) library
+    fig = go.Figure()
+
+    buttons = []
+    dates = []
+    i = 0
+
+    # Plot the beam locations as lines
+    for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], beamInfo['startY'], beamInfo['endY']):
+        fig.add_trace(go.Scatter(
+            x=[startX, endX],
+            y=[startY, endY],
+            mode='lines',
+            line = dict(
+                color = 'black',
+                width = 1.5,
+                dash = 'solid'),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+
+    # Plot the Marker Point (MP) labels in grey
+    fig.add_trace(go.Scatter(
+        x=beamInfo['labelX'],
+        y=beamInfo['labelY'],
+        text=beamInfo['MP_W_S'],
+        mode = 'text',
+        textfont = dict(
+            size = 10,
+            color = 'grey'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+
+    # Create a list to store the visibility lists for each dataframe
+    all_args = []
+    vis = []
+    visList = []
+
+    #create custom color scale, red to blue through white
+    custom_colors = ['#0000FF', '#FFFFFF', '#FF0000']
+
+    #iterate through columns in dataframe (not including the year column)
+    for column in df.columns[2:]: 
+        # Floor Elevation 
+        fig.add_trace(go.Scatter(
+            mode = 'markers',
+            x=df['mpX'],
+            y=df['mpY'],
+            text=df.index,
+            # name="",
+            marker=dict(
+                color = df[column].values,
+                colorscale=custom_colors,
+                colorbar=dict(title='Lug Elevation (ft)'),
+                size = 10,
+                line=dict(
+                    color='black',
+                    width=1.5
+                )           
+            ),
+            hovertemplate=
+            "<b>%{text}</b><br>" +
+            "Lug Elev.: %{marker.color:,} ft" ,
+            hoverlabel=dict(
+                bgcolor = "white"
+            ),
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==df.columns[len(df.columns)-1])
+        ))
+            
+
+    # groups and trace visibilities
+    vis = []
+    visList = []
+
+    for  i, col in enumerate(df.columns[2:]):
+        vis = [True]*(54) + ([False]*i + [True] + [False]*((54)-2-(i+1)))
+        visList.append(vis)
+        vis = []
+
+
+    # buttons for each group
+    buttons = []
+    for idx, col in enumerate(df.columns[2:]):
+        buttons.append(
+            dict(
+                label = col,
+                method = "update",
+                args=[{"visible": visList[idx]}])
+        )
+
+    buttons = [{'label': 'Select Survey Date',
+                    'method': 'restyle',
+                    'args': ['visible', [False]]}] + buttons
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+    )
+
+    # Set axes ranges
+    fig.update_xaxes(range=[-25, 415])
+    fig.update_yaxes(range=[-15, 140])
+    return fig
+
+# Lug to Floor Height at monitoring points (measurement of shims)
+def plot_lugFloorHeight_plan(lugFloorPlot, beamInfo):
+    df = lugFloorPlot
+
+    fig = go.Figure()
+
+    buttons = []
+    dates = []
+    i = 0
+
+    # Plot the beam locations as lines
+    for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], beamInfo['startY'], beamInfo['endY']):
+        fig.add_trace(go.Scatter(
+            x=[startX, endX],
+            y=[startY, endY],
+            mode='lines',
+            line = dict(
+                color = 'black',
+                width = 1.5,
+                dash = 'solid'),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+
+    # Plot the Marker Point (MP) labels in grey
+    fig.add_trace(go.Scatter(
+        x=beamInfo['labelX'],
+        y=beamInfo['labelY'],
+        text=beamInfo['MP_W_S'],
+        mode = 'text',
+        textfont = dict(
+            size = 10,
+            color = 'grey'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+
+    # Create a list to store the visibility lists for each dataframe
+    all_args = []
+    vis = []
+    visList = []
+
+    #create custom color scale, red to blue through white
+    custom_colors = ['#0000FF', '#FFFFFF', '#FF0000']
+
+    #iterate through columns in dataframe (not including the year column)
+    for column in df.columns[2:]: 
+        # Floor Elevation 
+        fig.add_trace(go.Scatter(
+            mode = 'markers',
+            x=df['mpX'],
+            y=df['mpY'],
+            text=df.index,
+            # name="",
+            marker=dict(
+                color = df[column].values,
+                colorscale=custom_colors,
+                colorbar=dict(title='Lug to Floor Height (ft)'),
+                size = 10,
+                line=dict(
+                    color='black',
+                    width=1.5
+                )           
+            ),
+            hovertemplate=
+            "<b>%{text}</b><br>" +
+            "Lug to Floor<br>Height: %{marker.color:,} ft" ,
+            hoverlabel=dict(
+                bgcolor = "white"
+            ),
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==df.columns[len(df.columns)-1])
+        ))
+            
+
+    # groups and trace visibilities
+    vis = []
+    visList = []
+
+    for  i, col in enumerate(df.columns[2:]):
+        vis = [True]*(54) + ([False]*i + [True] + [False]*((54)-2-(i+1)))
+        visList.append(vis)
+        vis = []
+
+
+    # buttons for each group
+    buttons = []
+    for idx, col in enumerate(df.columns[2:]):
+        buttons.append(
+            dict(
+                label = col,
+                method = "update",
+                args=[{"visible": visList[idx]}])
+        )
+
+    buttons = [{'label': 'Select Survey Date',
+                    'method': 'restyle',
+                    'args': ['visible', [False]]}] + buttons
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+    )
+
+    # Set axes ranges
+    fig.update_xaxes(range=[-25, 415])
+    fig.update_yaxes(range=[-15, 140])
+    return fig
+
+# Differential Floor Elevations (inches) between monitoring points
+def plot_floorDiffElev_plan(floorDiffColorplot, beamInfo, floorDiffplot, floorSymbolplot, floorDir, floorElevPlot, diffAnno):
+    df = floorDiffColorplot
+
+    fig = go.Figure()
+
+    buttons = []
+    dates = []
+    i = 0
+
+    # Plot the beam locations as lines
+    for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], beamInfo['startY'], beamInfo['endY']):
+        fig.add_trace(go.Scatter(
+            x=[startX, endX],
+            y=[startY, endY],
+            mode='lines',
+            line = dict(
+                color = 'black',
+                width = 1.5,
+                dash = 'solid'),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+
+    # Plot the Marker Point (MP) labels in grey
+    fig.add_trace(go.Scatter(
+        x=beamInfo['labelX'],
+        y=beamInfo['labelY'],
+        text=beamInfo['MP_W_S'],
+        mode = 'text',
+        textfont = dict(
+            size = 10,
+            color = 'grey'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+
+    # Create a list to store the visibility lists for each dataframe
+    all_args = []
+    vis = []
+    visList = []
+
+    #create custom color scale, red to blue through white
+    custom_colors = ['#0000FF', '#FFFFFF', '#FF0000']
+
+    #iterate through columns in dataframe (not including the year column)
+    for column in floorDiffplot.columns[2:]:
+        # Floor Differental
+        fig.add_trace(go.Scatter(
+            x=df['beamX'],
+            y=df['beamY'],
+            text=abs(df[column].values.round(2)),
+            customdata=df.index,
+            name="",
+            mode = 'text',
+            textfont = dict(
+                size = 10,
+                color = df[f'{column}_color'].values 
+                ),
+            hovertemplate=
+            "<b>%{customdata}</b><br>" +
+            "Floor Elevation<br>Difference %{text} in" ,
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==floorDiffplot.columns[len(floorDiffplot.columns)-1])
+        ))
+            
+        # Beam Differental Settlement Arrow - pointing in direction of low end 
+        fig.add_trace(go.Scatter(
+            x=floorSymbolplot['arrowX'],
+            y=floorSymbolplot['arrowY'],
+            mode = 'markers',
+            marker=dict(
+                color='red',
+                size=10,
+                symbol=floorSymbolplot[column].values,
+                angle=floorDir[column].values),
+            hoverinfo='skip',
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==floorDiffplot.columns[len(floorDiffplot.columns)-1])
+        ))
+        
+        # Floor Elevation 
+        fig.add_trace(go.Scatter(
+            mode = 'markers',
+            x=floorElevPlot['mpX'],
+            y=floorElevPlot['mpY'],
+            text=floorElevPlot.index,
+            name="",
+            marker=dict(
+                color = floorElevPlot[column].values,
+                colorscale=custom_colors,
+                colorbar=dict(title='Floor Elevation (ft)'),
+                size = 10,
+                line=dict(
+                    color='black',
+                    width=1.5
+                )           
+            ),
+            hovertemplate=
+            "<b>%{text}</b><br>" +
+            "Floor Elev.: %{marker.color:,} ft" ,
+            hoverlabel=dict(
+                bgcolor = "white"
+            ),
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==floorDiffplot.columns[len(floorDiffplot.columns)-1])
+        ))
+            
+
+    # groups and trace visibilities
+    vis = []
+    visList = []
+
+    for  i, col in enumerate(floorDiffplot.columns[2:]):
+        vis = [True]*(len(floorDiffplot.index)+2) + ([False]*i*3 + [True]*3 + [False]*(len(floorDiffplot.columns)-2-(i+1))*3)
+        visList.append(vis)
+        vis = []
+
+
+    # buttons for each group
+    buttons = []
+    for idx, col in enumerate(floorDiffplot.columns[2:]):
+        buttons.append(
+            dict(
+                label = col,
+                method = "update",
+                args=[{"visible": visList[idx]}])
+        )
+
+    buttons = [{'label': 'Select Survey Date',
+                    'method': 'restyle',
+                    'args': ['visible', [False]]}] + buttons
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        annotations = diffAnno,
+        #title = 'Differental Floor Elevation [in] between Monitoring Points'
+    )
+
+    # Set axes ranges
+    fig.update_xaxes(range=[-25, 415])
+    fig.update_yaxes(range=[-15, 140])
+    return fig
+
+# Differential Floor Slope (inches/Foot) between monitoring points
+def plot_floorSlopeElev_plan(floorSlopeColorplot, beamInfo, floorSlopeplot, floorSymbolplot, floorElevPlot, floorDir, slopeAnno):
+    df = floorSlopeColorplot
+
+    #create a figure from the graph objects (not plotly express) library
+    fig = go.Figure()
+
+    buttons = []
+    dates = []
+    i = 0
+
+    # Plot the beam locations as lines
+    for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], beamInfo['startY'], beamInfo['endY']):
+        fig.add_trace(go.Scatter(
+            x=[startX, endX],
+            y=[startY, endY],
+            mode='lines',
+            line = dict(
+                color = 'black',
+                width = 1.5,
+                dash = 'solid'),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+
+    # Plot the Marker Point (MP) labels in grey
+    fig.add_trace(go.Scatter(
+        x=beamInfo['labelX'],
+        y=beamInfo['labelY'],
+        text=beamInfo['MP_W_S'],
+        mode = 'text',
+        textfont = dict(
+            size = 10,
+            color = 'grey'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+
+    # Create a list to store the visibility lists for each dataframe
+    all_args = []
+    vis = []
+    visList = []
+
+    #create custom color scale, red to blue through white
+    custom_colors = ['#0000FF', '#FFFFFF', '#FF0000']
+
+    #iterate through columns in dataframe (not including the year column)
+    for column in floorSlopeplot.columns[3:]:
+        # Floor Differental
+        fig.add_trace(go.Scatter(
+            x=df['beamX'],
+            y=df['beamY'],
+            text=abs(df[column].values.round(2)),
+            customdata=df.index,
+            name="",
+            mode = 'text',
+            textfont = dict(
+                size = 10,
+                color = df[f'{column}_color'].values 
+                ),
+            hovertemplate=
+            "<b>%{customdata}</b><br>" +
+            "Floor Slope %{text} in/ft" ,
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==floorSlopeplot.columns[len(floorSlopeplot.columns)-1])
+        ))
+            
+        # Beam Differental Settlement Arrow - pointing in direction of low end 
+        fig.add_trace(go.Scatter(
+            x=floorSymbolplot['arrowX'],
+            y=floorSymbolplot['arrowY'],
+            mode = 'markers',
+            marker=dict(
+                color='red',
+                size=10,
+                symbol=floorSymbolplot[column].values,
+                angle=floorDir[column].values),
+            hoverinfo='skip',
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==floorSlopeplot.columns[len(floorSlopeplot.columns)-1])
+        ))
+        
+        # Floor Elevation 
+        fig.add_trace(go.Scatter(
+            mode = 'markers',
+            x=floorElevPlot['mpX'],
+            y=floorElevPlot['mpY'],
+            text=floorElevPlot.index,
+            name="",
+            marker=dict(
+                color = floorElevPlot[column].values,
+                colorscale=custom_colors,
+                colorbar=dict(title='Floor Elevation (ft)'),
+                size = 10,
+                line=dict(
+                    color='black',
+                    width=1.5
+                )           
+            ),
+            hovertemplate=
+            "<b>%{text}</b><br>" +
+            "Floor Elev.: %{marker.color:,} ft" ,
+            hoverlabel=dict(
+                bgcolor = "white"
+            ),
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==floorSlopeplot.columns[len(floorSlopeplot.columns)-1])
+        ))
+            
+
+    # groups and trace visibilities
+    vis = []
+    visList = []
+
+    for  i, col in enumerate(floorSlopeplot.columns[3:]):
+        vis = [True]*(len(floorSlopeplot.index)+2) + ([False]*i*3 + [True]*3 + [False]*(len(floorSlopeplot.columns)-(i+1))*3)
+        visList.append(vis)
+        vis = []
+
+
+    # buttons for each group
+    buttons = []
+    for idx, col in enumerate(floorSlopeplot.columns[3:]):
+        buttons.append(
+            dict(
+                label = col,
+                method = "update",
+                args=[{"visible": visList[idx]}])
+        )
+
+    buttons = [{'label': 'Select Survey Date',
+                    'method': 'restyle',
+                    'args': ['visible', [False]]}] + buttons
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        annotations = slopeAnno,
+        #title = 'Differental Floor Elevation [in] between Monitoring Points'
+    )
+
+    # Set axes ranges
+    fig.update_xaxes(range=[-25, 415])
+    fig.update_yaxes(range=[-15, 140])
+    return fig
+
 # 3D Plot - settlement with a slider
 def plot_3D_settlement_slider(settlementStart, beamInfo3D):
     fig = go.Figure()
@@ -773,7 +1543,6 @@ def plot_3D_settlement_slider(settlementStart, beamInfo3D):
         scene_aspectratio=dict(x=7, y=2, z=1)
     )
     return fig
-
 
 def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D):
     # Calculate the maximum number of traces required for any frame

@@ -36,6 +36,7 @@ st.sidebar.title('Survey and Forecast Options:')
 
 # Import the South Pole Station excel survey and beam information fils
 surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'csv')
+trussfile = st.sidebar.file_uploader("South Pole Station Truss Height File", type = 'csv')
 
 # Set forecasting variables
 nsurvey = st.sidebar.number_input('Number of Past Surveys Used for Forecast', value=10)
@@ -43,13 +44,15 @@ nyears = st.sidebar.number_input('Number of Years Forecasted', value=5)
 
 if st.sidebar.button('Compute Settlement'):
 
-    # Calculate settlement
+    # Calculate data for plotting 
     survey_clean, survey_long = read_survey(surveyfile)
-    beamInfo, beamLength = read_beamInfo()
-    settlement, settlement_points, settlement_delta, settlement_delta_MP = calc_settlement(survey_long)
+    truss_clean = read_trussHeight(trussfile)
+    beamInfo, beamLength, MPlocations = read_beamInfo()
+    settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
     settlementProj = calc_forecast_settlement(settlement, nsurvey, nyears)
-    beamDiff, beamDiffplot, beamSlope, beamSlopeplot = calc_differental_settlement(beamLength, survey_clean, beamInfo)
-    beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamDiffAnno, beamSlopeAnno, color_dict, maps = plot_annotations(beamInfo, beamDiff, beamSlope)
+    beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamLength_long, beamLength_sort = calc_differental_settlement(beamLength, survey_clean, beamInfo)
+    lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot = calc_plan_dataframe (survey_clean, truss_clean, MPlocations, beamLength_long, beamLength_sort, beamLength, beamInfo)
+    beamDir, beamSymbol, beamDiffColor, beamSlopeColor, floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot, beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, color_dict, maps = plot_annotations(beamInfo, beamDiff, beamSlope, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
     settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, beamSlopeColor)
     
     # Differental Settlement Planview
@@ -58,31 +61,51 @@ if st.sidebar.button('Compute Settlement'):
     # Differental Settlement Slope Planview
     fig_slope_plan = plot_SlopeSettlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno)
     
+    # Differental Floor Elevation Planview 
+    fig_floorElev_plan = plot_floorDiffElev_plan(floorDiffColorplot, beamInfo, floorDiffplot, floorSymbolplot, floorDir, floorElevPlot, diffAnno)
+
+    # Differental Floor Slope Planview
+    fig_floorSlope_plan = plot_floorSlopeElev_plan(floorSlopeColorplot, beamInfo, floorSlopeplot, floorSymbolplot, floorElevPlot, floorDir, slopeAnno)
+
+    # Lug Elevation
+    fig_lugElev_plan = plot_lugElev_plan(lugElevPlot, beamInfo)
+
+    # Lug to Floor Height
+    fig_lugTrussHeight_plan = plot_lugFloorHeight_plan(lugFloorPlot, beamInfo)
+
     # Create Streamlit Plot objects - Plan Figure
-    tab1, tab2 = st.tabs(["Differental Settlement [in]", "Differental Slope [in/ft]"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Differental Floor Elevation [in]", "Differental Floor Slope [in/ft]", 
+                                "Lug Elevation [ft]", "Lug to Truss Height [ft]"])
     with tab1:
         # Use the Streamlit theme.
         # This is the default. So you can also omit the theme argument.
-        st.plotly_chart(fig_diff_plan, use_container_width=True, height=600)
+        st.plotly_chart(fig_floorElev_plan, use_container_width=True, height=600)
     with tab2:
         # Use the native Plotly theme.
-        st.plotly_chart(fig_slope_plan, use_container_width=True, height=600)
+        st.plotly_chart(fig_floorSlope_plan, use_container_width=True, height=600)
+    with tab3: 
+        st.plotly_chart(fig_lugElev_plan, use_container_width=True, height=600)
+    with tab4:
+        st.plotly_chart(fig_lugTrussHeight_plan, use_container_width=True, height=600)
 
     # Cumulative settlement
     fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
     
     # Delta Settlement
     fig_delta = plot_delta_settlement(settlement_delta, color_dict, maps)
+
+    # Settlement Rate
+    fig_rate = plot_settlementRate(settlement_rate, color_dict, maps)
     
     # Create Streamlit Plot objects - Plan Figure
-    tab1, tab2 = st.tabs(["Cumulative Settlement [ft]", "Change in Settlement [in]"])
+    tab1, tab2 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]"])
     with tab1:
         # Use the Streamlit theme.
         # This is the default. So you can also omit the theme argument.
         st.plotly_chart(fig_cumulative, use_container_width=True, height=600)
     with tab2:
         # Use the native Plotly theme.
-        st.plotly_chart(fig_delta, use_container_width=True, height=600)
+        st.plotly_chart(fig_rate, use_container_width=True, height=600)
 
     # Differental Settlement 3D
     left_co, cent_co,last_co = st.columns([0.025, 0.95, 0.025])

@@ -1,3 +1,130 @@
+#------- Beam Pin elevation plan view -------
+df = beamSlopeplot
+
+#create a figure from the graph objects (not plotly express) library
+fig = go.Figure()
+
+buttons = []
+dates = []
+i = 0
+
+# Plot the beam locations as lines
+for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], beamInfo['startY'], beamInfo['endY']):
+    fig.add_trace(go.Scatter(
+        x=[startX, endX],
+        y=[startY, endY],
+        mode='lines',
+        line = dict(
+            color = 'black',
+            width = 1.5,
+            dash = 'solid'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+
+# Plot the Marker Point (MP) labels in grey
+fig.add_trace(go.Scatter(
+    x=beamInfo['labelX'],
+    y=beamInfo['labelY'],
+    text=beamInfo['MP_W_S'],
+    mode = 'text',
+    textfont = dict(
+        size = 10,
+        color = 'grey'),
+    hoverinfo='skip',
+    showlegend=False
+))
+
+# Create a list to store the visibility lists for each dataframe
+all_args = []
+vis = []
+visList = []
+
+
+#iterate through columns in dataframe (not including the year column)
+for column in df.columns[3:]:
+    # Beam Differental Settlement
+    fig.add_trace(go.Scatter(
+        x=df['beamX'],
+        y=df['beamY'],
+        text=abs(df[column].values.round(2)),
+        mode = 'text',
+        #name = column, 
+        textfont = dict(
+            size = 12,
+            color = beamSlopeColor[column].values),
+        hoverinfo='skip',
+        showlegend=False, 
+        #setting only the first dataframe to be visible as default
+        visible = (column==df.columns[len(df.columns)-1])
+    ))
+        
+        # Beam Differental Settlement Arrow - pointing in direction of low end 
+    fig.add_trace(go.Scatter(
+        x=beamInfo['arrowX'],
+        y=beamInfo['arrowY'],
+        mode = 'markers',
+        #name = column,
+        marker=dict(
+            color='red',
+            size=10,
+            symbol=beamSymbol[column].values,
+            angle=beamDir[column].values),
+        hoverinfo='skip',
+        showlegend=False, 
+        #setting only the first dataframe to be visible as default
+        visible = (column==df.columns[len(df.columns)-1])
+     ))
+        
+
+# groups and trace visibilities
+vis = []
+visList = []
+
+for  i, col in enumerate(df.columns[3:]):
+    vis = []
+    vis = [True]*(len(df.index)+2) + ([False]*i*2 + [True]*2 + [False]*(len(df.columns)-(i+1))*2)
+    visList.append(vis)
+
+
+# buttons for each group
+buttons = []
+for idx, col in enumerate(df.columns[3:]):
+    buttons.append(
+        dict(
+            label = col,
+            method = "update",
+            args=[{"visible": visList[idx]}])
+    )
+
+buttons = [{'label': 'Select Survey Date',
+            'method': 'restyle',
+            'args': ['visible', [False]]}] + buttons
+
+# update layout with buttons                       
+fig.update_layout(
+    updatemenus=[
+        dict(
+        type="dropdown",
+        direction="down",
+        buttons = buttons,
+            pad={"r": 10, "t": 10},
+            showactive=True,
+            x=0.0,
+            xanchor="left",
+            y=1.01,
+            yanchor="bottom")
+    ],
+    annotations = beamSlopeAnno,
+    #title = 'Differental Slope [in/ft]'
+)
+
+# Set axes ranges
+fig.update_xaxes(range=[-25, 415])
+fig.update_yaxes(range=[-15, 140])
+
+fig.show()
+
 # Create animation of the 3d plot 
 def plot_3D_settlement_animation(settlementStart, beamInfo3D):
     fig = go.Figure()

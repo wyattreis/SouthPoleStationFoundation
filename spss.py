@@ -44,32 +44,40 @@ nyears = st.sidebar.number_input('Number of Years Forecasted', value=5)
 
 if st.sidebar.button('Compute Settlement'):
 
-    # Calculate data for plotting 
+    ## DATA IMPORTING & ANALYSIS
+    # Import the survey data for the south pole station
     survey_clean, survey_long = read_survey(surveyfile)
     truss_clean = read_trussHeight(trussfile)
-    beamInfo, beamLength, MPlocations = read_beamInfo()
+    # Import the basic plotting file to use (label locations, building outline, etc.), and calculate the beam length between each column 
+    beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort = read_beamInfo()
+    # Calculate settlement at the column lugs from the survey file
     settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
+    # Forecast future settlement for user defined future using user defined previous number of years
     settlementProj, settlementProj_trans = calc_forecast_settlement(settlement, nsurvey, nyears)
-    beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, beamLength_long, beamLength_sort = calc_differental_settlement(beamLength, survey_clean, beamInfo, settlementProj_trans)
+    # Calculate the differental settlement between column lugs
+    beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj = calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans)
+    # Calculate the floor elevation differences and slopes accounting for known lug to truss height (shim height)
     lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot = calc_plan_dataframe (survey_clean, truss_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo)
-    beamDir, beamSymbol, beamDiffColor, beamSlopeColor, floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot, beamSlopeProjColor, beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps = plot_annotations(beamInfo, beamDiff, beamSlope, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
+    # Create dataframe for Beam Plotting Styles
+    beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProjColor = plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj)
+    # Create dataframe for floor elevation plotting styles
+    floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot = plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
+    # Create dataframe for plot annotations
+    beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps = plot_annotations()
+    # Create dataframe for 3D plotting
     settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
     
+    ## PLAVIEW PLOTTING
     # Differental Settlement Planview
     fig_diff_plan = plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, beamDir, beamDiffAnno)
-    
     # Differental Settlement Slope Planview
     fig_slope_plan = plot_SlopeSettlement_plan(beamSlopeplot, beamInfo, beamSlopeColor, beamSymbol, beamDir, beamSlopeAnno)
-    
     # Differental Floor Elevation Planview 
     fig_floorElev_plan = plot_floorDiffElev_plan(floorDiffColorplot, beamInfo, floorDiffplot, floorSymbolplot, floorDir, floorElevPlot, diffAnno)
-
     # Differental Floor Slope Planview
     fig_floorSlope_plan = plot_floorSlopeElev_plan(floorSlopeColorplot, beamInfo, floorSlopeplot, floorSymbolplot, floorElevPlot, floorDir, slopeAnno)
-
     # Lug Elevation
     fig_lugElev_plan = plot_lugElev_plan(lugElevPlot, beamInfo)
-
     # Lug to Floor Height
     fig_lugTrussHeight_plan = plot_lugFloorHeight_plan(lugFloorPlot, beamInfo)
 
@@ -88,12 +96,11 @@ if st.sidebar.button('Compute Settlement'):
     with tab4:
         st.plotly_chart(fig_lugTrussHeight_plan, use_container_width=True, height=600)
 
+    ## TIMESERIES PLOTTING
     # Cumulative settlement
     fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
-    
     # Delta Settlement
     fig_delta = plot_delta_settlement(settlement_delta, color_dict, maps)
-
     # Settlement Rate
     fig_rate = plot_settlementRate(settlement_rate, color_dict, maps)
     
@@ -107,6 +114,7 @@ if st.sidebar.button('Compute Settlement'):
         # Use the native Plotly theme.
         st.plotly_chart(fig_rate, use_container_width=True, height=600)
 
+    ## 3D PLOTTING
     # Differental Settlement 3D
     left_co, cent_co,last_co = st.columns([0.025, 0.95, 0.025])
     with cent_co:

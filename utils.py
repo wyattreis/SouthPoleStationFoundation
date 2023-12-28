@@ -49,7 +49,13 @@ def read_beamInfo():
     beamInfo = pd.read_csv(beamfile)
     beamLength = beamInfo[['MP_W_S', 'MP_E_N', 'beamName', 'beamLength']].dropna()
     MPlocations = beamInfo[['MP_W_S', 'mpX', 'mpY']].rename(columns={"MP_W_S":"MONITOR_POINT"}).dropna().set_index('MONITOR_POINT')
-    return beamInfo, beamLength, MPlocations
+
+    # Convert the beam length file to long format and make index the east or south Monitoring Point for each beam
+    beamLength_long = pd.melt(beamLength, id_vars=['beamName', 'beamLength']).rename(columns={'value':'MONITOR_POINT', 'variable':'beamEnd'})
+    beamLength_long.set_index('MONITOR_POINT', inplace = True)
+    beamLength_sort = beamLength_long.drop(columns=['beamEnd']).sort_values('beamName').set_index('beamName')
+    beamLength_sort = beamLength_sort[~beamLength_sort.index.duplicated(keep='first')]
+    return beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort
 
 # Calculate the cumulative settlement in feet for each column by survey data
 def calc_settlement(survey_long):
@@ -112,13 +118,7 @@ def calc_forecast_settlement(settlement, nsurvey, nyears):
     return settlementProj, settlementProj_trans
 
 # Calculate differental settlement
-def calc_differental_settlement(beamLength, survey_clean, beamInfo, settlementProj_trans):
-    # Convert the beam length file to long format and make index the east or south Monitoring Point for each beam
-    beamLength_long = pd.melt(beamLength, id_vars=['beamName', 'beamLength']).rename(columns={'value':'MONITOR_POINT', 'variable':'beamEnd'})
-    beamLength_long.set_index('MONITOR_POINT', inplace = True)
-    beamLength_sort = beamLength_long.drop(columns=['beamEnd']).sort_values('beamName').set_index('beamName')
-    beamLength_sort = beamLength_sort[~beamLength_sort.index.duplicated(keep='first')]
-    
+def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans):
     # Merge the beam file and the settlement file
     beamSettlement = beamLength_long.join(survey_clean)
 
@@ -147,7 +147,7 @@ def calc_differental_settlement(beamLength, survey_clean, beamInfo, settlementPr
     beamSlopeProj = beamLength_sort.join(beamDiffProj)
     beamSlopeProj.iloc[:,1:] = beamSlopeProj.iloc[:,1:].div(beamSlopeProj.beamLength, axis=0)
     beamSlopeProj= beamSlopeProj.drop(columns=['beamLength'])
-    return beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, beamLength_long, beamLength_sort
+    return beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj
 
 # Create dataframes for planview plotting 
 # (lug and floor elevations, lug to truss measurement, differential settlement)
@@ -198,9 +198,9 @@ def calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlo
     beamInfo3D = beamInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
     return settlementStart, beamInfo3D
 
-# Annotation for plots
-def plot_annotations(beamInfo, beamDiff, beamSlope, beamSlopeProj, floorDiff, floorDiffplot, floorSlope, floorSlopeplot):
-    #---------BEAM ANNOTATIONS--------------------------------
+# Line styles for beam plots
+def plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj):
+    #---------BEAM Plotting Styles--------------------------------
     # Calculate the direction of arrow of each beam
     beamDirLabels = beamInfo[['beamName','beamDir']].set_index(['beamName'])
     beamDir = pd.DataFrame(np.where(beamDiff >= 0, 0, 180), index = beamDiff.index, columns = beamDiff.columns)
@@ -233,7 +233,10 @@ def plot_annotations(beamInfo, beamDiff, beamSlope, beamSlopeProj, floorDiff, fl
     conditions = [abs(beamSlopeProj)<(1/32), ((abs(beamSlopeProj)>=(1/32)) & (abs(beamSlopeProj)<(1/16))), ((abs(beamSlopeProj)>=(1/16)) & (abs(beamSlopeProj)<(1/8))), abs(beamSlopeProj)>=(1/8)]
     choices = ['green','teal', 'blue', 'purple']
     beamSlopeProjColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = beamSlopeProj.index, columns = beamSlopeProj.columns).replace('nan','blue')
+    return beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProjColor
 
+# Line styles for floor plots
+def plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot):
     #-----------FLOOR ANNOTATIONS------------------------------
     # Calculate the direction of arrow of the floor
     floorDir = pd.DataFrame(np.where(floorDiff >= 0, 0, 180), index = floorDiff.index, columns = floorDiff.columns)
@@ -264,7 +267,10 @@ def plot_annotations(beamInfo, beamDiff, beamSlope, beamSlopeProj, floorDiff, fl
     choices = ['black','gold', 'orange', 'red']
     floorSlopeColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = floorSlope.index, columns = floorSlope.columns).replace('nan','blue')
     floorSlopeColorplot = floorSlopeplot.join(floorSlopeColor, rsuffix='_color')
+    return floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot
     
+# Plot annotations
+def plot_annotations():
     #----------PLOT NOTES AND ANNOTATIONS-----------------------
     beamDiffAnno = list([
         dict(text="Differental Settlement less than 1.5 inches",
@@ -477,7 +483,7 @@ def plot_annotations(beamInfo, beamDiff, beamSlope, beamSlopeProj, floorDiff, fl
         'B3':['B3-1', 'B3-2', 'B3-3', 'B3-4'],
         'B4':['B4-1', 'B4-2', 'B4-3', 'B4-4']}
     
-    return beamDir, beamSymbol, beamDiffColor, beamSlopeColor, floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot, beamSlopeProjColor, beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps
+    return beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps
 
 # Plot Cumulative Settlement
 def plot_cumulative_settlement(settlement, settlementProj, color_dict, maps):

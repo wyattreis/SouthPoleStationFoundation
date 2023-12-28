@@ -438,7 +438,7 @@ def plot_annotations():
                 align="right",
                 showarrow=False, 
                 font = dict(
-                    size = 12,
+                    size = 14,
                     color = 'grey')
             ),
         dict(text="<span style='color:orange'>Observed</span> & <span style='color:blue'>Forecasted</span> Beam Slope between 1/16 and 1/8 in/ft",
@@ -1654,18 +1654,18 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
             )
             frame_traces.append(line_trace)
 
-        # # Create the label trace for this frame
-        # label_trace = go.Scatter3d(
-        #     x=beamInfo3D['labelX'], 
-        #     y=beamInfo3D['labelY'], 
-        #     z=beamInfo3D[f'{col}_start'], 
-        #     text=beamInfo3D['MP_W_S'], 
-        #     mode='text', 
-        #     textfont=dict(size=12, color='grey'), 
-        #     hoverinfo='skip', 
-        #     showlegend=False
-        # )
-        # frame_traces.append(label_trace)
+        # Create the label trace for this frame
+        label_trace = go.Scatter3d(
+            x=beamInfo3D['labelX'], 
+            y=beamInfo3D['labelY'], 
+            z=beamInfo3D[f'{col}_start'], 
+            text=beamInfo3D['MP_W_S'], 
+            mode='text', 
+            textfont=dict(size=12, color='grey'), 
+            hoverinfo='skip', 
+            showlegend=False
+        )
+        frame_traces.append(label_trace)
 
         # Ensure the frame has the same number of traces as the figure
         while len(frame_traces) < max_traces_per_frame:

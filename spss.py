@@ -49,11 +49,11 @@ if st.sidebar.button('Compute Settlement'):
     truss_clean = read_trussHeight(trussfile)
     beamInfo, beamLength, MPlocations = read_beamInfo()
     settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
-    settlementProj = calc_forecast_settlement(settlement, nsurvey, nyears)
-    beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamLength_long, beamLength_sort = calc_differental_settlement(beamLength, survey_clean, beamInfo)
-    lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot = calc_plan_dataframe (survey_clean, truss_clean, MPlocations, beamLength_long, beamLength_sort, beamLength, beamInfo)
-    beamDir, beamSymbol, beamDiffColor, beamSlopeColor, floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot, beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, color_dict, maps = plot_annotations(beamInfo, beamDiff, beamSlope, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
-    settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, beamSlopeColor)
+    settlementProj, settlementProj_trans = calc_forecast_settlement(settlement, nsurvey, nyears)
+    beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, beamLength_long, beamLength_sort = calc_differental_settlement(beamLength, survey_clean, beamInfo, settlementProj_trans)
+    lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot = calc_plan_dataframe (survey_clean, truss_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo)
+    beamDir, beamSymbol, beamDiffColor, beamSlopeColor, floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot, beamSlopeProjColor, beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps = plot_annotations(beamInfo, beamDiff, beamSlope, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
+    settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
     
     # Differental Settlement Planview
     fig_diff_plan = plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, beamDir, beamDiffAnno)
@@ -110,5 +110,5 @@ if st.sidebar.button('Compute Settlement'):
     # Differental Settlement 3D
     left_co, cent_co,last_co = st.columns([0.025, 0.95, 0.025])
     with cent_co:
-        fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D)
+        fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
         st.plotly_chart(fig_3d_slider, width = 1100, height = 800)

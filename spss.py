@@ -119,6 +119,5 @@ if st.sidebar.button('Compute Settlement'):
     left_co, cent_co,last_co = st.columns([0.025, 0.95, 0.025])
     with cent_co:
         fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
-        st.plotly_chart(fig_3d_slider, width = 1000, height = 800)
-    st.set_page_config(layout="wide")
+        st.plotly_chart(fig_3d_slider)
     

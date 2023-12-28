@@ -1730,7 +1730,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
         ),
         sliders=sliders,
         width = 1100,
-        height = 800,
+        height = 600,
         scene_aspectmode='manual',
         scene_aspectratio=dict(x=7, y=2, z=1),
         uniformtext_minsize=10,

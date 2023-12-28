@@ -429,7 +429,7 @@ def plot_annotations():
                 align="right",
                 showarrow=False, 
                 font = dict(
-                    size = 12,
+                    size = 14,
                     color = 'grey')
             ),
         dict(text="<span style='color:gold'>Observed</span> & <span style='color:teal'>Forecasted</span> Beam Slope between 1/32 and 1/16 in/ft",
@@ -447,7 +447,7 @@ def plot_annotations():
                 align="right",
                 showarrow=False, 
                 font = dict(
-                    size = 12,
+                    size = 14,
                     color = 'grey')
             ),
         dict(text="<span style='color:red'>Observed</span> & <span style='color:purple'>Forecasted</span> Beam Slope greater than 1/8 in/ft",
@@ -456,7 +456,7 @@ def plot_annotations():
                 align="right",
                 showarrow=False, 
                 font = dict(
-                    size = 12,
+                    size = 14,
                     color = 'grey')
             ),
     ])

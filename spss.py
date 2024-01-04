@@ -28,10 +28,9 @@ with cent_co:
     htp = 'https://github.com/wyattreis/SouthPoleStationFoundation/blob/main/southpole_fromB_cropped.jpg?raw=true'
     st.image(htp, use_column_width=True, caption='U.S. South Pole Station. Credit: Marc Ankenbauer (2013)')
 
-left_co, cent_co,last_co = st.columns([0.2, 0.6, 0.2])
+left_co, cent_co,last_co = st.columns([0.25, 0.5, 0.25])
 with cent_co:
     st.title('Amundsen-Scott South Pole Station', anchor=False)
-    st.title('Foundation Settlement Visualization and Analysis', anchor=False)
 
 left_co, cent_co,last_co = st.columns([0.15, 0.7, 0.15])
 with cent_co:

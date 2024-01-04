@@ -1649,8 +1649,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
                     width = 3,
                     dash = 'solid'),
                 #hoverinfo='skip',
-                showlegend=False,
-                # textfont=dict(size=12, color='grey') 
+                showlegend=False 
             )
             frame_traces.append(line_trace)
 
@@ -1671,7 +1670,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
 
         # Ensure the frame has the same number of traces as the figure
         while len(frame_traces) < max_traces_per_frame:
-            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode=[])) #, textfont=dict(size=10, color='grey')
+            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode=[]))
 
         # Add the frame
         frames.append(go.Frame(data=frame_traces, name=col))

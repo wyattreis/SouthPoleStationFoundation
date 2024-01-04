@@ -30,9 +30,9 @@ with cent_co:
 
 left_co, cent_co,last_co = st.columns([0.1, 0.8, 0.1])
 with cent_co:
-    st.title('South Pole Station Settlement Visualization and Analysis', anchor=False)
+    st.title('Amundsen-Scott South Pole Station\nSettlement Visualization and Analysis', anchor=False)
 
-st.sidebar.title('Survey and Forecast Options:')
+st.sidebar.title('Survey Data and Forecast Options:')
 
 # Import the South Pole Station excel survey and beam information fils
 surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'csv')

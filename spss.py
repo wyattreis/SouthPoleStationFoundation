@@ -30,7 +30,8 @@ with cent_co:
 
 left_co, cent_co,last_co = st.columns([0.15, 0.7, 0.15])
 with cent_co:
-    st.title('Amundsen-Scott South Pole Station Settlement Visualization and Analysis', anchor=False)
+    st.title('Amundsen-Scott South Pole Station', anchor=False)
+    st.title('Foundation Settlement Visualization and Analysis', anchor=False)
 
 st.sidebar.title('Survey Data and Forecast Options:')
 

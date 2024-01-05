@@ -39,8 +39,6 @@ with cent_co:
 st.sidebar.title('Survey Data and Forecast Options:')
 
 # Import the South Pole Station excel survey and beam information fils
-#surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'csv')
-#trussfile = st.sidebar.file_uploader("South Pole Station Truss Height File", type = 'csv')
 xlfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'xlsx')
 
 # Set forecasting variables
@@ -51,8 +49,6 @@ if st.sidebar.button('Compute Settlement'):
 
     ## DATA IMPORTING & ANALYSIS
     # Import the survey data for the south pole station
-    #survey_clean, survey_long = read_survey(surveyfile)
-    #truss_clean = read_trussHeight(trussfile)
     survey_clean, survey_long = read_xlElev(xlfile)
     truss_clean = read_trussHeight(xlfile)
 

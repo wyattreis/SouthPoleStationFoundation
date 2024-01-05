@@ -31,7 +31,7 @@ def read_survey(surveyfile):
     survey_clean = survey_clean.set_index('MONITOR_POINT').rename_axis('date', axis=1)
     survey_clean.columns = pd.to_datetime(survey_clean.columns).astype(str)
 
-    # Transpose so dayes are in index column
+    # Transpose so dates are in index column
     survey_long = pd.DataFrame.transpose(survey_clean)
     return survey_clean, survey_long
 
@@ -40,6 +40,34 @@ def read_trussHeight(trussfile):
     truss = pd.read_csv(trussfile, skiprows=[1], nrows=36)
     # Clean up the imported truss to survey point file 
     truss_clean = truss.rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
+    truss_clean.columns = pd.to_datetime(truss_clean.columns).astype(str)
+    return truss_clean
+
+# import survey data from the excel
+def read_xlElev(xlfile):
+    survey = pd.read_excel(
+        io=xlfile,
+        engine='openpyxl',
+        sheet_name='SURVEY DATA',
+        skiprows=[0,2,3], 
+        nrows=36)
+    # rename second 2010/11/2 survey to 2010/11/3
+    survey_clean = survey.dropna(axis=1, how='all').drop(columns=["DESCRIPTION", "Shims\nNote 13", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT", "2010-11-02 00:00:00.1":'2010-11-03 00:00:00'}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
+    survey_clean.columns = pd.to_datetime(survey_clean.columns).astype(str)
+
+    # Transpose so dates are in index column
+    survey_long = pd.DataFrame.transpose(survey_clean)
+    return survey_clean, survey_long
+
+def read_xlTruss(xlfile):
+    truss = pd.read_excel(
+        io=xlfile,
+        engine='openpyxl',
+        sheet_name='SHIM DATA',
+        skiprows=[0,2,3], 
+        nrows=36)
+    # rename second 2010/11/2 survey to 2010/11/3
+    truss_clean = truss.dropna(axis=1, how='all').drop(columns=["DESCRIPTION", "Shims", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
     truss_clean.columns = pd.to_datetime(truss_clean.columns).astype(str)
     return truss_clean
 

@@ -39,8 +39,9 @@ with cent_co:
 st.sidebar.title('Survey Data and Forecast Options:')
 
 # Import the South Pole Station excel survey and beam information fils
-surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'csv')
-trussfile = st.sidebar.file_uploader("South Pole Station Truss Height File", type = 'csv')
+#surveyfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'csv')
+#trussfile = st.sidebar.file_uploader("South Pole Station Truss Height File", type = 'csv')
+xlfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'xlsx')
 
 # Set forecasting variables
 nsurvey = st.sidebar.number_input('Number of Past Surveys Used for Forecast', value=10)
@@ -50,8 +51,11 @@ if st.sidebar.button('Compute Settlement'):
 
     ## DATA IMPORTING & ANALYSIS
     # Import the survey data for the south pole station
-    survey_clean, survey_long = read_survey(surveyfile)
-    truss_clean = read_trussHeight(trussfile)
+    #survey_clean, survey_long = read_survey(surveyfile)
+    #truss_clean = read_trussHeight(trussfile)
+    survey_clean, survey_long = read_xlElev(xlfile)
+    truss_clean = read_trussHeight(xlfile)
+
     # Import the basic plotting file to use (label locations, building outline, etc.), and calculate the beam length between each column 
     beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort = read_beamInfo()
     # Calculate settlement at the column lugs from the survey file
@@ -86,7 +90,7 @@ if st.sidebar.button('Compute Settlement'):
     fig_lugTrussHeight_plan = plot_lugFloorHeight_plan(lugFloorPlot, beamInfo)
 
     # Create Streamlit Plot objects - Plan Figure
-    tab1, tab2, tab3, tab4 = st.tabs(["Differental Floor Elevation [in]", "Differental Floor Slope [in/ft]", 
+    tab1, tab2, tab3, tab4 = st.tabs(["Differental Floor Elevation [in]", "Floor Slope [in/ft]", 
                                 "Lug Elevation [ft]", "Lug to Truss Height [ft]"])
     with tab1:
         # Use the Streamlit theme.

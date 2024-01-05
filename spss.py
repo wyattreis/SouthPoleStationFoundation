@@ -18,6 +18,7 @@ import scipy.stats as stats
 import plotly.express as px
 import plotly.graph_objects as go
 import datetime as dt
+import openpyxl
 from utils import *
 
 st.set_page_config(layout="wide")

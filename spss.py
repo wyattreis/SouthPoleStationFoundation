@@ -7,7 +7,7 @@
 #               Cold Regions Research and Engineering Laboratory (CRREL)
 #               Wyatt.K.Reis@usace.army.mil
 # Created:      31 October 2023
-# Updated:      -
+# Updated:      08 January 2024
 #
 # -------------------------------------------------------------------------------
 
@@ -18,6 +18,7 @@ import scipy.stats as stats
 import plotly.express as px
 import plotly.graph_objects as go
 import datetime as dt
+import openpyxl
 from utils import *
 
 st.set_page_config(layout="wide")

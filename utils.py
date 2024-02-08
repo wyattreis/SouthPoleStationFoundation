@@ -20,7 +20,6 @@ import scipy.stats as stats
 import plotly.express as px
 import plotly.graph_objects as go
 import datetime as dt
-from openpyxl import load_workbook
 
 
 # import survey dataframe and return clean version
@@ -46,7 +45,6 @@ def read_trussHeight(trussfile):
 
 # import survey data from the excel
 def read_xlElev(xlfile):
-    # wb = load_workbook(xlfile, read_only=False)
     survey = pd.read_excel(
         xlfile,
         engine='openpyxl',

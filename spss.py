@@ -49,7 +49,7 @@ st.sidebar.title('Survey Data and Forecast Options:')
 #     survey_clean, survey_long = read_xlElev(xlfile)
 
 # Import the South Pole Station excel survey and beam information fils
-xlfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'xlsx')
+xlfile = st.sidebar.file_uploader(" Upload South Pole Station Survey File", type = ['xlsx'])
 
 # Set forecasting variables
 nsurvey = st.sidebar.number_input('Number of Past Surveys Used for Forecast', value=10)

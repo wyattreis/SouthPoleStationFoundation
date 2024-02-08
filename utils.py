@@ -46,9 +46,8 @@ def read_trussHeight(trussfile):
 
 # import survey data from the excel
 def read_xlElev(xlfile):
-    wb = load_workbook(xlfile, read_only=False)
     survey = pd.read_excel(
-        wb,
+        xlfile,
         engine='openpyxl',
         sheet_name='SURVEY DATA',
         skiprows=[0,2,3], 
@@ -62,9 +61,9 @@ def read_xlElev(xlfile):
     return survey_clean, survey_long
 
 def read_xlTruss(xlfile):
-    wb = load_workbook(xlfile, read_only=False)
+    # wb = load_workbook(xlfile, read_only=False)
     truss = pd.read_excel(
-        wb,
+        xlfile,
         engine='openpyxl',
         #engine='xlrd',
         sheet_name='SHIM DATA',

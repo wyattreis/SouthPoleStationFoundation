@@ -68,7 +68,6 @@ def read_xlTruss(xlfile):
         io=wb,
         engine='openpyxl',
         sheet_name='SHIM DATA',
-        encoding='latin-1',
         skiprows=[0,2,3], 
         nrows=36)
     # rename second 2010/11/2 survey to 2010/11/3

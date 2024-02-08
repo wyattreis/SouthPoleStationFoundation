@@ -49,7 +49,7 @@ st.sidebar.title('Survey Data and Forecast Options:')
 #     survey_clean, survey_long = read_xlElev(xlfile)
 
 # Import the South Pole Station excel survey and beam information fils
-xlfile = st.sidebar.file_uploader(" Upload South Pole Station Survey File", type = ['xlsx'])
+xlfile = st.sidebar.file_uploader("Upload South Pole Station Survey File", type = ['xlsx'])
 
 # Set forecasting variables
 nsurvey = st.sidebar.number_input('Number of Past Surveys Used for Forecast', value=10)
@@ -61,6 +61,8 @@ if st.sidebar.button('Compute Settlement'):
     # Import the survey data for the south pole station
     survey_clean, survey_long = read_xlElev(xlfile)
     # truss_clean = read_trussHeight(xlfile)
+
+    st.write(survey_clean)
 
     # # Import the basic plotting file to use (label locations, building outline, etc.), and calculate the beam length between each column 
     # beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort = read_beamInfo()

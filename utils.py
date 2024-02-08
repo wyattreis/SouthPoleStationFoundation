@@ -20,7 +20,7 @@ import scipy.stats as stats
 import plotly.express as px
 import plotly.graph_objects as go
 import datetime as dt
-import openpyxl
+from openpyxl import load_workbook
 
 
 # import survey dataframe and return clean version

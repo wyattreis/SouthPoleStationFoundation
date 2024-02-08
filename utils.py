@@ -49,8 +49,8 @@ def read_trussHeight(trussfile):
 def read_xlElev(xlfile):
     survey = pd.read_excel(
         io=xlfile,
-        #engine='openpyxl',
-        engine='xlrd',
+        engine='openpyxl',
+        #engine='xlrd',
         sheet_name='SURVEY DATA',
         skiprows=[0,2,3], 
         nrows=36)
@@ -65,8 +65,8 @@ def read_xlElev(xlfile):
 def read_xlTruss(xlfile):
     truss = pd.read_excel(
         io=xlfile,
-        #engine='openpyxl',
-        engine='xlrd',
+        engine='openpyxl',
+        #engine='xlrd',
         sheet_name='SHIM DATA',
         skiprows=[0,2,3], 
         nrows=36)

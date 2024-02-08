@@ -46,6 +46,7 @@ def read_trussHeight(trussfile):
 
 # import survey data from the excel
 def read_xlElev(xlfile):
+    # wb = load_workbook(xlfile, read_only=False)
     survey = pd.read_excel(
         xlfile,
         engine='openpyxl',

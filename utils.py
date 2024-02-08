@@ -20,6 +20,7 @@ import scipy.stats as stats
 import plotly.express as px
 import plotly.graph_objects as go
 import datetime as dt
+import openpyxl
 
 
 # import survey dataframe and return clean version
@@ -49,6 +50,7 @@ def read_xlElev(xlfile):
         io=xlfile,
         engine='openpyxl',
         sheet_name='SURVEY DATA',
+        encoding='latin-1',
         skiprows=[0,2,3], 
         nrows=36)
     # rename second 2010/11/2 survey to 2010/11/3
@@ -64,6 +66,7 @@ def read_xlTruss(xlfile):
         io=xlfile,
         engine='openpyxl',
         sheet_name='SHIM DATA',
+        encoding='latin-1',
         skiprows=[0,2,3], 
         nrows=36)
     # rename second 2010/11/2 survey to 2010/11/3

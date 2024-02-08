@@ -18,7 +18,7 @@ import scipy.stats as stats
 import plotly.express as px
 import plotly.graph_objects as go
 import datetime as dt
-import openpyxl
+from openpyxl import load_workbook
 from utils import *
 
 st.set_page_config(layout="wide")
@@ -39,12 +39,14 @@ with cent_co:
 
 st.sidebar.title('Survey Data and Forecast Options:')
 
-fkonzept = st.file_uploader("upload FK file", type={"xlsx", "csv", "txt"})
+xlfile = st.file_uploader("upload FK file", type={"xlsx", "csv", "txt"})
 
-if fkonzept:
-    wb = load_workbook(fkonzept, read_only=False)
+if xlfile:
+    wb = load_workbook(xlfile, read_only=False)
     st.write(wb.sheetnames)
-    st.title(fkonzept.name)
+    st.title(xlfile.name)
+
+    survey_clean, survey_long = read_xlElev(xlfile)
 
 # # Import the South Pole Station excel survey and beam information fils
 # xlfile = st.sidebar.file_uploader("South Pole Station Survey File", type = 'xlsx')

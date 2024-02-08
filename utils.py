@@ -47,7 +47,8 @@ def read_trussHeight(trussfile):
 
 # import survey data from the excel
 def read_xlElev(xlfile):
-    wb = xlrd.open_workbook(xlfile, encoding_override='latin1')
+    xlfile_bytes = xlfile.read()
+    wb = xlrd.open_workbook(xlfile_bytes, encoding_override='latin1')
     survey = pd.read_excel(
         io=wb,
         engine='openpyxl',
@@ -63,7 +64,8 @@ def read_xlElev(xlfile):
     return survey_clean, survey_long
 
 def read_xlTruss(xlfile):
-    wb = xlrd.open_workbook(xlfile, encoding_override='latin1')
+    xlfile_bytes = xlfile.read()
+    wb = xlrd.open_workbook(xlfile_bytes, encoding_override='latin1')
     truss = pd.read_excel(
         io=wb,
         engine='openpyxl',

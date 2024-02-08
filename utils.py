@@ -21,7 +21,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import datetime as dt
 import openpyxl
-import xlrd
 
 
 # import survey dataframe and return clean version

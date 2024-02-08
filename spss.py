@@ -60,9 +60,9 @@ if st.sidebar.button('Compute Settlement'):
     ## DATA IMPORTING & ANALYSIS
     # Import the survey data for the south pole station
     survey_clean, survey_long = read_xlElev(xlfile)
-    # truss_clean = read_trussHeight(xlfile)
+    truss_clean = read_trussHeight(xlfile)
 
-    st.write(survey_clean)
+    st.write(truss_clean)
 
     # # Import the basic plotting file to use (label locations, building outline, etc.), and calculate the beam length between each column 
     # beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort = read_beamInfo()

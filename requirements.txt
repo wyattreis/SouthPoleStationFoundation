@@ -4,3 +4,4 @@ plotly
 scipy
 streamlit
 openpyxl
+xlrd

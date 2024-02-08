@@ -21,6 +21,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import datetime as dt
 import openpyxl
+import xlrd
 
 
 # import survey dataframe and return clean version
@@ -46,11 +47,11 @@ def read_trussHeight(trussfile):
 
 # import survey data from the excel
 def read_xlElev(xlfile):
+    wb = xlrd.open_workbook(xlfile, encoding_override='latin1')
     survey = pd.read_excel(
-        io=xlfile,
+        io=wb,
         engine='openpyxl',
         sheet_name='SURVEY DATA',
-        encoding='latin-1',
         skiprows=[0,2,3], 
         nrows=36)
     # rename second 2010/11/2 survey to 2010/11/3
@@ -62,8 +63,9 @@ def read_xlElev(xlfile):
     return survey_clean, survey_long
 
 def read_xlTruss(xlfile):
+    wb = xlrd.open_workbook(xlfile, encoding_override='latin1')
     truss = pd.read_excel(
-        io=xlfile,
+        io=wb,
         engine='openpyxl',
         sheet_name='SHIM DATA',
         encoding='latin-1',

@@ -26,7 +26,7 @@ left_co, cent_co,last_co = st.columns([0.05, 0.9, 0.05])
 with cent_co:
 
     htp = 'https://github.com/wyattreis/SouthPoleStationFoundation/blob/main/southpole_fromB_cropped.jpg?raw=true'
-    st.image(htp, use_column_width=True, caption='U.S. South Pole Station. Credit: Marc Ankenbauer (2013)')
+    st.image(htp, use_column_width=True, caption='Amundsen-Scott South Pole Station. Credit: Marc Ankenbauer (2013)')
 
 left_co, cent_co,last_co = st.columns([0.25, 0.5, 0.25])
 with cent_co:
@@ -37,15 +37,6 @@ with cent_co:
     st.title('Foundation Settlement Visualization and Analysis', anchor=False)
 
 st.sidebar.title('Survey Data and Forecast Options:')
-
-# xlfile = st.file_uploader("upload FK file", type={"xlsx", "csv", "txt"})
-
-# if xlfile:
-#     wb = load_workbook(xlfile, read_only=False)
-#     st.write(wb.sheetnames)
-#     st.title(xlfile.name)
-
-#     survey_clean, survey_long = read_xlElev(xlfile)
 
 # Import the South Pole Station excel survey and beam information fils
 xlfile = st.sidebar.file_uploader("Upload South Pole Station Survey File", type = ['xlsx'])

@@ -86,8 +86,8 @@ if st.sidebar.button('Compute Settlement'):
     fig_lugTrussHeight_plan = plot_lugFloorHeight_plan(lugFloorPlot, beamInfo)
 
     # Create heading heading for the plan view plot that describes each tab of the plot
-    st.subheader("South Pole Station Settlement Plan View Plots")
-    st.text("Differential Floor Elevation: The differential elevations (in inches) between each column using the lug elevations and the shim pack height.  \nFloor Slope: The slope of the station floor using the differental floor elevations at each column and the known distances between each column.")
+    st.subheader("Plan View Plots")
+    st.text("Differential Floor Elevation: The differential elevations (in inches) between each column using the lug elevations and the shim pack height.  \nFloor Slope: The slope (in inches per foot) of the station floor using the differental floor elevations at each column and the known distances between each column.  \nLug Elevation: The elevation (in feet) of the column lugs used to survey the station settlement.  \nLug to Truss Height: The height between the lug survey points and the bottom of the floor trusses, including the shim pack height.")
 
     # Create Streamlit Plot objects - Plan Figure
     tab1, tab2, tab3, tab4 = st.tabs(["Differental Floor Elevation [in]", "Floor Slope [in/ft]", 
@@ -112,6 +112,9 @@ if st.sidebar.button('Compute Settlement'):
     # Settlement Rate
     fig_rate = plot_settlementRate(settlement_rate, color_dict, maps)
     
+    st.subheader("Time Series Plots")
+    st.text("Cumulative Settlement: The cumulative settlement (in feet) of the station based on the survey lugs.  \nAnnualized Settlement Rate: The rate of settlement (in inches per year) between each survey data annualized to account for variable periods between the surveys.")
+
     # Create Streamlit Plot objects - Plan Figure
     tab1, tab2 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]"])
     with tab1:

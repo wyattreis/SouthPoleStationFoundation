@@ -23,25 +23,25 @@ import datetime as dt
 
 
 # import survey dataframe and return clean version
-def read_survey(surveyfile):
-    survey = pd.read_csv(surveyfile, skiprows=[1], nrows=36)
+# def read_survey(surveyfile):
+#     survey = pd.read_csv(surveyfile, skiprows=[1], nrows=36)
     
-    # rename second 2010/11/2 survey to 2010/11/3
-    survey_clean = survey.drop(columns=["DESCRIPTION", "Shims\nNote 13", "Unnamed: 52", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"})
-    survey_clean = survey_clean.set_index('MONITOR_POINT').rename_axis('date', axis=1)
-    survey_clean.columns = pd.to_datetime(survey_clean.columns).astype(str)
+#     # rename second 2010/11/2 survey to 2010/11/3
+#     survey_clean = survey.drop(columns=["DESCRIPTION", "Shims\nNote 13", "Unnamed: 52", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"})
+#     survey_clean = survey_clean.set_index('MONITOR_POINT').rename_axis('date', axis=1)
+#     survey_clean.columns = pd.to_datetime(survey_clean.columns).astype(str)
 
-    # Transpose so dates are in index column
-    survey_long = pd.DataFrame.transpose(survey_clean)
-    return survey_clean, survey_long
+#     # Transpose so dates are in index column
+#     survey_long = pd.DataFrame.transpose(survey_clean)
+#     return survey_clean, survey_long
 
-# import lug to truss measurements
-def read_trussHeight(trussfile):
-    truss = pd.read_csv(trussfile, skiprows=[1], nrows=36)
-    # Clean up the imported truss to survey point file 
-    truss_clean = truss.rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
-    truss_clean.columns = pd.to_datetime(truss_clean.columns).astype(str)
-    return truss_clean
+# # import lug to truss measurements
+# def read_trussHeight(trussfile):
+#     truss = pd.read_csv(trussfile, skiprows=[1], nrows=36)
+#     # Clean up the imported truss to survey point file 
+#     truss_clean = truss.rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
+#     truss_clean.columns = pd.to_datetime(truss_clean.columns).astype(str)
+#     return truss_clean
 
 # import survey data from the excel
 def read_xlElev(xlfile):
@@ -225,6 +225,28 @@ def calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlo
     beamInfo3D = beamInfo3D[beamInfo3D.index.notnull()]
     beamInfo3D = beamInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
     return settlementStart, beamInfo3D
+
+# Create dataframe for 3D plotting floor elevations
+def calc_3d_floorElev(beamInfo, floorElevPlot, settlementProj_trans, beamSlopeColor, beamSlopeProjColor):
+    beamStart = beamInfo[['MP_W_S', 'beamName']].set_index('MP_W_S')
+    settlementFloorStart = beamStart.join(floorElevPlot.drop(columns=['mpX', 'mpY'])).set_index('beamName')
+    settlementFloorStart.columns = pd.to_datetime(settlementFloorStart.columns).astype(str)
+    settlementProjStart = beamStart.join(settlementProj_trans).set_index('beamName')
+    settlementFloorStart = settlementFloorStart.join(settlementProjStart)
+
+    beamEnd = beamInfo[['MP_E_N', 'beamName']].set_index('MP_E_N')
+    settlementEnd = beamEnd.join(floorElevPlot.drop(columns=['mpX', 'mpY'])).set_index('beamName')
+    settlementEnd.columns = pd.to_datetime(settlementEnd.columns).astype(str)
+    settlementProjEnd = beamEnd.join(settlementProj_trans).set_index('beamName')
+    settlementEnd = settlementEnd.join(settlementProjEnd)
+
+    settlement3D = settlementFloorStart.join(settlementEnd, lsuffix='_start', rsuffix='_end')
+
+    floorInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
+    floorInfo3D = floorInfo3D.join(settlement3D)
+    floorInfo3D = floorInfo3D[floorInfo3D.index.notnull()]
+    floorInfo3D = floorInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
+    return settlementFloorStart, floorInfo3D
 
 # Line styles for beam plots
 def plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj):
@@ -1732,6 +1754,139 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
     )
 
     maxSettlement = settlementStart[settlementStart.columns[len(settlementStart.columns)-1]].max()
+
+    # Update layout for slider and set consistent y-axis range
+    fig.update_layout(
+        # Update layout with play and pause buttons
+        updatemenus=[dict(
+            type="buttons",
+            showactive=False,
+            buttons=[play_button, pause_button],
+            x=0,  # x and y determine the position of the buttons
+            y=-0.06,
+            xanchor="right",
+            yanchor="top",
+            direction="left"
+        )],
+        autosize=False,
+        margin=dict(l=0, r=0, b=100, t=0),
+        scene_camera=camera,
+        scene=dict(
+            xaxis_title='',
+            xaxis= dict(range=[400,-10]), 
+            yaxis_title='',
+            yaxis= dict(range=[130,-10]),
+            zaxis_title='Cumulative Settlement [ft]',
+            zaxis = dict(range = [maxSettlement,0])
+        ),
+        sliders=sliders,
+        width = 1100,
+        height = 600,
+        scene_aspectmode='manual',
+        scene_aspectratio=dict(x=7, y=2, z=1),
+        uniformtext_minsize=10,
+        annotations = plot3dAnno
+        )
+
+    # Set initial view, update hover mode
+    fig.update_traces(x=frames[0].data[0].x, 
+                    y=frames[0].data[0].y, 
+                    z=frames[0].data[0].z,
+                    hovertemplate="<br>".join([
+                        "Settlement [ft]: %{z}"
+                        ]),
+                    hoverlabel=dict(
+                        bgcolor = "white"
+                        ))
+    return fig
+
+def plot_3D_floor_slider_animated(settlementFloorStart, floorInfo3D, plot3dAnno):
+    # Calculate the maximum number of traces required for any frame
+    max_traces_per_frame = len(floorInfo3D['startX']) + 1  # +1 for the label trace
+
+    # Initialize the figure with the maximum number of empty traces
+    fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], mode='lines', showlegend=False) for _ in range(max_traces_per_frame)])
+
+    # Creating frames
+    frames = []
+    for col in settlementFloorStart.columns:
+        frame_traces = []  # List to hold all traces for this frame
+
+        # Create a separate trace for each line segment
+        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor) in zip(floorInfo3D['startX'], floorInfo3D['endX'], 
+                                                                                    floorInfo3D['startY'], floorInfo3D['endY'], 
+                                                                                    floorInfo3D['{0}_start'.format(col)], 
+                                                                                    floorInfo3D['{0}_end'.format(col)],
+                                                                                    floorInfo3D[col],floorInfo3D[col]):
+
+            line_trace = go.Scatter3d(
+                x=[startX, endX],
+                y=[startY, endY],
+                z = [startZ, endZ],
+                text = floorInfo3D['MP_W_S'],
+                line_color= [startColor, endColor],
+                name="",
+                mode='lines',
+                line = dict(
+                    color = 'black',
+                    width = 3,
+                    dash = 'solid'),
+                #hoverinfo='skip',
+                showlegend=False 
+            )
+            frame_traces.append(line_trace)
+
+        # Create the label trace for this frame
+        label_trace = go.Scatter3d(
+            x=floorInfo3D['labelX'], 
+            y=floorInfo3D['labelY'], 
+            z=floorInfo3D[f'{col}_start'], 
+            text=floorInfo3D['MP_W_S'], 
+            mode='text', 
+            textfont=dict(
+                size=12,
+                color='grey'), 
+            hoverinfo='skip', 
+            showlegend=False
+        )
+        frame_traces.append(label_trace)
+
+        # Ensure the frame has the same number of traces as the figure
+        while len(frame_traces) < max_traces_per_frame:
+            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode=[]))
+
+        # Add the frame
+        frames.append(go.Frame(data=frame_traces, name=col))
+
+    fig.frames = frames
+
+    # Slider
+    sliders = [{"steps": [{"args": [[f.name], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}],
+                            "label": col, "method": "animate"} for col, f in zip(settlementFloorStart.columns, fig.frames)],
+                "len": 0.95,
+                "x": 0.035,
+                "y": 0}]
+
+    camera = dict(
+        up=dict(x=0, y=0, z=1),
+        center=dict(x=0, y=0, z=0),
+        eye=dict(x=0.1, y=4, z=3)
+    )
+
+    # Define the play and pause buttons
+    play_button = dict(
+        label="&#9654;",
+        method="animate",
+        args=[None, {"frame": {"duration": 200, "redraw": True}, "fromcurrent": True, "transition": {"duration": 200, "easing": "quadratic-in-out"}}]
+    )
+
+    pause_button = dict(
+        label="&#9724;",
+        method="animate",
+        args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate", "transition": {"duration": 0}}]
+    )
+
+    maxSettlement = settlementFloorStart[settlementFloorStart.columns[len(settlementFloorStart.columns)-1]].max()
 
     # Update layout for slider and set consistent y-axis range
     fig.update_layout(

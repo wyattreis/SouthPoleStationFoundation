@@ -1932,8 +1932,8 @@ def plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot
         args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate", "transition": {"duration": 0}}]
     )
 
-    maxElev = elevationFloorStart[elevationFloorStart.columns[len(elevationFloorStart.columns)-1]].max()
-    minElev = elevationFloorStart[elevationFloorStart.columns[len(elevationFloorStart.columns)-1]].min()
+    maxElev = elevFloorInfo3D.loc[:, elevFloorInfo3D.columns.str.contains('_start')].max().max()
+    minElev = elevFloorInfo3D.loc[:, elevFloorInfo3D.columns.str.contains('_start')].min().min()
 
     # Update layout for slider and set consistent y-axis range
     fig.update_layout(
@@ -1957,7 +1957,7 @@ def plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot
             yaxis_title='',
             yaxis= dict(range=[130,-10]),
             zaxis_title='Cumulative Settlement [ft]',
-            zaxis = dict(range = [30,50])
+            zaxis = dict(range = [minElev,maxElev])
         ),
         sliders=sliders,
         width = 1100,

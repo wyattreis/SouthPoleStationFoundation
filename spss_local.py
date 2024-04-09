@@ -54,9 +54,9 @@ beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps =
 settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
 elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
 
-
-maxElev = elevationFloorStart[elevationFloorStart.columns[len(elevationFloorStart.columns)-1]].max()
-minElev = elevationFloorStart[elevationFloorStart.columns[len(elevationFloorStart.columns)-1]].min()
+print()
+maxElev = elevFloorInfo3D.loc[:, elevFloorInfo3D.columns.str.contains('_start')].max().max()
+minElev = elevFloorInfo3D.loc[:, elevFloorInfo3D.columns.str.contains('_start')].min().min()
 print(maxElev, minElev)
 
 

@@ -92,16 +92,16 @@ if st.sidebar.button('Compute Settlement'):
     tab1, tab2, tab3, tab4 = st.tabs(["Differental Floor Elevation [in]", "Floor Slope [in/ft]", 
                                 "Lug Elevation [ft]", "Lug to Truss Height [ft]"])
     with tab1:
-        st.text("The differential elevations (in inches) between each column using the lug elevations and the shim pack height. Data limited to the period where shim pack heights are known.")
+        st.text("The differential elevations (in inches) between each column using the lug elevations and the shim pack height.  \nData is limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_floorElev_plan, use_container_width=True, height=600)
     with tab2:
-        st.text("The slope (in inches per foot) of the station floor using the differental floor elevations at each column and the known distances between each column. Data limited to the period where shim pack heights are known.")
+        st.text("The slope (in inches per foot) of the station floor using the differental floor elevations at each column and the known distances between each column.  \nData is limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_floorSlope_plan, use_container_width=True, height=600)
     with tab3:
-        st.text("The elevation (in feet) of the column lugs used to survey the station settlement. All survey dates are included.")
+        st.text("The elevation (in feet) of the column lugs used to survey the station settlement.  \nAll survey dates are included.")
         st.plotly_chart(fig_lugElev_plan, use_container_width=True, height=600)
     with tab4:
-        st.text("The height (in feet) between the lug survey points and the bottom of the floor trusses, this measurement includes the shimpack height. Data limited to the period where shim pack heights are known.")
+        st.text("The height (in feet) between the lug survey points and the bottom of the floor trusses, this measurement includes the shimpack height.  \nData limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_lugTrussHeight_plan, use_container_width=True, height=600)
 
     ## TIMESERIES PLOTTING

@@ -91,6 +91,9 @@ def calc_settlement(survey_long):
     firstValue = survey_long.groupby('dummy').first()
     firstValue = firstValue.to_numpy()[0]
 
+    elevation =  survey_long.drop(columns=["dummy"])
+    elevation.index = pd.to_datetime(elevation.index)
+
     settlement = survey_long.drop(columns=["dummy"]).apply(lambda row: firstValue - row, axis=1)
     settlement.index = pd.to_datetime(settlement.index)
     settlement_points = pd.DataFrame.transpose(settlement)
@@ -104,7 +107,7 @@ def calc_settlement(survey_long):
     diffDays["diffDays"] = settlement_delta.index.to_series().diff().dt.days
 
     settlement_rate = settlement_delta.iloc[:,:].div(diffDays.diffDays, axis=0).mul(365)
-    return settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate
+    return elevation, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate
 
 # Cumulative Settlement Forecasting
 def calc_forecast_settlement(settlement, nsurvey, nyears):
@@ -143,7 +146,50 @@ def calc_forecast_settlement(settlement, nsurvey, nyears):
     settlementProj_trans = settlementProj
     settlementProj_trans.index = settlementProj_trans.index.strftime('%Y-%m-%d') 
     settlementProj_trans = pd.DataFrame.transpose(settlementProj_trans).iloc[:,2:]
+
     return settlementProj, settlementProj_trans
+
+def calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears):
+    elevInterp = elevation.iloc[(len(elevation.index)-(nsurvey)):(len(elevation.index))]
+    currentYear = elevInterp.index.year[-1]
+
+    projList = []
+    for year in range(nyears):
+        projYear = (currentYear + year+1).astype(str)
+        projYear = pd.to_datetime(projYear + '-01-01') 
+        projList.append(projYear)
+
+    elevExtrap = pd.DataFrame(columns=elevInterp.columns, index = [projList]).reset_index().set_index('level_0')
+    elevExtrap.index = elevExtrap.index.map(dt.datetime.toordinal)
+    elevInterp.index = elevInterp.index.map(dt.datetime.toordinal)
+
+    x_endpoints = list([elevInterp.index[0], elevInterp.index[nsurvey-1]]) + elevExtrap.index.tolist()
+    x_enddates = pd.DataFrame(x_endpoints)
+
+    df_regression = elevInterp.apply(lambda x: stats.linregress(elevInterp.index, x), result_type='expand').rename(index={0: 'slope', 1: 
+                                                                                    'intercept', 2: 'rvalue', 3:
+                                                                                    'p-value', 4:'stderr'})
+
+    new_data_loc = {}
+    for column in df_regression.columns:   
+        slope = df_regression.loc['slope', column]  
+        intercept = df_regression.loc['intercept', column]  
+        new_data_loc[column] = [slope * val + intercept for val in x_endpoints]
+
+    elevProj = pd.DataFrame([new_data_loc], columns=new_data_loc.keys()).apply(pd.Series.explode).reset_index().drop(['index'], axis = 1)
+    elevProj = x_enddates.join(elevProj).set_index(0)
+    elevProj.index.names = ['date']
+    elevProj.index = elevProj.index.map(dt.datetime.fromordinal)
+    elevProj = elevProj.apply(pd.to_numeric, errors='ignore').round(3)
+
+    elevProj_trans = elevProj
+    elevProj_trans.index = elevProj_trans.index.strftime('%Y-%m-%d') 
+    elevProj_trans = pd.DataFrame.transpose(elevProj_trans).iloc[:,2:]
+
+    currentTruss = truss_clean.iloc[:,-1]
+    elevFloorProj = elevProj_trans.add(currentTruss, axis="index")
+
+    return elevProj, elevProj_trans, elevFloorProj
 
 # Calculate differental settlement
 def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans):
@@ -227,26 +273,26 @@ def calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlo
     return settlementStart, beamInfo3D
 
 # Create dataframe for 3D plotting floor elevations
-def calc_3d_floorElev(beamInfo, floorElevPlot, settlementProj_trans, beamSlopeColor, beamSlopeProjColor):
+def calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor):
     beamStart = beamInfo[['MP_W_S', 'beamName']].set_index('MP_W_S')
-    settlementFloorStart = beamStart.join(floorElevPlot.drop(columns=['mpX', 'mpY'])).set_index('beamName')
-    settlementFloorStart.columns = pd.to_datetime(settlementFloorStart.columns).astype(str)
-    settlementProjStart = beamStart.join(settlementProj_trans).set_index('beamName')
-    settlementFloorStart = settlementFloorStart.join(settlementProjStart)
+    elevationFloorStart = beamStart.join(floorElevPlot.drop(columns=['mpX', 'mpY'])).set_index('beamName')
+    elevationFloorStart.columns = pd.to_datetime(elevationFloorStart.columns).astype(str)
+    elevationFloorProjStart = beamStart.join(elevFloorProj).set_index('beamName')
+    elevationFloorStart = elevationFloorStart.join(elevationFloorProjStart)
 
     beamEnd = beamInfo[['MP_E_N', 'beamName']].set_index('MP_E_N')
-    settlementEnd = beamEnd.join(floorElevPlot.drop(columns=['mpX', 'mpY'])).set_index('beamName')
-    settlementEnd.columns = pd.to_datetime(settlementEnd.columns).astype(str)
-    settlementProjEnd = beamEnd.join(settlementProj_trans).set_index('beamName')
-    settlementEnd = settlementEnd.join(settlementProjEnd)
+    elevationFloorEnd = beamEnd.join(floorElevPlot.drop(columns=['mpX', 'mpY'])).set_index('beamName')
+    elevationFloorEnd.columns = pd.to_datetime(elevationFloorEnd.columns).astype(str)
+    elevationFloorProjEnd = beamEnd.join(elevFloorProj).set_index('beamName')
+    elevationFloorEnd = elevationFloorEnd.join(elevationFloorProjEnd)
 
-    settlement3D = settlementFloorStart.join(settlementEnd, lsuffix='_start', rsuffix='_end')
+    elevFloor3D = elevationFloorStart.join(elevationFloorEnd, lsuffix='_start', rsuffix='_end')
 
-    floorInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
-    floorInfo3D = floorInfo3D.join(settlement3D)
-    floorInfo3D = floorInfo3D[floorInfo3D.index.notnull()]
-    floorInfo3D = floorInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
-    return settlementFloorStart, floorInfo3D
+    elevFloorInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
+    elevFloorInfo3D = elevFloorInfo3D.join(elevFloor3D)
+    elevFloorInfo3D = elevFloorInfo3D[elevFloor3D.index.notnull()]
+    elevFloorInfo3D = elevFloorInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
+    return elevationFloorStart, elevFloorInfo3D
 
 # Line styles for beam plots
 def plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj):
@@ -1800,30 +1846,30 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
                         ))
     return fig
 
-def plot_3D_floor_slider_animated(settlementFloorStart, floorInfo3D, plot3dAnno):
+def plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot3dAnno):
     # Calculate the maximum number of traces required for any frame
-    max_traces_per_frame = len(floorInfo3D['startX']) + 1  # +1 for the label trace
+    max_traces_per_frame = len(elevFloorInfo3D['startX']) + 1  # +1 for the label trace
 
     # Initialize the figure with the maximum number of empty traces
     fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], mode='lines', showlegend=False) for _ in range(max_traces_per_frame)])
 
     # Creating frames
     frames = []
-    for col in settlementFloorStart.columns:
+    for col in elevationFloorStart.columns:
         frame_traces = []  # List to hold all traces for this frame
 
         # Create a separate trace for each line segment
-        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor) in zip(floorInfo3D['startX'], floorInfo3D['endX'], 
-                                                                                    floorInfo3D['startY'], floorInfo3D['endY'], 
-                                                                                    floorInfo3D['{0}_start'.format(col)], 
-                                                                                    floorInfo3D['{0}_end'.format(col)],
-                                                                                    floorInfo3D[col],floorInfo3D[col]):
+        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor) in zip(elevFloorInfo3D['startX'], elevFloorInfo3D['endX'], 
+                                                                                    elevFloorInfo3D['startY'], elevFloorInfo3D['endY'], 
+                                                                                    elevFloorInfo3D['{0}_start'.format(col)], 
+                                                                                    elevFloorInfo3D['{0}_end'.format(col)],
+                                                                                    elevFloorInfo3D[col],elevFloorInfo3D[col]):
 
             line_trace = go.Scatter3d(
                 x=[startX, endX],
                 y=[startY, endY],
                 z = [startZ, endZ],
-                text = floorInfo3D['MP_W_S'],
+                text = elevFloorInfo3D['MP_W_S'],
                 line_color= [startColor, endColor],
                 name="",
                 mode='lines',
@@ -1838,10 +1884,10 @@ def plot_3D_floor_slider_animated(settlementFloorStart, floorInfo3D, plot3dAnno)
 
         # Create the label trace for this frame
         label_trace = go.Scatter3d(
-            x=floorInfo3D['labelX'], 
-            y=floorInfo3D['labelY'], 
-            z=floorInfo3D[f'{col}_start'], 
-            text=floorInfo3D['MP_W_S'], 
+            x=elevFloorInfo3D['labelX'], 
+            y=elevFloorInfo3D['labelY'], 
+            z=elevFloorInfo3D[f'{col}_start'], 
+            text=elevFloorInfo3D['MP_W_S'], 
             mode='text', 
             textfont=dict(
                 size=12,
@@ -1862,7 +1908,7 @@ def plot_3D_floor_slider_animated(settlementFloorStart, floorInfo3D, plot3dAnno)
 
     # Slider
     sliders = [{"steps": [{"args": [[f.name], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}],
-                            "label": col, "method": "animate"} for col, f in zip(settlementFloorStart.columns, fig.frames)],
+                            "label": col, "method": "animate"} for col, f in zip(elevationFloorStart.columns, fig.frames)],
                 "len": 0.95,
                 "x": 0.035,
                 "y": 0}]
@@ -1886,7 +1932,8 @@ def plot_3D_floor_slider_animated(settlementFloorStart, floorInfo3D, plot3dAnno)
         args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate", "transition": {"duration": 0}}]
     )
 
-    maxSettlement = settlementFloorStart[settlementFloorStart.columns[len(settlementFloorStart.columns)-1]].max()
+    maxElev = elevationFloorStart[elevationFloorStart.columns[len(elevationFloorStart.columns)-1]].max()
+    minElev = elevationFloorStart[elevationFloorStart.columns[len(elevationFloorStart.columns)-1]].min()
 
     # Update layout for slider and set consistent y-axis range
     fig.update_layout(
@@ -1910,7 +1957,7 @@ def plot_3D_floor_slider_animated(settlementFloorStart, floorInfo3D, plot3dAnno)
             yaxis_title='',
             yaxis= dict(range=[130,-10]),
             zaxis_title='Cumulative Settlement [ft]',
-            zaxis = dict(range = [maxSettlement,0])
+            zaxis = dict(range = [maxElev,minElev])
         ),
         sliders=sliders,
         width = 1100,

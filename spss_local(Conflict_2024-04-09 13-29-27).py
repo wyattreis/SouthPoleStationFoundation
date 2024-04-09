@@ -35,11 +35,9 @@ truss_clean = read_xlTruss(xlfile)
 # Import the basic plotting file to use (label locations, building outline, etc.), and calculate the beam length between each column 
 beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort = read_beamInfo()
 # Calculate settlement at the column lugs from the survey file
-elevation, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
+settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
 # Forecast future settlement for user defined future using user defined previous number of years
 settlementProj, settlementProj_trans = calc_forecast_settlement(settlement, nsurvey, nyears)
-#Forecast the future floor elevations
-elevProj, elevProj_trans, elevFloorProj = calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears)
 # Calculate the differental settlement between column lugs
 beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj = calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans)
 # Calculate the floor elevation differences and slopes accounting for known lug to truss height (shim height)
@@ -52,13 +50,64 @@ floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot = plot_floorS
 beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps = plot_annotations()
 # Create dataframe for 3D plotting
 settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
-elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
+settlementFloorStart, floorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
+
+survey_long['dummy']= 1
+firstValue = survey_long.groupby('dummy').first()
+firstValue = firstValue.to_numpy()[0]
+print(firstValue)
+
+# elevation = survey_long.drop(columns=["dummy"]).apply(lambda row: firstValue - row, axis=1)
+# settlement.index = pd.to_datetime(settlement.index)
+
+elevInterp = survey_long.iloc[(len(survey_long.index)-(nsurvey)):(len(survey_long.index))]
+settlementInterp = settlement.iloc[(len(settlement.index)-(nsurvey)):(len(settlement.index))]
+# currentYear = elevInterp.index.year[-1]
+
+print(elevInterp)
+print(settlementInterp)
+
+# projList = []
+# for year in range(nyears):
+#     projYear = (currentYear + year+1).astype(str)
+#     projYear = pd.to_datetime(projYear + '-01-01') 
+#     projList.append(projYear)
+
+# settlementExtrap = pd.DataFrame(columns=settlementInterp.columns, index = [projList]).reset_index().set_index('level_0')
+# settlementExtrap.index = settlementExtrap.index.map(dt.datetime.toordinal)
+# settlementInterp.index = settlementInterp.index.map(dt.datetime.toordinal)
+
+# x_endpoints = list([settlementInterp.index[0], settlementInterp.index[nsurvey-1]]) + settlementExtrap.index.tolist()
+# x_enddates = pd.DataFrame(x_endpoints)
+
+# df_regression = settlementInterp.apply(lambda x: stats.linregress(settlementInterp.index, x), result_type='expand').rename(index={0: 'slope', 1: 
+#                                                                                 'intercept', 2: 'rvalue', 3:
+#                                                                                 'p-value', 4:'stderr'})
+
+# new_data_loc = {}
+# for column in df_regression.columns:   
+#     slope = df_regression.loc['slope', column]  
+#     intercept = df_regression.loc['intercept', column]  
+#     new_data_loc[column] = [slope * val + intercept for val in x_endpoints]
+
+# settlementProj = pd.DataFrame([new_data_loc], columns=new_data_loc.keys()).apply(pd.Series.explode).reset_index().drop(['index'], axis = 1)
+# settlementProj = x_enddates.join(settlementProj).set_index(0)
+# settlementProj.index.names = ['date']
+# settlementProj.index = settlementProj.index.map(dt.datetime.fromordinal)
+# settlementProj = settlementProj.apply(pd.to_numeric, errors='ignore').round(3)
+
+# settlementProj_trans = settlementProj
+# settlementProj_trans.index = settlementProj_trans.index.strftime('%Y-%m-%d') 
+# settlementProj_trans = pd.DataFrame.transpose(settlementProj_trans).iloc[:,2:]
 
 
-maxElev = elevationFloorStart[elevationFloorStart.columns[len(elevationFloorStart.columns)-1]].max()
-minElev = elevationFloorStart[elevationFloorStart.columns[len(elevationFloorStart.columns)-1]].min()
-print(maxElev, minElev)
 
+# currentElev = survey_clean.iloc[:,-1]
+# print(currentElev)
+
+# projectedElev = settlementProj_trans.sub(currentElev, axis=0)
+
+# print(projectedElev)
 
 
 

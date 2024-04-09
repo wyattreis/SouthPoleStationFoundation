@@ -55,9 +55,11 @@ if st.sidebar.button('Compute Settlement'):
     # Import the basic plotting file to use (label locations, building outline, etc.), and calculate the beam length between each column 
     beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort = read_beamInfo()
     # Calculate settlement at the column lugs from the survey file
-    settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
+    elevation, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
     # Forecast future settlement for user defined future using user defined previous number of years
     settlementProj, settlementProj_trans = calc_forecast_settlement(settlement, nsurvey, nyears)
+    #Forecast the future floor elevations
+    elevProj, elevProj_trans, elevFloorProj = calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears)
     # Calculate the differental settlement between column lugs
     beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj = calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans)
     # Calculate the floor elevation differences and slopes accounting for known lug to truss height (shim height)
@@ -70,7 +72,7 @@ if st.sidebar.button('Compute Settlement'):
     beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps = plot_annotations()
     # Create dataframe for 3D plotting
     settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
-    settlementFloorStart, floorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
+    elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
     
     ## PLAVIEW PLOTTING
     # Differental Settlement Planview
@@ -125,7 +127,7 @@ if st.sidebar.button('Compute Settlement'):
 
     ## 3D PLOTTING
     fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
-    fig_3d_floor = plot_3D_floor_slider_animated(settlementFloorStart, floorInfo3D, plot3dAnno)
+    fig_3d_floor = plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot3dAnno)
 
     st.subheader("3-Deminsional Animations of Settlement")
     # Differental Settlement 3D

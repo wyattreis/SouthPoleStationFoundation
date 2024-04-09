@@ -1957,7 +1957,7 @@ def plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot
             yaxis_title='',
             yaxis= dict(range=[130,-10]),
             zaxis_title='Cumulative Settlement [ft]',
-            # zaxis = dict(range = [maxElev,minElev])
+            zaxis = dict(range = [30,50])
         ),
         sliders=sliders,
         width = 1100,

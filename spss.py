@@ -87,21 +87,21 @@ if st.sidebar.button('Compute Settlement'):
 
     # Create heading heading for the plan view plot that describes each tab of the plot
     st.subheader("Plan View Plots")
-    st.text("Differential Floor Elevation: The differential elevations (in inches) between each column using the lug elevations and the shim pack height.  \nFloor Slope: The slope (in inches per foot) of the station floor using the differental floor elevations at each column and the known distances between each column.  \nLug Elevation: The elevation (in feet) of the column lugs used to survey the station settlement.  \nLug to Truss Height: The height between the lug survey points and the bottom of the floor trusses, including the shim pack height.")
 
     # Create Streamlit Plot objects - Plan Figure
     tab1, tab2, tab3, tab4 = st.tabs(["Differental Floor Elevation [in]", "Floor Slope [in/ft]", 
                                 "Lug Elevation [ft]", "Lug to Truss Height [ft]"])
     with tab1:
-        # Use the Streamlit theme.
-        # This is the default. So you can also omit the theme argument.
+        st.text("The differential elevations (in inches) between each column using the lug elevations and the shim pack height. Data limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_floorElev_plan, use_container_width=True, height=600)
     with tab2:
-        # Use the native Plotly theme.
+        st.text("The slope (in inches per foot) of the station floor using the differental floor elevations at each column and the known distances between each column. Data limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_floorSlope_plan, use_container_width=True, height=600)
-    with tab3: 
+    with tab3:
+        st.text("The elevation (in feet) of the column lugs used to survey the station settlement. All survey dates are included.")
         st.plotly_chart(fig_lugElev_plan, use_container_width=True, height=600)
     with tab4:
+        st.text("The height (in feet) between the lug survey points and the bottom of the floor trusses, this measurement includes the shimpack height. Data limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_lugTrussHeight_plan, use_container_width=True, height=600)
 
     ## TIMESERIES PLOTTING
@@ -113,30 +113,24 @@ if st.sidebar.button('Compute Settlement'):
     fig_rate = plot_settlementRate(settlement_rate, color_dict, maps)
     
     st.subheader("Time Series Plots")
-    #st.text("Cumulative Settlement: The cumulative settlement (in feet) of the station based on the survey lugs.  \nAnnualized Settlement Rate: The rate of settlement (in inches per year) between each survey data annualized to account for variable periods between the surveys.")
-
     # Create Streamlit Plot objects - Plan Figure
     tab1, tab2 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]"])
     with tab1:
-        # Use the Streamlit theme.
-        # This is the default. So you can also omit the theme argument.
-        st.text("Cumulative Settlement: The cumulative settlement (in feet) of the station based on the survey lugs.")
+        st.text("The cumulative settlement (in feet) of the station based on the survey lugs. All survey dates are included.")
         st.plotly_chart(fig_cumulative, use_container_width=True, height=600)
     with tab2:
-        # Use the native Plotly theme.
-        st.text("Annualized Settlement Rate: The rate of settlement (in inches per year) between each survey data annualized to account for variable periods between the surveys.")
+        st.text("The rate of settlement (in inches per year) between each survey data annualized to account for variable periods between the surveys. All survey dates are included.")
         st.plotly_chart(fig_rate, use_container_width=True, height=600)
 
     ## 3D PLOTTING
     fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
 
-    st.subheader("3-Deminsional Plots")
-    st.text("Cumulative Settlement: The cumul")
+    st.subheader("3-Deminsional Animations of Settlement")
     # Differental Settlement 3D
-    #left_co, cent_co,last_co = st.columns([0.025, 0.95, 0.025])
     tab1, tab2 = st.tabs(["Floor Elevation Cumulative Settlement [ft]", "Grade Beam Cumulative Settlement [ft]"])
     with tab1:
+        st.text("The observed and forecasted floor elevations using survey data trends and known shim pack heights. Data limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_3d_slider)
     with tab2:
-        # Use the native Plotly theme.
-        st.plotly_chart(fig_rate, use_container_width=True, height=600)      
+        st.text("The observed and forecasted grade beam elevations using survey data trends. All survey dates are included.")
+        st.plotly_chart(fig_3d_slider)    

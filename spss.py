@@ -113,28 +113,30 @@ if st.sidebar.button('Compute Settlement'):
     fig_rate = plot_settlementRate(settlement_rate, color_dict, maps)
     
     st.subheader("Time Series Plots")
-    st.text("Cumulative Settlement: The cumulative settlement (in feet) of the station based on the survey lugs.  \nAnnualized Settlement Rate: The rate of settlement (in inches per year) between each survey data annualized to account for variable periods between the surveys.")
+    #st.text("Cumulative Settlement: The cumulative settlement (in feet) of the station based on the survey lugs.  \nAnnualized Settlement Rate: The rate of settlement (in inches per year) between each survey data annualized to account for variable periods between the surveys.")
 
     # Create Streamlit Plot objects - Plan Figure
     tab1, tab2 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]"])
     with tab1:
         # Use the Streamlit theme.
         # This is the default. So you can also omit the theme argument.
+        st.text("Cumulative Settlement: The cumulative settlement (in feet) of the station based on the survey lugs.")
         st.plotly_chart(fig_cumulative, use_container_width=True, height=600)
     with tab2:
         # Use the native Plotly theme.
+        st.text("Annualized Settlement Rate: The rate of settlement (in inches per year) between each survey data annualized to account for variable periods between the surveys.")
         st.plotly_chart(fig_rate, use_container_width=True, height=600)
 
     ## 3D PLOTTING
+    fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
+
     st.subheader("3-Deminsional Plots")
     st.text("Cumulative Settlement: The cumul")
     # Differental Settlement 3D
-    left_co, cent_co,last_co = st.columns([0.025, 0.95, 0.025])
+    #left_co, cent_co,last_co = st.columns([0.025, 0.95, 0.025])
     tab1, tab2 = st.tabs(["Floor Elevation Cumulative Settlement [ft]", "Grade Beam Cumulative Settlement [ft]"])
     with tab1:
-        with cent_co:
-            fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
-            st.plotly_chart(fig_3d_slider)
+        st.plotly_chart(fig_3d_slider)
     with tab2:
         # Use the native Plotly theme.
         st.plotly_chart(fig_rate, use_container_width=True, height=600)      

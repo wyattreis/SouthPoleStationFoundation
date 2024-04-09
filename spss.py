@@ -6,8 +6,8 @@
 #               US Army Corps of Engineers
 #               Cold Regions Research and Engineering Laboratory (CRREL)
 #               Wyatt.K.Reis@usace.army.mil
-# Created:      31 October 2023
-# Updated:      08 January 2024
+# Created:      October 2023
+# Updated:      April 2024
 #
 # -------------------------------------------------------------------------------
 
@@ -84,6 +84,11 @@ if st.sidebar.button('Compute Settlement'):
     fig_lugElev_plan = plot_lugElev_plan(lugElevPlot, beamInfo)
     # Lug to Floor Height
     fig_lugTrussHeight_plan = plot_lugFloorHeight_plan(lugFloorPlot, beamInfo)
+
+    # Create heading heading for the plan view plot that describes each tab of the plot
+    st.header("Test with header")
+    st.subheader("test with subheader")
+    st.text("test with text")
 
     # Create Streamlit Plot objects - Plan Figure
     tab1, tab2, tab3, tab4 = st.tabs(["Differental Floor Elevation [in]", "Floor Slope [in/ft]", 

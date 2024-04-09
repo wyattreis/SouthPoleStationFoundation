@@ -126,9 +126,15 @@ if st.sidebar.button('Compute Settlement'):
         st.plotly_chart(fig_rate, use_container_width=True, height=600)
 
     ## 3D PLOTTING
+    st.subheader("3-Deminsional Plots")
+    st.text("Cumulative Settlement: The cumul")
     # Differental Settlement 3D
     left_co, cent_co,last_co = st.columns([0.025, 0.95, 0.025])
-    with cent_co:
-        fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
-        st.plotly_chart(fig_3d_slider)
-    
+    tab1, tab2 = st.tabs(["Floor Elevation Cumulative Settlement [ft]", "Grade Beam Cumulative Settlement [ft]"])
+    with tab1:
+        with cent_co:
+            fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
+            st.plotly_chart(fig_3d_slider)
+    with tab2:
+        # Use the native Plotly theme.
+        st.plotly_chart(fig_rate, use_container_width=True, height=600)      

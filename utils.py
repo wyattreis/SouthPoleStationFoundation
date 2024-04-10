@@ -2116,7 +2116,7 @@ def plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3
         args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate", "transition": {"duration": 0}}]
     )
 
-    maxElev = elevGBInfo3D.loc[:, elevGBInfo3D.columns.str.contains('_start')].max().max() + 13
+    maxElev = elevGBInfo3D.loc[:, elevGBInfo3D.columns.str.contains('_start')].max().max()
     minElev = elevGBInfo3D.loc[:, elevGBInfo3D.columns.str.contains('_start')].min().min()
 
     # Update layout for slider and set consistent y-axis range

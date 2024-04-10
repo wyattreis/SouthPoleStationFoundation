@@ -2049,22 +2049,22 @@ def plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3
             )
             frame_traces.append(line_trace)
 
-            column_trace = go.Scatter3d(
-                x=[startX, endX],
-                y=[startY, endY],
-                z = [startZ, startZ + 12.3],
-                text = elevGBInfo3D['MP_W_S'],
-                line_color= [startColor, endColor],
-                name="",
-                mode='lines',
-                line = dict(
-                    color = 'black',
-                    width = 3,
-                    dash = 'solid'),
-                hoverinfo='skip',
-                showlegend=False 
-            )
-            frame_traces.append(column_trace)
+            # column_trace = go.Scatter3d(
+            #     x=[startX, endX],
+            #     y=[startY, endY],
+            #     z = [startZ, startZ + 12.3],
+            #     text = elevGBInfo3D['MP_W_S'],
+            #     line_color= [startColor, endColor],
+            #     name="",
+            #     mode='lines',
+            #     line = dict(
+            #         color = 'black',
+            #         width = 3,
+            #         dash = 'solid'),
+            #     hoverinfo='skip',
+            #     showlegend=False 
+            # )
+            # frame_traces.append(column_trace)
 
         # Create the label trace for this frame
         label_trace = go.Scatter3d(

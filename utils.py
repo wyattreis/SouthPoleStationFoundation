@@ -2015,7 +2015,7 @@ def plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot
 def plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3dAnno):
     
     # Calculate the maximum number of traces required for any frame
-    max_traces_per_frame = len(elevGBInfo3D['startX']) + 1  # +1 for the label trace
+    max_traces_per_frame = len(elevGBInfo3D['startX'])*2 + 1  # +1 for the label trace
 
     # Initialize the figure with the maximum number of empty traces
     fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], mode='lines', showlegend=False) for _ in range(max_traces_per_frame)])
@@ -2052,7 +2052,7 @@ def plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3
             column_trace = go.Scatter3d(
                 x=[startX, startX],
                 y=[startY, startY],
-                z = [startZ, startZ + 12.3],
+                z = [startZ, (startZ + 12.31)],
                 text = elevGBInfo3D['MP_W_S'],
                 line_color= [startColor, endColor],
                 name="",

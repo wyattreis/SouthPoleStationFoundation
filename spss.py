@@ -127,7 +127,7 @@ if st.sidebar.button('Compute Settlement'):
     ## 3D PLOTTING
     fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
     fig_3d_floor = plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot3dAnno)
-    fig_3d_gradeBeam = plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3dAnno)
+    # fig_3d_gradeBeam = plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3dAnno)
 
     st.subheader("3-Deminsional Animations of Settlement")
     # Differental Settlement 3D
@@ -137,4 +137,4 @@ if st.sidebar.button('Compute Settlement'):
         st.plotly_chart(fig_3d_floor)
     with tab2:
         st.text("The observed and forecasted grade beam elevations using survey data trends.  \nAll survey dates are included.")
-        st.plotly_chart(fig_3d_gradeBeam)    
+        # st.plotly_chart(fig_3d_gradeBeam)    

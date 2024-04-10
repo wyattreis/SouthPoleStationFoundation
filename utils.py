@@ -96,7 +96,7 @@ def calc_settlement(survey_long):
     elevation.index = pd.to_datetime(elevation.index)
 
     #create an elevation of the grade beams using the 12.31' listed in the SPS As-builts Sheet A5.1 minues 1' between top of column and survey point (11.31' below survey point)
-    gradeBeamElev = elevation.sub(11.31)
+    gradeBeamElev = elevation.sub(11.31).transpose()
 
     settlement = survey_long.drop(columns=["dummy"]).apply(lambda row: firstValue - row, axis=1)
     settlement.index = pd.to_datetime(settlement.index)
@@ -309,7 +309,7 @@ def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeC
     elevationGBStart = elevationGBStart.join(elevationFloorProjStart)
 
     beamEnd = beamInfo[['MP_E_N', 'beamName']].set_index('MP_E_N')
-    elevationGBEnd = beamEnd.join(gradeBeamElev.drop(columns=['mpX', 'mpY'])).set_index('beamName')
+    elevationGBEnd = beamEnd.join(gradeBeamElev).set_index('beamName')
     elevationGBEnd.columns = pd.to_datetime(elevationGBEnd.columns).astype(str)
     elevationFloorProjEnd = beamEnd.join(elevGradeBeamProj).set_index('beamName')
     elevationGBEnd = elevationGBEnd.join(elevationFloorProjEnd)

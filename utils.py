@@ -2054,7 +2054,7 @@ def plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3
                 y=[startY, startY],
                 z = [startZ, (startZ + 12.31)],
                 text = elevGBInfo3D['MP_W_S'],
-                line_color= [startColor, endColor],
+                line_color= "black",#[startColor, endColor],
                 name="",
                 mode='lines',
                 line = dict(
@@ -2230,7 +2230,7 @@ def plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, el
                 y=[startY, startY],
                 z = [startZ, (startZ + 12.31)],
                 text = elevGBInfo3D['MP_W_S'],
-                line_color= [startColor, endColor],
+                line_color= "black",#[startColor, endColor],
                 name="",
                 mode='lines',
                 line = dict(

@@ -91,8 +91,12 @@ def calc_settlement(survey_long):
     firstValue = survey_long.groupby('dummy').first()
     firstValue = firstValue.to_numpy()[0]
 
+    #create an elevation of lug dateframe
     elevation =  survey_long.drop(columns=["dummy"])
     elevation.index = pd.to_datetime(elevation.index)
+
+    #create an elevation of the grade beams using the 12.31' listed in the SPS As-builts Sheet A5.1 minues 1' between top of column and survey point (11.31' below survey point)
+    gradeBeamElev = elevation.sub(11.31)
 
     settlement = survey_long.drop(columns=["dummy"]).apply(lambda row: firstValue - row, axis=1)
     settlement.index = pd.to_datetime(settlement.index)
@@ -107,7 +111,7 @@ def calc_settlement(survey_long):
     diffDays["diffDays"] = settlement_delta.index.to_series().diff().dt.days
 
     settlement_rate = settlement_delta.iloc[:,:].div(diffDays.diffDays, axis=0).mul(365)
-    return elevation, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate
+    return elevation, gradeBeamElev, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate
 
 # Cumulative Settlement Forecasting
 def calc_forecast_settlement(settlement, nsurvey, nyears):
@@ -189,7 +193,9 @@ def calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears):
     currentTruss = truss_clean.iloc[:,-1]
     elevFloorProj = elevProj_trans.add(currentTruss, axis="index")
 
-    return elevProj, elevProj_trans, elevFloorProj
+    elevGradeBeamProj = elevProj_trans.sub(11.31)
+
+    return elevProj, elevProj_trans, elevFloorProj, elevGradeBeamProj
 
 # Calculate differental settlement
 def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans):
@@ -293,6 +299,28 @@ def calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, be
     elevFloorInfo3D = elevFloorInfo3D[elevFloor3D.index.notnull()]
     elevFloorInfo3D = elevFloorInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
     return elevationFloorStart, elevFloorInfo3D
+
+# Create dataframe for 3D plotting floor elevations
+def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor):
+    beamStart = beamInfo[['MP_W_S', 'beamName']].set_index('MP_W_S')
+    elevationGBStart = beamStart.join(gradeBeamElev.drop(columns=['mpX', 'mpY'])).set_index('beamName')
+    elevationGBStart.columns = pd.to_datetime(elevationGBStart.columns).astype(str)
+    elevationFloorProjStart = beamStart.join(elevGradeBeamProj).set_index('beamName')
+    elevationGBStart = elevationGBStart.join(elevationFloorProjStart)
+
+    beamEnd = beamInfo[['MP_E_N', 'beamName']].set_index('MP_E_N')
+    elevationGBEnd = beamEnd.join(gradeBeamElev.drop(columns=['mpX', 'mpY'])).set_index('beamName')
+    elevationGBEnd.columns = pd.to_datetime(elevationGBEnd.columns).astype(str)
+    elevationFloorProjEnd = beamEnd.join(elevGradeBeamProj).set_index('beamName')
+    elevationGBEnd = elevationGBEnd.join(elevationFloorProjEnd)
+
+    elevGB3D = elevationGBStart.join(elevationGBEnd, lsuffix='_start', rsuffix='_end')
+
+    elevGBInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
+    elevGBInfo3D = elevGBInfo3D.join(elevGB3D)
+    elevGBInfo3D = elevGBInfo3D[elevGB3D.index.notnull()]
+    elevGBInfo3D = elevGBInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
+    return elevationGBStart, elevGBInfo3D
 
 # Line styles for beam plots
 def plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj):
@@ -746,7 +774,7 @@ def plot_settlementRate(settlement_rate, color_dict, maps):
     fig.update_layout(
             xaxis_title="Survey Date",
             yaxis_title="Settlement [in/year]",
-            yaxis= dict(range=[-5,10])
+            yaxis= dict(range=[0,6])
         )
 
     # groups and trace visibilities
@@ -1850,6 +1878,7 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
     return fig
 
 def plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot3dAnno):
+    
     # Calculate the maximum number of traces required for any frame
     max_traces_per_frame = len(elevFloorInfo3D['startX']) + 1  # +1 for the label trace
 
@@ -1937,6 +1966,158 @@ def plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot
 
     maxElev = elevFloorInfo3D.loc[:, elevFloorInfo3D.columns.str.contains('_start')].max().max()
     minElev = elevFloorInfo3D.loc[:, elevFloorInfo3D.columns.str.contains('_start')].min().min()
+
+    # Update layout for slider and set consistent y-axis range
+    fig.update_layout(
+        # Update layout with play and pause buttons
+        updatemenus=[dict(
+            type="buttons",
+            showactive=False,
+            buttons=[play_button, pause_button],
+            x=0,  # x and y determine the position of the buttons
+            y=-0.06,
+            xanchor="right",
+            yanchor="top",
+            direction="left"
+        )],
+        autosize=False,
+        margin=dict(l=0, r=0, b=100, t=0),
+        scene_camera=camera,
+        scene=dict(
+            xaxis_title='',
+            xaxis= dict(range=[400,-10]), 
+            yaxis_title='',
+            yaxis= dict(range=[130,-10]),
+            zaxis_title='Floor Elevation [ft]',
+            zaxis = dict(range = [minElev,maxElev])
+        ),
+        sliders=sliders,
+        width = 1100,
+        height = 600,
+        scene_aspectmode='manual',
+        scene_aspectratio=dict(x=7, y=2, z=1),
+        uniformtext_minsize=10,
+        annotations = plot3dAnno
+        )
+
+    # Set initial view, update hover mode
+    fig.update_traces(x=frames[0].data[0].x, 
+                    y=frames[0].data[0].y, 
+                    z=frames[0].data[0].z,
+                    hovertemplate="<br>".join([
+                        "Elevation [ft]: %{z}"
+                        ]),
+                    hoverlabel=dict(
+                        bgcolor = "white"
+                        ))
+    return fig
+
+def plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3dAnno):
+    
+    # Calculate the maximum number of traces required for any frame
+    max_traces_per_frame = len(elevGBInfo3D['startX']) + 1  # +1 for the label trace
+
+    # Initialize the figure with the maximum number of empty traces
+    fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], mode='lines', showlegend=False) for _ in range(max_traces_per_frame)])
+
+    # Creating frames
+    frames = []
+    for col in elevationGBStart.columns:
+        frame_traces = []  # List to hold all traces for this frame
+
+        # Create a separate trace for each line segment
+        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor) in zip(elevGBInfo3D['startX'], elevGBInfo3D['endX'], 
+                                                                                    elevGBInfo3D['startY'], elevGBInfo3D['endY'], 
+                                                                                    elevGBInfo3D['{0}_start'.format(col)], 
+                                                                                    elevGBInfo3D['{0}_end'.format(col)],
+                                                                                    elevGBInfo3D[col],elevGBInfo3D[col]):
+
+            line_trace = go.Scatter3d(
+                x=[startX, endX],
+                y=[startY, endY],
+                z = [startZ, endZ],
+                text = elevGBInfo3D['MP_W_S'],
+                line_color= [startColor, endColor],
+                name="",
+                mode='lines',
+                line = dict(
+                    color = 'black',
+                    width = 3,
+                    dash = 'solid'),
+                #hoverinfo='skip',
+                showlegend=False 
+            )
+            frame_traces.append(line_trace)
+
+            column_trace = go.Scatter3d(
+                x=[startX, endX],
+                y=[startY, endY],
+                z = [startZ, startZ + 12.3],
+                text = elevGBInfo3D['MP_W_S'],
+                line_color= [startColor, endColor],
+                name="",
+                mode='lines',
+                line = dict(
+                    color = 'black',
+                    width = 3,
+                    dash = 'solid'),
+                hoverinfo='skip',
+                showlegend=False 
+            )
+            frame_traces.append(column_trace)
+
+        # Create the label trace for this frame
+        label_trace = go.Scatter3d(
+            x=elevGBInfo3D['labelX'], 
+            y=elevGBInfo3D['labelY'], 
+            z=elevGBInfo3D[f'{col}_start'], 
+            text=elevGBInfo3D['MP_W_S'], 
+            mode='text', 
+            textfont=dict(
+                size=12,
+                color='grey'), 
+            hoverinfo='skip', 
+            showlegend=False
+        )
+        frame_traces.append(label_trace)
+
+        # Ensure the frame has the same number of traces as the figure
+        while len(frame_traces) < max_traces_per_frame:
+            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode=[]))
+
+        # Add the frame
+        frames.append(go.Frame(data=frame_traces, name=col))
+
+    fig.frames = frames
+
+    # Slider
+    sliders = [{"steps": [{"args": [[f.name], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}],
+                            "label": col, "method": "animate"} for col, f in zip(elevationGBStart.columns, fig.frames)],
+                "len": 0.95,
+                "x": 0.035,
+                "y": 0}]
+
+    camera = dict(
+        up=dict(x=0, y=0, z=1),
+        center=dict(x=0, y=0, z=0),
+        eye=dict(x=0.1, y=4, z=3)
+    )
+
+    # Define the play and pause buttons
+    play_button = dict(
+        label="&#9654;",
+        method="animate",
+        args=[None, {"frame": {"duration": 200, "redraw": True}, "fromcurrent": True, "transition": {"duration": 200, "easing": "quadratic-in-out"}}]
+    )
+
+    pause_button = dict(
+        label="&#9724;",
+        method="animate",
+        args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate", "transition": {"duration": 0}}]
+    )
+
+    maxElev = elevGBInfo3D.loc[:, elevGBInfo3D.columns.str.contains('_start')].max().max()
+    minElev = elevGBInfo3D.loc[:, elevGBInfo3D.columns.str.contains('_start')].min().min()
 
     # Update layout for slider and set consistent y-axis range
     fig.update_layout(

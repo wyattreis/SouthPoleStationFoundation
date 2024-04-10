@@ -35,11 +35,11 @@ truss_clean = read_xlTruss(xlfile)
 # Import the basic plotting file to use (label locations, building outline, etc.), and calculate the beam length between each column 
 beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort = read_beamInfo()
 # Calculate settlement at the column lugs from the survey file
-elevation, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
+elevation, gradeBeamElev, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
 # Forecast future settlement for user defined future using user defined previous number of years
 settlementProj, settlementProj_trans = calc_forecast_settlement(settlement, nsurvey, nyears)
 #Forecast the future floor elevations
-elevProj, elevProj_trans, elevFloorProj = calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears)
+elevProj, elevProj_trans, elevFloorProj, elevGradeBeamProj = calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears)
 # Calculate the differental settlement between column lugs
 beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj = calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans)
 # Calculate the floor elevation differences and slopes accounting for known lug to truss height (shim height)
@@ -53,14 +53,8 @@ beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps =
 # Create dataframe for 3D plotting
 settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
 elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
-
-print(settlement_rate)
-maxRate = settlement_rate.iloc[:,-1].max()
-# minElev = elevFloorInfo3D.loc[:, elevFloorInfo3D.columns.str.contains('_start')].min().min()
-print(maxRate)
-
-
-
+elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor)
+print(elevationGBStart)
 
 
 

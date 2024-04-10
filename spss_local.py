@@ -55,7 +55,7 @@ settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, set
 elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
 
 print(settlement_rate)
-maxRate = settlement_rate.max().median()
+maxRate = settlement_rate.iloc[:,-1].max()
 # minElev = elevFloorInfo3D.loc[:, elevFloorInfo3D.columns.str.contains('_start')].min().min()
 print(maxRate)
 

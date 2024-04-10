@@ -746,7 +746,7 @@ def plot_settlementRate(settlement_rate, color_dict, maps):
     fig.update_layout(
             xaxis_title="Survey Date",
             yaxis_title="Settlement [in/year]",
-            yaxis= dict(range=[0,7])
+            yaxis= dict(range=[-5,10])
         )
 
     # groups and trace visibilities

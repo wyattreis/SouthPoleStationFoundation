@@ -128,13 +128,16 @@ if st.sidebar.button('Compute Settlement'):
     fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
     fig_3d_floor = plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot3dAnno)
     fig_3d_gradeBeam = plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3dAnno)
+    fig_3d_station = plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, elevGBInfo3D, plot3dAnno)
 
     st.subheader("3-Deminsional Animations of Settlement")
     # Differental Settlement 3D
-    tab1, tab2 = st.tabs(["Floor Elevation Cumulative Settlement [ft]", "Grade Beam Cumulative Settlement [ft]"])
+    tab1, tab2, tab3 = st.tabs(["Floor Elevation [ft]", "Grade Beam [ft]", "Station Foundation [ft]"])
     with tab1:
         st.text("The observed and forecasted floor elevations using survey data trends and known shim pack heights.  \nData is limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_3d_floor)
     with tab2:
         st.text("The observed and forecasted grade beam elevations using survey data trends.  \nAll survey dates are included.")
-        st.plotly_chart(fig_3d_gradeBeam)    
+        st.plotly_chart(fig_3d_gradeBeam) 
+    with tab3:
+        st.plotly_chart(fig_3d_station) 

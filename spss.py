@@ -125,19 +125,19 @@ if st.sidebar.button('Compute Settlement'):
         st.plotly_chart(fig_rate, use_container_width=True, height=600)
 
     ## 3D PLOTTING
-    fig_3d_slider = plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno)
     fig_3d_floor = plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot3dAnno)
     fig_3d_gradeBeam = plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3dAnno)
     fig_3d_station = plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, elevGBInfo3D, plot3dAnno)
 
     st.subheader("3-Deminsional Animations of Settlement")
     # Differental Settlement 3D
-    tab1, tab2, tab3 = st.tabs(["Floor Elevation [ft]", "Grade Beam [ft]", "Station Foundation [ft]"])
+    tab1, tab2, tab3 = st.tabs(["Floor Elevation [ft]", "Grade Beam Elevation [ft]", "Station Foundation Elevation[ft]"])
     with tab1:
-        st.text("The observed and forecasted floor elevations using survey data trends and known shim pack heights.  \nData is limited to the period where shim pack heights are known.")
+        st.text("The observed and forecasted floor elevations.  \nForecasted elevations use settlement trend rates from the number of years specified.  \nFloor elevations equal the survey lug elevation plus the distance to the bottom of floor joist, including shim pack height.  \nData is limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_3d_floor)
     with tab2:
-        st.text("The observed and forecasted grade beam elevations using survey data trends.  \nAll survey dates are included.")
+        st.text("The observed and forecasted grade beam elevations. \nForecasted elevations use settlement trend rates from the number of years specified.  \nGrade beam elevation is equal to the survey lug elevation minus 11.31 feet (As-Builts Sheet A5.1; column height = 12.31', lugs are ~1' below top of column). \nAll survey dates are included.")
         st.plotly_chart(fig_3d_gradeBeam) 
     with tab3:
+        st.text("The observed and forecasted grade beam and floor elevations of the station.  \nForecasted elevations use settlement trend rates from the number of years specified.  \nColumns are shown for clarity, opening between top of column and floor elevation includes variability in shim packs and distance between top of column and floor joists.  \nData is limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_3d_station) 

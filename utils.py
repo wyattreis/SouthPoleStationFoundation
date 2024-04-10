@@ -743,8 +743,11 @@ def plot_settlementRate(settlement_rate, color_dict, maps):
                 marker_color = color_dict[column]
             ))
 
-    fig.update_layout(xaxis_title="Survey Date",
-                    yaxis_title="Settlement [in/year]")
+    fig.update_layout(scene=dict(
+            xaxis_title="Survey Date",
+            yaxis_title="Settlement [in/year]",
+            yaxis= dict(range=[0,7])
+        ))
 
     # groups and trace visibilities
     group = []
@@ -1956,7 +1959,7 @@ def plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot
             xaxis= dict(range=[400,-10]), 
             yaxis_title='',
             yaxis= dict(range=[130,-10]),
-            zaxis_title='Cumulative Settlement [ft]',
+            zaxis_title='Floor Elevation [ft]',
             zaxis = dict(range = [minElev,maxElev])
         ),
         sliders=sliders,
@@ -1973,7 +1976,7 @@ def plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot
                     y=frames[0].data[0].y, 
                     z=frames[0].data[0].z,
                     hovertemplate="<br>".join([
-                        "Settlement [ft]: %{z}"
+                        "Elevation [ft]: %{z}"
                         ]),
                     hoverlabel=dict(
                         bgcolor = "white"

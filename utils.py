@@ -2050,8 +2050,8 @@ def plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3
             frame_traces.append(line_trace)
 
             column_trace = go.Scatter3d(
-                x=[startX, endX],
-                y=[startY, endY],
+                x=[startX, startX],
+                y=[startY, startY],
                 z = [startZ, startZ + 12.3],
                 text = elevGBInfo3D['MP_W_S'],
                 line_color= [startColor, endColor],

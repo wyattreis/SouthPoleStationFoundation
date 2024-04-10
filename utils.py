@@ -303,7 +303,7 @@ def calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, be
 # Create dataframe for 3D plotting floor elevations
 def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor):
     beamStart = beamInfo[['MP_W_S', 'beamName']].set_index('MP_W_S')
-    elevationGBStart = beamStart.join(gradeBeamElev.drop(columns=['mpX', 'mpY'])).set_index('beamName')
+    elevationGBStart = beamStart.join(gradeBeamElev).set_index('beamName')
     elevationGBStart.columns = pd.to_datetime(elevationGBStart.columns).astype(str)
     elevationFloorProjStart = beamStart.join(elevGradeBeamProj).set_index('beamName')
     elevationGBStart = elevationGBStart.join(elevationFloorProjStart)

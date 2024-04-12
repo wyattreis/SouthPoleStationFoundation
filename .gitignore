@@ -1,0 +1,5 @@
+# .gitignore
+.ipynb_checkpoints/
+_old/
+_pycache_
+.devcontainer

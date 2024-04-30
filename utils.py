@@ -231,7 +231,7 @@ def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, 
     beamSlopeProj.iloc[:,1:] = beamSlopeProj.iloc[:,1:].div(beamSlopeProj.beamLength, axis=0)
     beamSlopeProj= beamSlopeProj.drop(columns=['beamLength'])
 
-    # Projected floor settlement differences 
+    # Floor settlement differences 
     floorElevAll = beamLength_long.join(floorElevPlot).join(elevFloorProj.iloc[:,1:])
     floorDiffElev = floorElevAll.set_index(['beamName']).sort_values(by=['beamName', 'beamEnd']).drop(columns=['beamEnd', 'beamLength', 'mpX', 'mpY']).groupby(['beamName']).diff().mul(12)
     floorDiffElev = floorDiffElev[~floorDiffElev.index.duplicated(keep='last')].abs()

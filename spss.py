@@ -42,7 +42,7 @@ st.sidebar.title('Survey Data and Forecast Options:')
 xlfile = st.sidebar.file_uploader("Upload South Pole Station Survey File", type = ['xlsx'])
 
 # Set forecasting variables
-nsurvey = st.sidebar.number_input('Number of Past Surveys Used for Forecast', value=10)
+nsurvey = st.sidebar.number_input('Number of Past Surveys Used for Forecast', value=6)
 nyears = st.sidebar.number_input('Number of Years Forecasted', value=5)
 
 if st.sidebar.button('Compute Settlement'):

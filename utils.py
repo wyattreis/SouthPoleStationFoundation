@@ -943,7 +943,8 @@ def plot_settlementRate(settlement_rate, color_dict, maps):
 def floorDifferential(floorDiffElev, color_dictBeams, mapsBeams):
     df = floorDiffElev.transpose()
     df= df.drop('2022-01-07')
-    df = df[['A2-6 - A2-5','A1-2 - A1-1','A1-3 - A1-2','A3-2 - A2-6','B1-1 - B2-1','B2-6 - B2-2','B4-1 - B3-4','B4-3 - B4-2','B3-1 - B2-2']]
+    #Use these to only show specific columns or columns over a threshold
+    #df = df[['A2-6 - A2-5','A1-2 - A1-1','A1-3 - A1-2','A3-2 - A2-6','B1-1 - B2-1','B2-6 - B2-2','B4-1 - B3-4','B4-3 - B4-2','B3-1 - B2-2']]
     #df = df[df.columns[df[specific_column].max() >= 2]]
 
     fig = go.Figure()

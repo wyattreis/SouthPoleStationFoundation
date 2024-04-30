@@ -60,16 +60,16 @@ if st.sidebar.button('Compute Settlement'):
     settlementProj, settlementProj_trans = calc_forecast_settlement(settlement, nsurvey, nyears)
     #Forecast the future floor elevations
     elevProj, elevProj_trans, elevFloorProj, elevGradeBeamProj = calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears)
-    # Calculate the differental settlement between column lugs
-    beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj = calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans)
     # Calculate the floor elevation differences and slopes accounting for known lug to truss height (shim height)
     lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot = calc_plan_dataframe (survey_clean, truss_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo)
+    # Calculate the differental settlement between column lugs
+    beamDiff, beamDiffProj, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, floorDiffElev = calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans, elevFloorProj, floorElevPlot)
     # Create dataframe for Beam Plotting Styles
     beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProjColor = plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj)
     # Create dataframe for floor elevation plotting styles
     floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot = plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
     # Create dataframe for plot annotations
-    beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps = plot_annotations()
+    beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams = plot_annotations()
     # Create dataframe for 3D plotting
     settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
     elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
@@ -113,16 +113,21 @@ if st.sidebar.button('Compute Settlement'):
     fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
     # Settlement Rate
     fig_rate = plot_settlementRate(settlement_rate, color_dict, maps)
+    # Differential between columns Timeseries
+    floorDiff = floorDifferential(floorDiffElev, color_dictBeams, mapsBeams)
     
     st.subheader("Time Series Plots")
     # Create Streamlit Plot objects - Plan Figure
-    tab1, tab2 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]"])
+    tab1, tab2, tab3 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]", "Column Pair Floor Differential [in]"])
     with tab1:
         st.text("The cumulative settlement (in feet) of the station based on the survey lugs.  \nAll survey dates are included.")
         st.plotly_chart(fig_cumulative, use_container_width=True, height=600)
     with tab2:
         st.text("The rate of settlement (in inches per year) between each survey data annualized to account for variable periods between the surveys.  \nAll survey dates are included.")
         st.plotly_chart(fig_rate, use_container_width=True, height=600)
+    with tab3:
+        st.text("The differential elevation (in inches) for each column pair for each survey date and using projected floor elevations.  \nData is limited to the period where shim pack heights are known and projected.")
+        st.plotly_chart(floorDiff, use_container_width=True, height=600)
 
     ## 3D PLOTTING
     fig_3d_floor = plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot3dAnno)

@@ -118,6 +118,8 @@ def calc_forecast_settlement(settlement, nsurvey, nyears):
     settlementInterp = settlement.iloc[(len(settlement.index)-(nsurvey)):(len(settlement.index))]
     currentYear = settlementInterp.index.year[-1]
 
+    starting_settlement = settlementInterp.iloc[-1]
+
     projList = []
     for year in range(nyears):
         projYear = (currentYear + year+1).astype(str)
@@ -129,33 +131,35 @@ def calc_forecast_settlement(settlement, nsurvey, nyears):
     settlementInterp.index = settlementInterp.index.map(dt.datetime.toordinal)
 
     x_endpoints = list([settlementInterp.index[0], settlementInterp.index[nsurvey-1]]) + settlementExtrap.index.tolist()
-    x_enddates = pd.DataFrame(x_endpoints)
+    x_enddates = pd.DataFrame(x_endpoints[1:])
+    deltaDays = [x - x_endpoints[1] for x in x_endpoints[1:]]
 
     df_regression = settlementInterp.apply(lambda x: stats.linregress(settlementInterp.index, x), result_type='expand').rename(index={0: 'slope', 1: 
                                                                                     'intercept', 2: 'rvalue', 3:
                                                                                     'p-value', 4:'stderr'})
 
-    new_data_loc = {}
+    settlementProj = pd.DataFrame(index=x_enddates[0])
     for column in df_regression.columns:   
         slope = df_regression.loc['slope', column]  
-        intercept = df_regression.loc['intercept', column]  
-        new_data_loc[column] = [slope * val + intercept for val in x_endpoints]
-
-    settlementProj = pd.DataFrame([new_data_loc], columns=new_data_loc.keys()).apply(pd.Series.explode).reset_index().drop(['index'], axis = 1)
-    settlementProj = x_enddates.join(settlementProj).set_index(0)
+        projected_data = [starting_settlement[column] + slope * val for val in deltaDays]
+        settlementProj[column] = projected_data
+        
     settlementProj.index.names = ['date']
     settlementProj.index = settlementProj.index.map(dt.datetime.fromordinal)
     settlementProj = settlementProj.apply(pd.to_numeric, errors='ignore').round(3)
 
+
     settlementProj_trans = settlementProj
     settlementProj_trans.index = settlementProj_trans.index.strftime('%Y-%m-%d') 
-    settlementProj_trans = pd.DataFrame.transpose(settlementProj_trans).iloc[:,2:]
+    settlementProj_trans = pd.DataFrame.transpose(settlementProj_trans).iloc[:,1:]
 
     return settlementProj, settlementProj_trans
 
 def calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears):
     elevInterp = elevation.iloc[(len(elevation.index)-(nsurvey)):(len(elevation.index))]
     currentYear = elevInterp.index.year[-1]
+
+    starting_elev = elevInterp.iloc[-1]
 
     projList = []
     for year in range(nyears):
@@ -168,27 +172,26 @@ def calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears):
     elevInterp.index = elevInterp.index.map(dt.datetime.toordinal)
 
     x_endpoints = list([elevInterp.index[0], elevInterp.index[nsurvey-1]]) + elevExtrap.index.tolist()
-    x_enddates = pd.DataFrame(x_endpoints)
+    x_enddates = pd.DataFrame(x_endpoints[1:])
+    deltaDays = [x - x_endpoints[1] for x in x_endpoints[1:]]
 
     df_regression = elevInterp.apply(lambda x: stats.linregress(elevInterp.index, x), result_type='expand').rename(index={0: 'slope', 1: 
                                                                                     'intercept', 2: 'rvalue', 3:
                                                                                     'p-value', 4:'stderr'})
 
-    new_data_loc = {}
+    elevProj = pd.DataFrame(index=x_enddates[0])
     for column in df_regression.columns:   
         slope = df_regression.loc['slope', column]  
-        intercept = df_regression.loc['intercept', column]  
-        new_data_loc[column] = [slope * val + intercept for val in x_endpoints]
+        projected_data = [starting_elev[column] + slope * val for val in deltaDays]
+        elevProj[column] = projected_data
 
-    elevProj = pd.DataFrame([new_data_loc], columns=new_data_loc.keys()).apply(pd.Series.explode).reset_index().drop(['index'], axis = 1)
-    elevProj = x_enddates.join(elevProj).set_index(0)
     elevProj.index.names = ['date']
     elevProj.index = elevProj.index.map(dt.datetime.fromordinal)
     elevProj = elevProj.apply(pd.to_numeric, errors='ignore').round(3)
 
     elevProj_trans = elevProj
     elevProj_trans.index = elevProj_trans.index.strftime('%Y-%m-%d') 
-    elevProj_trans = pd.DataFrame.transpose(elevProj_trans).iloc[:,2:]
+    elevProj_trans = pd.DataFrame.transpose(elevProj_trans)#.iloc[:,1:]
 
     currentTruss = truss_clean.iloc[:,-1]
     elevFloorProj = elevProj_trans.add(currentTruss, axis="index")
@@ -198,7 +201,7 @@ def calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears):
     return elevProj, elevProj_trans, elevFloorProj, elevGradeBeamProj
 
 # Calculate differental settlement
-def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans):
+def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans, elevFloorProj, floorElevPlot):
     # Merge the beam file and the settlement file
     beamSettlement = beamLength_long.join(survey_clean)
 
@@ -217,7 +220,7 @@ def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, 
     beamDiffProj = beamDiffProj[~beamDiffProj.index.duplicated(keep='last')]
     beamDiffProj.columns = pd.to_datetime(beamDiffProj.columns).astype(str)
 
-    # Calculate the slope for each beam, transpose for ploting 
+    # Calculate the slope for each beam, transpose for plotting 
     beamSlope = beamLength_sort.join(beamDiff)
     beamSlope.iloc[:,1:] = beamSlope.iloc[:,1:].div(beamSlope.beamLength, axis=0)
     beamSlopeplot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['beamName']).join(beamSlope)
@@ -227,7 +230,14 @@ def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, 
     beamSlopeProj = beamLength_sort.join(beamDiffProj)
     beamSlopeProj.iloc[:,1:] = beamSlopeProj.iloc[:,1:].div(beamSlopeProj.beamLength, axis=0)
     beamSlopeProj= beamSlopeProj.drop(columns=['beamLength'])
-    return beamDiff, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj
+
+    # Projected floor settlement differences 
+    floorElevAll = beamLength_long.join(floorElevPlot).join(elevFloorProj.iloc[:,1:])
+    floorDiffElev = floorElevAll.set_index(['beamName']).sort_values(by=['beamName', 'beamEnd']).drop(columns=['beamEnd', 'beamLength', 'mpX', 'mpY']).groupby(['beamName']).diff().mul(12)
+    floorDiffElev = floorDiffElev[~floorDiffElev.index.duplicated(keep='last')].abs()
+    floorDiffElev.columns = pd.to_datetime(floorDiffElev.columns).astype(str)
+
+    return beamDiff, beamDiffProj, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, floorDiffElev
 
 # Create dataframes for planview plotting 
 # (lug and floor elevations, lug to truss measurement, differential settlement)
@@ -283,13 +293,13 @@ def calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, be
     beamStart = beamInfo[['MP_W_S', 'beamName']].set_index('MP_W_S')
     elevationFloorStart = beamStart.join(floorElevPlot.drop(columns=['mpX', 'mpY'])).set_index('beamName')
     elevationFloorStart.columns = pd.to_datetime(elevationFloorStart.columns).astype(str)
-    elevationFloorProjStart = beamStart.join(elevFloorProj).set_index('beamName')
+    elevationFloorProjStart = beamStart.join(elevFloorProj.iloc[:,1:]).set_index('beamName')
     elevationFloorStart = elevationFloorStart.join(elevationFloorProjStart)
 
     beamEnd = beamInfo[['MP_E_N', 'beamName']].set_index('MP_E_N')
     elevationFloorEnd = beamEnd.join(floorElevPlot.drop(columns=['mpX', 'mpY'])).set_index('beamName')
     elevationFloorEnd.columns = pd.to_datetime(elevationFloorEnd.columns).astype(str)
-    elevationFloorProjEnd = beamEnd.join(elevFloorProj).set_index('beamName')
+    elevationFloorProjEnd = beamEnd.join(elevFloorProj.iloc[:,1:]).set_index('beamName')
     elevationFloorEnd = elevationFloorEnd.join(elevationFloorProjEnd)
 
     elevFloor3D = elevationFloorStart.join(elevationFloorEnd, lsuffix='_start', rsuffix='_end')
@@ -305,13 +315,13 @@ def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeC
     beamStart = beamInfo[['MP_W_S', 'beamName']].set_index('MP_W_S')
     elevationGBStart = beamStart.join(gradeBeamElev).set_index('beamName')
     elevationGBStart.columns = pd.to_datetime(elevationGBStart.columns).astype(str)
-    elevationFloorProjStart = beamStart.join(elevGradeBeamProj).set_index('beamName')
+    elevationFloorProjStart = beamStart.join(elevGradeBeamProj.iloc[:,1:]).set_index('beamName')
     elevationGBStart = elevationGBStart.join(elevationFloorProjStart)
 
     beamEnd = beamInfo[['MP_E_N', 'beamName']].set_index('MP_E_N')
     elevationGBEnd = beamEnd.join(gradeBeamElev).set_index('beamName')
     elevationGBEnd.columns = pd.to_datetime(elevationGBEnd.columns).astype(str)
-    elevationFloorProjEnd = beamEnd.join(elevGradeBeamProj).set_index('beamName')
+    elevationFloorProjEnd = beamEnd.join(elevGradeBeamProj.iloc[:,1:]).set_index('beamName')
     elevationGBEnd = elevationGBEnd.join(elevationFloorProjEnd)
 
     elevGB3D = elevationGBStart.join(elevationGBEnd, lsuffix='_start', rsuffix='_end')
@@ -594,8 +604,22 @@ def plot_annotations():
     'B1-1': '#1b9e77', 'B1-2': '#d95f02', 'B1-3': '#7570b3', 'B1-4': '#e7298a',
     'B2-1': '#1b9e77', 'B2-2': '#d95f02', 'B2-3': '#7570b3', 'B2-4': '#e7298a', 'B2-5': '#66a61e','B2-6': '#e6ab02',
     'B3-1': '#1b9e77', 'B3-2': '#d95f02', 'B3-3': '#7570b3', 'B3-4': '#e7298a',
-    'B4-1': '#1b9e77', 'B4-2': '#d95f02', 'B4-3': '#7570b3', 'B4-4': '#e7298a'
-}
+    'B4-1': '#1b9e77', 'B4-2': '#d95f02', 'B4-3': '#7570b3', 'B4-4': '#e7298a'}
+
+    color_dictBeams = {
+        'A1-1 - A2-2':'#006666', 'A1-2 - A1-1':'#009999', 'A1-3 - A1-2':'#00CCCC', 'A1-3 - A1-4':'#00FFFF',
+        'A1-4 - A1-1':'#33FFFF', 'A1-4 - A2-4':'#65FFFF', 'A2-2 - A2-1':'#99FFFF', 'A2-3 - A2-1':'#B2FFFF',
+        'A2-4 - A2-2':'#CBFFFF', 'A2-4 - A2-3':'#E5FFFF', 'A2-5 - A2-3':'#FFE5CB', 'A2-6 - A2-4':'#FFCA99',
+        'A2-6 - A2-5':'#F100F1', 'A3-1 - A2-5':'#FF8E33', 'A3-2 - A2-6':'#FF6E00', 'A3-2 - A3-1':'#CC5500',
+        'A3-3 - A3-2':'#993D00', 'A3-3 - A3-4':'#662700', 'A3-4 - A3-1':'#3D87FF', 'A4-1 - A3-2': '#2400D8',
+        'A4-2 - A4-1':'#2857FF', 'A4-3 - A4-2':'#D8152F', 'A4-3 - A4-4':'#FF7856', 'A4-4 - A3-3':'#FF3D3D','A4-4 - A4-1':'#A50021', 
+        'B1-1 - B2-1':'#006666', 'B1-2 - B1-1':'#009999', 'B1-3 - B1-2':'#00CCCC',
+        'B1-3 - B1-4':'#00FFFF', 'B1-4 - B1-1':'#33FFFF', 'B1-4 - B2-5':'#65FFFF', 'B2-1 - A3-3':'#99FFFF',
+        'B2-1 - B2-4':'#B2FFFF', 'B2-2 - B2-3':'#CBFFFF', 'B2-3 - B2-4':'#E5FFFF', 'B2-4 - A3-4':'#FFE5CB',
+        'B2-5 - B2-1':'#FFCA99', 'B2-5 - B2-3':'#FFAD65', 'B2-6 - B2-2':'#500050', 'B2-6 - B2-5':'#BB00BB',
+        'B3-1 - B2-2':'#CC5500', 'B3-2 - B3-1':'#993D00', 'B3-3 - B3-2':'#662700', 'B3-3 - B3-4':'#3D87FF',
+        'B3-4 - B2-6':'#2400D8', 'B3-4 - B3-1':'#2857FF', 'B4-1 - B3-4':'#D8152F', 'B4-2 - B4-1':'#FF7856',
+        'B4-3 - B4-2':'#FF3D3D', 'B4-3 - B4-4':'#A50021', 'B4-4 - B3-3':'#99FFFF', 'B4-4 - B4-1':'#FFE5CB'}
 
     # Identify the monitor point groupings based on the pod
     maps = {'A1':['A1-1', 'A1-2', 'A1-3', 'A1-4'],
@@ -607,7 +631,21 @@ def plot_annotations():
         'B3':['B3-1', 'B3-2', 'B3-3', 'B3-4'],
         'B4':['B4-1', 'B4-2', 'B4-3', 'B4-4']}
     
-    return beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, maps
+    mapsBeams = {'A':['A1-1 - A2-2','A1-2 - A1-1','A1-3 - A1-2','A1-3 - A1-4',
+                      'A1-4 - A1-1','A1-4 - A2-4','A2-2 - A2-1','A2-3 - A2-1',
+                      'A2-4 - A2-2','A2-4 - A2-3','A2-5 - A2-3','A2-6 - A2-4',
+                      'A2-6 - A2-5','A3-1 - A2-5','A3-2 - A2-6','A3-2 - A3-1',
+                      'A3-3 - A3-2','A3-3 - A3-4','A3-4 - A3-1','A4-1 - A3-2',
+                      'A4-2 - A4-1','A4-3 - A4-2','A4-3 - A4-4','A4-4 - A3-3','A4-4 - A4-1'],
+                'B':['B1-1 - B2-1','B1-2 - B1-1','B1-3 - B1-2','B1-3 - B1-4',
+                     'B1-4 - B1-1','B1-4 - B2-5','B2-1 - B2-4','B2-2 - B2-3',
+                     'B2-3 - B2-4','B2-5 - B2-1','B2-5 - B2-3','B2-6 - B2-2',
+                     'B2-6 - B2-5','B3-1 - B2-2','B3-2 - B3-1','B3-3 - B3-2',
+                     'B3-3 - B3-4','B3-4 - B2-6','B3-4 - B3-1','B4-1 - B3-4',
+                     'B4-2 - B4-1','B4-3 - B4-2','B4-3 - B4-4','B4-4 - B3-3','B4-4 - B4-1'],
+                'A-B':['B2-1 - A3-3', 'B2-4 - A3-4']}
+    
+    return beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams
 
 # Plot Cumulative Settlement
 def plot_cumulative_settlement(settlement, settlementProj, color_dict, maps):
@@ -629,6 +667,87 @@ def plot_cumulative_settlement(settlement, settlementProj, color_dict, maps):
             fig.add_trace(go.Scatter(
                 x=settlementProj.index,
                 y=settlementProj[column],
+                name= column + ' Projection',
+                mode = 'lines+markers',
+                marker_color = color_dict[column],
+                line = dict(
+                    width = 1.5,
+                    dash = 'dash'),
+                marker = dict(
+                    size=7.5,
+                    symbol='star'),
+            ))
+            
+    fig.update_layout(xaxis_title="Survey Date",
+                    yaxis_title="Cumulative Settlement [ft]")
+
+    # groups and trace visibilities
+    group = []
+    vis = []
+    visList = []
+    for m in maps.keys():
+        for col in df.columns:
+            if col in maps[m]:
+                vis.append(True)
+            else:
+                vis.append(False)
+        group.append(m)
+        visList.append(vis)
+        vis = []
+
+    # buttons for each group
+    buttons = []
+    for i, g in enumerate(group):
+        button =  dict(label=g,
+                    method = 'restyle',
+                        args = ['visible',visList[i]])
+        buttons.append(button)
+
+    # buttons
+    buttons = [{'label': 'All Points',
+                    'method': 'restyle',
+                    'args': ['visible', [True, True, True, True, True, True]]}] + buttons
+
+                
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        height = 600
+    )
+    return fig
+
+def plot_floorElev_timeseries(floorElevPlot, elevFloorProj, color_dict, maps):
+    df = floorElevPlot.drop(columns=['mpX', 'mpY']).transpose() 
+    df2 = elevFloorProj.transpose()
+
+    # plotly figure
+    fig = go.Figure()
+
+    for column in df:
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df[column],
+                name= column,
+                mode = 'lines+markers',
+                marker_color = color_dict[column]
+            ))
+
+    for column in df2:
+            fig.add_trace(go.Scatter(
+                x=df2.index,
+                y=df2[column],
                 name= column + ' Projection',
                 mode = 'lines+markers',
                 marker_color = color_dict[column],
@@ -817,6 +936,73 @@ def plot_settlementRate(settlement_rate, color_dict, maps):
                 y=1.01,
                 yanchor="bottom")
         ],
+    )
+    return fig
+
+# Plot settlement rate between each survey
+def floorDifferential(floorDiffElev, color_dictBeams, mapsBeams):
+    df = floorDiffElev.transpose()
+    df= df.drop('2022-01-07')
+    df = df[['A2-6 - A2-5','A1-2 - A1-1','A1-3 - A1-2','A3-2 - A2-6','B1-1 - B2-1','B2-6 - B2-2','B4-1 - B3-4','B4-3 - B4-2','B3-1 - B2-2']]
+    #df = df[df.columns[df[specific_column].max() >= 2]]
+
+    fig = go.Figure()
+
+    for column in df:
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df[column],
+                name= column,
+                mode = 'lines+markers',
+                marker_color = color_dictBeams[column]
+            ))
+
+    fig.update_layout(
+            xaxis_title="Survey Date",
+            yaxis_title="Differential Elevation [in]",
+            #yaxis= dict(range=[0,6])
+        )
+
+    # groups and trace visibilities
+    group = []
+    vis = []
+    visList = []
+    for m in mapsBeams.keys():
+        for col in df.columns:
+            if col in mapsBeams[m]:
+                vis.append(True)
+            else:
+                vis.append(False)
+        group.append(m)
+        visList.append(vis)
+        vis = []
+
+    # buttons for each group
+    buttons = []
+    for i, g in enumerate(group):
+        button =  dict(label=g,
+                    method = 'restyle',
+                        args = ['visible',visList[i]])
+        buttons.append(button)
+
+    buttons = [{'label': 'All Points',
+                    'method': 'restyle',
+                    'args': ['visible', [True, True, True, True, True, True]]}] + buttons
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ]
     )
     return fig
 

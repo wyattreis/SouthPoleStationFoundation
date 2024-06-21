@@ -126,11 +126,11 @@ if st.sidebar.button('Compute Settlement'):
         st.text("The rate of settlement (in inches per year) between each survey data annualized to account for variable periods between the surveys.  \nAll survey dates are included.")
         st.plotly_chart(fig_rate, use_container_width=True, height=600)
     with tab3:
-        st.text("The differential elevation (in inches) for each column pair for each survey date and using projected floor elevations.  \nData is limited to the period where shim pack heights are known and projected.")
+        st.text("The differential elevation (in inches) for each column pair for each survey date and using projected floor elevations.  \nData is limited to the period where shim pack heights are known and projected.  \nThe January 2022 Survey is not included due to significant errors.")
         st.plotly_chart(floorDiff, use_container_width=True, height=600)
 
     ## 3D PLOTTING
-    fig_3d_floor = plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot3dAnno)
+    fig_3d_floor = plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3D, plot3dAnno, floorElevPlot)
     fig_3d_gradeBeam = plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3dAnno)
     fig_3d_station = plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, elevGBInfo3D, plot3dAnno)
 
@@ -148,3 +148,4 @@ if st.sidebar.button('Compute Settlement'):
         st.plotly_chart(fig_3d_station)
 
     st.subheader(" ")
+

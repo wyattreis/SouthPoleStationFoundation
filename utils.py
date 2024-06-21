@@ -2380,7 +2380,13 @@ def plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3
         scene_aspectmode='manual',
         scene_aspectratio=dict(x=7, y=2, z=1),
         uniformtext_minsize=10,
-        annotations = plot3dAnno
+        annotations = plot3dAnno,
+        legend = dict(
+            xanchor = 'right',
+            yanchor = 'top',
+            x = 1,
+            y = 0.9
+        )
         )
 
     # Set initial view, update hover mode

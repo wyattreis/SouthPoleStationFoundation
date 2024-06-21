@@ -387,19 +387,19 @@ def plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlo
     # Create dataframe for conditional marker symbol for floor differental settlement
     conditions = [abs(floorDiff.round(2))>0, abs(floorDiff.round(2))==0]
     choices = ['triangle-right','circle-open']
-    floorSymbol = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = floorDiff.index, columns = floorDiff.columns).replace('nan','x')
+    floorSymbol = pd.DataFrame(np.select(conditions, choices, default='x'), index = floorDiff.index, columns = floorDiff.columns)#.replace('nan','x')
     floorSymbolplot = beamInfo[['beamName', 'arrowX', 'arrowY']].dropna().set_index(['beamName']).join(floorSymbol)
 
     # Create dataframe for conditional text color for floor differental settlement values
     conditions = [abs(floorDiff)<1.5, (abs(floorDiff)>=1.5) & (abs(floorDiff)<2), abs(floorDiff)>=2]
     choices = ['black', 'orange', 'red']
-    floorDiffColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = floorDiff.index, columns = floorDiff.columns).replace('nan','blue')
+    floorDiffColor = pd.DataFrame(np.select(conditions, choices, default='blue'), index = floorDiff.index, columns = floorDiff.columns)#.replace('nan','blue')
     floorDiffColorplot = floorDiffplot.join(floorDiffColor, rsuffix='_color')
 
     # Create dataframe for conditional text color for differental settlement slope values
     conditions = [abs(floorSlope)<(1/32), ((abs(floorSlope)>=(1/32)) & (abs(floorSlope)<(1/16))), ((abs(floorSlope)>=(1/16)) & (abs(floorSlope)<(1/8))), abs(floorSlope)>=(1/8)]
     choices = ['black','gold', 'orange', 'red']
-    floorSlopeColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = floorSlope.index, columns = floorSlope.columns).replace('nan','blue')
+    floorSlopeColor = pd.DataFrame(np.select(conditions, choices, default='blue'), index = floorSlope.index, columns = floorSlope.columns)#.replace('nan','blue')
     floorSlopeColorplot = floorSlopeplot.join(floorSlopeColor, rsuffix='_color')
     return floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot
     

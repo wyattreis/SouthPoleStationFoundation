@@ -351,22 +351,22 @@ def plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj):
     # Create dataframe for conditional text color for differental settlement values
     conditions = [abs(beamDiff)>0, abs(beamDiff)==0]
     choices = ['triangle-right', 'circle-open']
-    beamSymbol = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = beamDiff.index, columns = beamDiff.columns).replace('nan','x')
+    beamSymbol = pd.DataFrame(np.select(conditions, choices, default='x'), index = beamDiff.index, columns = beamDiff.columns)#.replace('nan','x')
 
     # Create dataframe for conditional text color for differental settlement values
     conditions = [abs(beamDiff)<1.5, (abs(beamDiff)>=1.5) & (abs(beamDiff)<2), abs(beamDiff)>=2]
     choices = ['black', 'orange', 'red']
-    beamDiffColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = beamDiff.index, columns = beamDiff.columns).replace('nan','blue')
+    beamDiffColor = pd.DataFrame(np.select(conditions, choices, default='blue'), index = beamDiff.index, columns = beamDiff.columns)#.replace('nan','blue')
 
     # Create dataframe for conditional text color for differental settlement slope values
     conditions = [abs(beamSlope)<(1/32), (abs(beamSlope)>=(1/32)) & (abs(beamSlope)<(1/16)), (abs(beamSlope)>=(1/16)) & (abs(beamSlope)<(1/8)), abs(beamDiff)>=(1/8)]
     choices = ['black','gold', 'orange', 'red']
-    beamSlopeColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = beamDiff.index, columns = beamDiff.columns).replace('nan','blue')
+    beamSlopeColor = pd.DataFrame(np.select(conditions, choices, default='blue'), index = beamDiff.index, columns = beamDiff.columns)#.replace('nan','blue')
     
     # Create dataframe for conditional text color for differental settlement slope values
     conditions = [abs(beamSlopeProj)<(1/32), ((abs(beamSlopeProj)>=(1/32)) & (abs(beamSlopeProj)<(1/16))), ((abs(beamSlopeProj)>=(1/16)) & (abs(beamSlopeProj)<(1/8))), abs(beamSlopeProj)>=(1/8)]
     choices = ['green','teal', 'blue', 'purple']
-    beamSlopeProjColor = pd.DataFrame(np.select(conditions, choices, default=np.nan), index = beamSlopeProj.index, columns = beamSlopeProj.columns).replace('nan','blue')
+    beamSlopeProjColor = pd.DataFrame(np.select(conditions, choices, default='blue'), index = beamSlopeProj.index, columns = beamSlopeProj.columns)#.replace('nan','blue')
     return beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProjColor
 
 # Line styles for floor plots

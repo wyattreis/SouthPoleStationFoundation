@@ -86,7 +86,7 @@ def read_beamInfo():
     return beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort
 
 # Calculate the cumulative settlement in feet for each column by survey data
-def calc_settlement(survey_long):
+def calc_settlement(survey_long, MPlocations):
     survey_long['dummy']= 1
     firstValue = survey_long.groupby('dummy').first()
     firstValue = firstValue.to_numpy()[0]
@@ -97,6 +97,9 @@ def calc_settlement(survey_long):
 
     #create an elevation of the grade beams using the 12.31' listed in the SPS As-builts Sheet A5.1 minues 1' between top of column and survey point (11.31' below survey point)
     gradeBeamElev = elevation.sub(11.31).transpose()
+    gradeBeamElevPlot = gradeBeamElev
+    gradeBeamElevPlot.columns = gradeBeamElevPlot.columns.astype(str)
+    gradeBeamElevPlot = MPlocations.join(gradeBeamElevPlot)
 
     settlement = survey_long.drop(columns=["dummy"]).apply(lambda row: firstValue - row, axis=1)
     settlement.index = pd.to_datetime(settlement.index)
@@ -111,7 +114,7 @@ def calc_settlement(survey_long):
     diffDays["diffDays"] = settlement_delta.index.to_series().diff().dt.days
 
     settlement_rate = settlement_delta.iloc[:,:].div(diffDays.diffDays, axis=0).mul(365).round(3)
-    return elevation, gradeBeamElev, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate
+    return elevation, gradeBeamElev, gradeBeamElevPlot, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate
 
 # Cumulative Settlement Forecasting
 def calc_forecast_settlement(settlement, nsurvey, nyears):
@@ -316,13 +319,13 @@ def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeC
     elevationGBStart = beamStart.join(gradeBeamElev).set_index('beamName')
     elevationGBStart.columns = pd.to_datetime(elevationGBStart.columns).astype(str)
     elevationFloorProjStart = beamStart.join(elevGradeBeamProj.iloc[:,1:]).set_index('beamName')
-    elevationGBStart = elevationGBStart.join(elevationFloorProjStart)
+    #elevationGBStart = elevationGBStart.join(elevationFloorProjStart)
 
     beamEnd = beamInfo[['MP_E_N', 'beamName']].set_index('MP_E_N')
     elevationGBEnd = beamEnd.join(gradeBeamElev).set_index('beamName')
     elevationGBEnd.columns = pd.to_datetime(elevationGBEnd.columns).astype(str)
     elevationFloorProjEnd = beamEnd.join(elevGradeBeamProj.iloc[:,1:]).set_index('beamName')
-    elevationGBEnd = elevationGBEnd.join(elevationFloorProjEnd)
+    #elevationGBEnd = elevationGBEnd.join(elevationFloorProjEnd)
 
     elevGB3D = elevationGBStart.join(elevationGBEnd, lsuffix='_start', rsuffix='_end')
 
@@ -631,6 +634,15 @@ def plot_annotations():
         'B3':['B3-1', 'B3-2', 'B3-3', 'B3-4'],
         'B4':['B4-1', 'B4-2', 'B4-3', 'B4-4']}
     
+    mapsPods = {'A':['A1-1', 'A1-2', 'A1-3', 'A1-4', 
+                     'A2-1', 'A2-2', 'A2-3', 'A2-4', 'A2-5','A2-6',
+                     'A3-1', 'A3-2', 'A3-3', 'A3-4',
+                     'A4-1', 'A4-2', 'A4-3', 'A4-4'],
+                'B':['B1-1', 'B1-2', 'B1-3', 'B1-4', 
+                     'B2-1', 'B2-2', 'B2-3', 'B2-4', 'B2-5','B2-6',
+                     'B3-1', 'B3-2', 'B3-3', 'B3-4',
+                     'B4-1', 'B4-2', 'B4-3', 'B4-4']}
+    
     mapsBeams = {'A':['A1-1 - A2-2','A1-2 - A1-1','A1-3 - A1-2','A1-3 - A1-4',
                       'A1-4 - A1-1','A1-4 - A2-4','A2-2 - A2-1','A2-3 - A2-1',
                       'A2-4 - A2-2','A2-4 - A2-3','A2-5 - A2-3','A2-6 - A2-4',
@@ -645,7 +657,7 @@ def plot_annotations():
                      'B4-2 - B4-1','B4-3 - B4-2','B4-3 - B4-4','B4-4 - B3-3','B4-4 - B4-1'],
                 'A-B':['B2-1 - A3-3', 'B2-4 - A3-4']}
     
-    return beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams
+    return beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods
 
 # Plot Cumulative Settlement
 def plot_cumulative_settlement(settlement, settlementProj, color_dict, maps):
@@ -2217,6 +2229,7 @@ def plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3
 
     # Creating frames
     frames = []
+    pods = ['A', 'B']
     
     for col in elevationFloorStart.columns:
         frame_traces = []  # List to hold all traces for this frame
@@ -2260,7 +2273,6 @@ def plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3
         )
         frame_traces.append(label_trace)      
 
-        pods = ['A', 'B']
         for pod in pods:
             df = floorElevPlot[[pod in s for s in floorElevPlot.index]]
             
@@ -2384,7 +2396,7 @@ def plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3
         legend = dict(
             xanchor = 'right',
             yanchor = 'top',
-            x = 1,
+            x = 1.2,
             y = 0.9
         )
         )
@@ -2399,6 +2411,103 @@ def plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3
                     hoverlabel=dict(
                         bgcolor = "white"
                         ))
+    return fig
+
+# Plot Floor Elevation Error
+def plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods):
+
+    df = floorElevPlot
+
+    fit_error = pd.DataFrame()
+
+    for col in df.columns[2:]:
+        # Extract coordinates
+        xs = df['mpX']
+        ys = df['mpY']
+        zs = df[col]
+
+        # Calculate mean of z values
+        Z_mean = zs.mean()
+
+        # Fit plane 
+        tmp_A = []
+        tmp_b = []
+        for i in range(len(xs)):
+            tmp_A.append([xs[i], ys[i], 1])
+            tmp_b.append(zs[i])
+        b = np.matrix(tmp_b).T
+        A = np.matrix(tmp_A)
+        fit = (A.T * A).I * A.T * b
+        errors_a = b - A * fit
+
+        fit_error[col] = np.array(errors_a).flatten()
+
+    fit_error['MP'] = df.index
+    fit_error = fit_error.set_index('MP')
+    fit_errorT = fit_error.T
+
+    df = fit_errorT 
+
+    # plotly figure
+    fig = go.Figure()
+
+    for column in df:
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df[column],
+                name= column,
+                mode = 'lines+markers',
+                marker_color = color_dict[column]
+            ))
+            
+    fig.update_layout(xaxis_title="Survey Date",
+                      yaxis_title="Anomaly from the Fit Plane [ft]")
+
+    # groups and trace visibilities
+    group = []
+    vis = []
+    visList = []
+    for m in mapsPods.keys():
+        for col in df.columns:
+            if col in mapsPods[m]:
+                vis.append(True)
+            else:
+                vis.append(False)
+        group.append(m)
+        visList.append(vis)
+        vis = []
+
+    # buttons for each group
+    buttons = []
+    for i, g in enumerate(group):
+        button =  dict(label=g,
+                    method = 'restyle',
+                        args = ['visible',visList[i]])
+        buttons.append(button)
+
+    # buttons
+    buttons = [{'label': 'All Points',
+                    'method': 'restyle',
+                    'args': ['visible', [True, True, True, True, True, True]]}] + buttons
+
+                
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        height = 600
+    )
     return fig
 
 def plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3dAnno):
@@ -2551,6 +2660,313 @@ def plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3
                     hoverlabel=dict(
                         bgcolor = "white"
                         ))
+    return fig
+
+def plot_3D_gradeBeamElev_slider_animated_planes(elevationGBStart, elevGBInfo3D , plot3dAnno, gradeBeamElevPlot):
+    
+    # Calculate the maximum number of traces required for any frame
+    max_traces_per_frame = len(elevGBInfo3D['startX'])*2 + 1 + 4 # +1 for the label trace, +4 for two mean and two fitted traces
+
+    # Initialize the figure with the maximum number of empty traces
+    fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], mode='lines', showlegend=False) for _ in range(max_traces_per_frame)])
+
+    # Creating frames
+    frames = []
+    pods = ['A', 'B']
+
+    for col in elevationGBStart.columns:
+        frame_traces = []  # List to hold all traces for this frame
+
+        # Create a separate trace for each line segment
+        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor) in zip(elevGBInfo3D['startX'], elevGBInfo3D['endX'], 
+                                                                                    elevGBInfo3D['startY'], elevGBInfo3D['endY'], 
+                                                                                    elevGBInfo3D['{0}_start'.format(col)], 
+                                                                                    elevGBInfo3D['{0}_end'.format(col)],
+                                                                                    elevGBInfo3D[col],elevGBInfo3D[col]):
+
+            line_trace = go.Scatter3d(
+                x=[startX, endX],
+                y=[startY, endY],
+                z = [startZ, endZ],
+                text = elevGBInfo3D['MP_W_S'],
+                line_color= [startColor, endColor],
+                name="",
+                mode='lines',
+                line = dict(
+                    color = 'black',
+                    width = 3,
+                    dash = 'solid'),
+                #hoverinfo='skip',
+                showlegend=False 
+            )
+            frame_traces.append(line_trace)
+
+            column_trace = go.Scatter3d(
+                x=[startX, startX],
+                y=[startY, startY],
+                z = [startZ, (startZ + 12.31)],
+                text = elevGBInfo3D['MP_W_S'],
+                line_color= "black",#[startColor, endColor],
+                name="",
+                mode='lines',
+                line = dict(
+                    color = 'black',
+                    width = 3,
+                    dash = 'solid'),
+                hoverinfo='skip',
+                showlegend=False 
+            )
+            frame_traces.append(column_trace)
+
+        # Create the label trace for this frame
+        label_trace = go.Scatter3d(
+            x=elevGBInfo3D['labelX'], 
+            y=elevGBInfo3D['labelY'], 
+            z=elevGBInfo3D[f'{col}_start'], 
+            text=elevGBInfo3D['MP_W_S'], 
+            mode='text', 
+            textfont=dict(
+                size=12,
+                color='grey'), 
+            hoverinfo='skip', 
+            showlegend=False
+        )
+        frame_traces.append(label_trace)
+
+        for pod in pods:
+            df = gradeBeamElevPlot[[pod in s for s in gradeBeamElevPlot.index]]
+            
+            # Extract coordinates
+            xs = df['mpX']
+            ys = df['mpY']
+            zs = df[col]
+
+            # Calculate mean of z values
+            Z_mean = zs.mean()
+
+            # Fit plane 
+            tmp_A = []
+            tmp_b = []
+            for i in range(len(xs)):
+                tmp_A.append([xs[i], ys[i], 1])
+                tmp_b.append(zs[i])
+            b = np.matrix(tmp_b).T
+            A = np.matrix(tmp_A)
+            fit = (A.T * A).I * A.T * b
+
+            # Define ranges for x and y
+            xlim = [xs.min(), xs.max()]
+            ylim = [ys.min(), ys.max()]
+
+            # Create meshgrid for the plane surface - mean and fitted
+            X, Y = np.meshgrid(np.arange(xlim[0], xlim[1]),
+                            np.arange(ylim[0], ylim[1]))
+            Z_plane_mean = np.ones_like(X) * Z_mean
+
+            Z_plane_fit = np.zeros(X.shape)
+
+            for r in range(X.shape[0]):
+                for c in range(X.shape[1]):
+                    Z_plane_fit[r,c] = fit[0] * X[r,c] + fit[1] * Y[r,c] + fit[2]
+
+            # Add surface trace for the plane - mean
+            mean_plane = go.Surface(x=X,y=Y, z=Z_plane_mean,
+                                    showscale=False, showlegend= True,
+                                    name=f'Mean plane for {pod} {col}'
+            )
+            frame_traces.append(mean_plane)      
+            
+            # Add surface trace for the plane - fit
+            fit_plane = go.Surface(x=X, y=Y, z=Z_plane_fit,
+                                    colorscale='Viridis', showscale=False, showlegend= True,
+                                    name=f'Fit plane for {pod} {col}'
+            )
+            frame_traces.append(fit_plane)  
+
+        # Ensure the frame has the same number of traces as the figure
+        while len(frame_traces) < max_traces_per_frame:
+            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode=[]))
+
+        # Add the frame
+        frames.append(go.Frame(data=frame_traces, name=col))
+
+    fig.frames = frames
+
+    # Slider
+    sliders = [{"steps": [{"args": [[f.name], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}],
+                            "label": col, "method": "animate"} for col, f in zip(elevationGBStart.columns, fig.frames)],
+                "len": 0.95,
+                "x": 0.035,
+                "y": 0}]
+
+    camera = dict(
+        up=dict(x=0, y=0, z=1),
+        center=dict(x=0, y=0, z=0),
+        eye=dict(x=0.1, y=4, z=3)
+    )
+
+    # Define the play and pause buttons
+    play_button = dict(
+        label="&#9654;",
+        method="animate",
+        args=[None, {"frame": {"duration": 200, "redraw": True}, "fromcurrent": True, "transition": {"duration": 200, "easing": "quadratic-in-out"}}]
+    )
+
+    pause_button = dict(
+        label="&#9724;",
+        method="animate",
+        args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate", "transition": {"duration": 0}}]
+    )
+
+    maxElev = elevGBInfo3D.loc[:, elevGBInfo3D.columns.str.contains('_start')].max().max()
+    minElev = elevGBInfo3D.loc[:, elevGBInfo3D.columns.str.contains('_start')].min().min()
+
+    # Update layout for slider and set consistent y-axis range
+    fig.update_layout(
+        # Update layout with play and pause buttons
+        updatemenus=[dict(
+            type="buttons",
+            showactive=False,
+            buttons=[play_button, pause_button],
+            x=0,  # x and y determine the position of the buttons
+            y=-0.06,
+            xanchor="right",
+            yanchor="top",
+            direction="left"
+        )],
+        autosize=False,
+        margin=dict(l=0, r=0, b=100, t=0),
+        scene_camera=camera,
+        scene=dict(
+            xaxis_title='',
+            xaxis= dict(range=[400,-10]), 
+            yaxis_title='',
+            yaxis= dict(range=[130,-10]),
+            zaxis_title='Grade Beam Elevation [ft]',
+            zaxis = dict(range = [minElev,maxElev])
+        ),
+        sliders=sliders,
+        width = 1100,
+        height = 600,
+        scene_aspectmode='manual',
+        scene_aspectratio=dict(x=7, y=2, z=1),
+        uniformtext_minsize=10,
+        annotations = plot3dAnno,
+        legend = dict(
+            xanchor = 'right',
+            yanchor = 'top',
+            x = 1.2,
+            y = 0.9
+        )
+        )
+
+    # Set initial view, update hover mode
+    fig.update_traces(x=frames[0].data[0].x, 
+                    y=frames[0].data[0].y, 
+                    z=frames[0].data[0].z,
+                    hovertemplate="<br>".join([
+                        "Elevation [ft]: %{z}"
+                        ]),
+                    hoverlabel=dict(
+                        bgcolor = "white"
+                        ))
+    return fig
+
+# Plot Floor Elevation Error
+def plot_GradeBeamElev_error_fit(gradeBeamElevPlot, color_dict, mapsPods):
+
+    df = gradeBeamElevPlot
+
+    fit_error = pd.DataFrame()
+
+    for col in df.columns[2:]:
+        # Extract coordinates
+        xs = df['mpX']
+        ys = df['mpY']
+        zs = df[col]
+
+        # Calculate mean of z values
+        Z_mean = zs.mean()
+
+        # Fit plane 
+        tmp_A = []
+        tmp_b = []
+        for i in range(len(xs)):
+            tmp_A.append([xs[i], ys[i], 1])
+            tmp_b.append(zs[i])
+        b = np.matrix(tmp_b).T
+        A = np.matrix(tmp_A)
+        fit = (A.T * A).I * A.T * b
+        errors_a = b - A * fit
+
+        fit_error[col] = np.array(errors_a).flatten()
+
+    fit_error['MP'] = df.index
+    fit_error = fit_error.set_index('MP')
+    fit_errorT = fit_error.T
+
+    df = fit_errorT 
+
+    # plotly figure
+    fig = go.Figure()
+
+    for column in df:
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df[column],
+                name= column,
+                mode = 'lines+markers',
+                marker_color = color_dict[column]
+            ))
+            
+    fig.update_layout(xaxis_title="Survey Date",
+                      yaxis_title="Anomaly from the Fit Plane [ft]")
+
+    # groups and trace visibilities
+    group = []
+    vis = []
+    visList = []
+    for m in mapsPods.keys():
+        for col in df.columns:
+            if col in mapsPods[m]:
+                vis.append(True)
+            else:
+                vis.append(False)
+        group.append(m)
+        visList.append(vis)
+        vis = []
+
+    # buttons for each group
+    buttons = []
+    for i, g in enumerate(group):
+        button =  dict(label=g,
+                    method = 'restyle',
+                        args = ['visible',visList[i]])
+        buttons.append(button)
+
+    # buttons
+    buttons = [{'label': 'All Points',
+                    'method': 'restyle',
+                    'args': ['visible', [True, True, True, True, True, True]]}] + buttons
+
+                
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        height = 600
+    )
     return fig
 
 

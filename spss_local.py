@@ -35,7 +35,7 @@ truss_clean = read_xlTruss(xlfile)
 # Import the basic plotting file to use (label locations, building outline, etc.), and calculate the beam length between each column 
 beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort = read_beamInfo()
 # Calculate settlement at the column lugs from the survey file
-elevation, gradeBeamElev, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
+elevation, gradeBeamElev, gradeBeamElevPlot, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long, MPlocations)
 # Forecast future settlement for user defined future using user defined previous number of years
 settlementProj, settlementProj_trans = calc_forecast_settlement(settlement, nsurvey, nyears)
 #Forecast the future floor elevations
@@ -49,111 +49,13 @@ beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProj
 # Create dataframe for floor elevation plotting styles
 floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot = plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
 # Create dataframe for plot annotations
-beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams = plot_annotations()
+beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods = plot_annotations()
 # Create dataframe for 3D plotting
 settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
 elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
 elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor)
 
 
-print(elevationFloorStart.columns)
-# df_in = floorElevPlot
-
-# fig = go.Figure()
-# pods = ['A', 'B']
-# for pod in pods:
-#     df = df_in[[pod in s for s in df_in.index]]
-
-#     for col in df.columns[2:]:
-#         # Extract coordinates
-#         xs = df['mpX']
-#         ys = df['mpY']
-#         zs = df[col]
-
-#         # Calculate mean of z values
-#         Z_mean = zs.mean()
-
-#         # Define ranges for x and y
-#         xlim = [xs.min(), xs.max()]
-#         ylim = [ys.min(), ys.max()]
-
-#         # Create meshgrid for the plane surface
-#         X, Y = np.meshgrid(np.arange(xlim[0], xlim[1]),
-#                         np.arange(ylim[0], ylim[1]))
-#         Z_plane = np.ones_like(X) * Z_mean
-
-#         # Add surface trace for the plane
-#         fig.add_trace(go.Surface(x=X, y=Y, z=Z_plane,
-#                                 colorscale='Viridis', showscale=False, showlegend= True,
-#                                 name=f'Plane for {pod} {col}'))
-
-#         # Add scatter trace for the points
-#         fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs,
-#                                 mode='markers', marker=dict(size=5),
-#                                 name=f'Points for {pod} {col}'))
-    
-# fig.show()
-
-# print(elevationFloorStart)
-
-# df_in = floorElevPlot
-
-# fig = go.Figure()
-# pods = ['A', 'B']
-
-
-# for col in df_in.columns[2:]:
-#     for pod in pods:
-#         df = df_in[[pod in s for s in df_in.index]]
-#         # Extract coordinates
-#         xs = df['mpX']
-#         ys = df['mpY']
-#         zs = df[col]
-
-#         # Calculate mean of z values
-#         Z_mean = zs.mean()
-
-#         # Fit plane 
-#         tmp_A = []
-#         tmp_b = []
-#         for i in range(len(xs)):
-#             tmp_A.append([xs[i], ys[i], 1])
-#             tmp_b.append(zs[i])
-#         b = np.matrix(tmp_b).T
-#         A = np.matrix(tmp_A)
-#         fit = (A.T * A).I * A.T * b
-
-#         # Define ranges for x and y
-#         xlim = [xs.min(), xs.max()]
-#         ylim = [ys.min(), ys.max()]
-
-#         # Create meshgrid for the plane surface - mean and fitted
-#         X, Y = np.meshgrid(np.arange(xlim[0], xlim[1]),
-#                         np.arange(ylim[0], ylim[1]))
-#         Z_plane_mean = np.ones_like(X) * Z_mean
-
-#         Z_plane_fit = np.zeros(X.shape)
-
-#         for r in range(X.shape[0]):
-#             for c in range(X.shape[1]):
-#                 Z_plane_fit[r,c] = fit[0] * X[r,c] + fit[1] * Y[r,c] + fit[2]
-
-#         # Add surface trace for the plane - mean
-#         fig.add_trace(go.Surface(x=X, y=Y, z=Z_plane_mean,
-#                                 colorscale='Viridis', showscale=False, showlegend= True,
-#                                 name=f'Mean plane for {pod} {col}'))      
-        
-#         # Add surface trace for the plane - fit
-#         fig.add_trace(go.Surface(x=X, y=Y, z=Z_plane_fit,
-#                                 colorscale='Viridis', showscale=False, showlegend= True,
-#                                 name=f'Fit plane for {pod} {col}'))
-
-#         # Add scatter trace for the points
-#         fig.add_trace(go.Scatter3d(x=xs, y=ys, z=zs,
-#                                 mode='markers', marker=dict(size=5),
-#                                 name=f'Points for {pod} {col}'))
-    
-# fig.show()
 
 
 
@@ -183,10 +85,48 @@ print(elevationFloorStart.columns)
 # print(Za)
 
 
-# print(floorElevPlot)
 
-fig_3d_floor_planes = plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3D, plot3dAnno, floorElevPlot)
-st.plotly_chart(fig_3d_floor_planes)
+# df = floorElevPlot
+
+# fit_error = pd.DataFrame()
+
+# for col in df.columns[2:]:
+#     # Extract coordinates
+#     xs = df['mpX']
+#     ys = df['mpY']
+#     zs = df[col]
+
+#     # Calculate mean of z values
+#     Z_mean = zs.mean()
+
+#     # Fit plane 
+#     tmp_A = []
+#     tmp_b = []
+#     for i in range(len(xs)):
+#         tmp_A.append([xs[i], ys[i], 1])
+#         tmp_b.append(zs[i])
+#     b = np.matrix(tmp_b).T
+#     A = np.matrix(tmp_A)
+#     fit = (A.T * A).I * A.T * b
+#     errors_a = b - A * fit
+
+#     fit_error[col] = np.array(errors_a).flatten()
+
+# fit_error['MP'] = df.index
+# fit_error = fit_error.set_index('MP')
+# fit_errorT = fit_error.T
+
+
+
+
+fig_error_fit_plane = plot_GradeBeamElev_error_fit(gradeBeamElevPlot, color_dict, mapsPods)
+st.plotly_chart(fig_error_fit_plane)
+
+
+# fig_3d_GB_planes = plot_3D_gradeBeamElev_slider_animated_planes(elevationGBStart, elevGBInfo3D , plot3dAnno, gradeBeamElevPlot)
+
+# # fig_3d_floor_planes = plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3D, plot3dAnno, floorElevPlot)
+# st.plotly_chart(fig_3d_GB_planes)
 
 # planeFit = floorElevPlot
 # # planeFit = floorElevPlot.iloc[:,[0,1]].join(gradeBeamElev.iloc[:,48])

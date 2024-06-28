@@ -55,7 +55,7 @@ if st.sidebar.button('Compute Settlement'):
     # Import the basic plotting file to use (label locations, building outline, etc.), and calculate the beam length between each column 
     beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort = read_beamInfo()
     # Calculate settlement at the column lugs from the survey file
-    elevation, gradeBeamElev, settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long)
+    elevation, gradeBeamElev, gradeBeamElevPlot,  settlement, settlement_points, settlement_delta, settlement_delta_MP, settlement_rate = calc_settlement(survey_long, MPlocations)
     # Forecast future settlement for user defined future using user defined previous number of years
     settlementProj, settlementProj_trans = calc_forecast_settlement(settlement, nsurvey, nyears)
     #Forecast the future floor elevations
@@ -69,7 +69,7 @@ if st.sidebar.button('Compute Settlement'):
     # Create dataframe for floor elevation plotting styles
     floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot = plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
     # Create dataframe for plot annotations
-    beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams = plot_annotations()
+    beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods = plot_annotations()
     # Create dataframe for 3D plotting
     settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
     elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
@@ -131,21 +131,35 @@ if st.sidebar.button('Compute Settlement'):
 
     ## 3D PLOTTING
     fig_3d_floor = plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3D, plot3dAnno, floorElevPlot)
-    fig_3d_gradeBeam = plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3dAnno)
+    fig_3d_gradeBeam = plot_3D_gradeBeamElev_slider_animated_planes(elevationGBStart, elevGBInfo3D , plot3dAnno, gradeBeamElevPlot)
     fig_3d_station = plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, elevGBInfo3D, plot3dAnno)
 
     st.subheader("3-Deminsional Animations of Settlement")
     # Differental Settlement 3D
     tab1, tab2, tab3 = st.tabs(["Floor Elevation [ft]", "Grade Beam Elevation [ft]", "Station Foundation Elevation[ft]"])
     with tab1:
-        st.text("The observed and forecasted floor elevations.  \nForecasted elevations use settlement trend rates from the number of years specified.  \nFloor elevations equal the survey lug elevation plus the distance to the bottom of floor joist, including shim pack height.  \nData is limited to the period where shim pack heights are known.")
+        st.text("The observed floor elevations.  \nFloor elevations equal the survey lug elevation plus the distance to the bottom of floor joist, including shim pack height.  \nData is limited to the period where shim pack heights are known.") #\nForecasted elevations use settlement trend rates from the number of years specified.
         st.plotly_chart(fig_3d_floor)
     with tab2:
-        st.text("The observed and forecasted grade beam elevations. \nForecasted elevations use settlement trend rates from the number of years specified.  \nGrade beam elevation is equal to the survey lug elevation minus 11.31 feet (As-Builts Sheet A5.1; column height = 12.31', lugs are ~1' below top of column). \nAll survey dates are included.")
+        st.text("The observed grade beam elevations. \nGrade beam elevation is equal to the survey lug elevation minus 11.31 feet (As-Builts Sheet A5.1; column height = 12.31', lugs are ~1' below top of column). \nAll survey dates are included.")
         st.plotly_chart(fig_3d_gradeBeam) 
     with tab3:
-        st.text("The observed and forecasted grade beam and floor elevations of the station.  \nForecasted elevations use settlement trend rates from the number of years specified.  \nColumns are shown for clarity, opening between top of column and floor elevation includes variability in shim packs and distance between top of column and floor joists.  \nData is limited to the period where shim pack heights are known.")
+        st.text("The observed grade beam and floor elevations of the station.  \nColumns are shown for clarity, opening between top of column and floor elevation includes variability in shim packs and distance between top of column and floor joists.  \nData is limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_3d_station)
+
+    ## Plane Error PLOTTING
+    fig_floorElev_errorFit = plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods)
+    fig_gradeBeamElev_errorFit = plot_GradeBeamElev_error_fit(gradeBeamElevPlot, color_dict, mapsPods)
+
+    st.subheader("Anomaly Between Plane and Measured Elevation")
+    # Differental Settlement 3D
+    tab1, tab2 = st.tabs(["Floor Elevation Error - Fitted [ft]", "Grade Beam Elevation Error - Fitted [ft]"])
+    with tab1:
+        st.text(" ")
+        st.plotly_chart(fig_floorElev_errorFit)
+    with tab2:
+        st.text(" ")
+        st.plotly_chart(fig_gradeBeamElev_errorFit) 
 
     st.subheader(" ")
 

@@ -560,7 +560,7 @@ def plot_annotations():
    ])
     
     plot3dAnno = list([
-        dict(text="<span style='color:black'>Observed</span> & <span style='color:green'>Forecasted</span> Beam Slope less than 1/32 in/ft",
+        dict(text="<span style='color:black'>ObservedBeam Slope less than 1/32 in/ft</span>",
                 x=0.6, xref="paper", xanchor="right",
                 y=-0.05, yref="paper", yanchor="bottom",
                 align="right",
@@ -569,7 +569,7 @@ def plot_annotations():
                     size = 14,
                     color = 'grey')
             ),
-        dict(text="<span style='color:gold'>Observed</span> & <span style='color:teal'>Forecasted</span> Beam Slope between 1/32 and 1/16 in/ft",
+        dict(text="<span style='color:gold'>Observed Beam Slope between 1/32 and 1/16 in/ft</span>",
                 x=1, xref="paper", xanchor="right",
                 y=-0.05, yref="paper", yanchor="bottom",
                 align="right",
@@ -578,7 +578,7 @@ def plot_annotations():
                     size = 14,
                     color = 'grey')
             ),
-        dict(text="<span style='color:orange'>Observed</span> & <span style='color:blue'>Forecasted</span> Beam Slope between 1/16 and 1/8 in/ft",
+        dict(text="<span style='color:orange'>Observed Beam Slope between 1/16 and 1/8 in/ft</span>",
                 x=.6, xref="paper", xanchor="right",
                 y=-0.08, yref="paper", yanchor="bottom",
                 align="right",
@@ -587,7 +587,7 @@ def plot_annotations():
                     size = 14,
                     color = 'grey')
             ),
-        dict(text="<span style='color:red'>Observed</span> & <span style='color:purple'>Forecasted</span> Beam Slope greater than 1/8 in/ft",
+        dict(text="<span style='color:red'>Observed Beam Slope greater than 1/8 in/ft</span>",
                 x=1, xref="paper", xanchor="right",
                 y=-0.08, yref="paper", yanchor="bottom",
                 align="right",

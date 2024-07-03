@@ -560,7 +560,7 @@ def plot_annotations():
    ])
     
     plot3dAnno = list([
-        dict(text="<span style='color:black'>ObservedBeam Slope less than 1/32 in/ft</span>",
+        dict(text="<span style='color:black'>Observed Beam Slope less than 1/32 in/ft</span>",
                 x=0.6, xref="paper", xanchor="right",
                 y=-0.05, yref="paper", yanchor="bottom",
                 align="right",
@@ -2413,7 +2413,7 @@ def plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3
                         ))
     return fig
 
-# Plot Floor Elevation Error
+# Plot Floor Elevation Error - fitted
 def plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods):
 
     df = floorElevPlot
@@ -2438,9 +2438,106 @@ def plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods):
         b = np.matrix(tmp_b).T
         A = np.matrix(tmp_A)
         fit = (A.T * A).I * A.T * b
-        errors_a = b - A * fit
+        errors = b - A * fit
 
-        fit_error[col] = np.array(errors_a).flatten()
+        fit_error[col] = np.array(errors).flatten()
+
+    fit_error['MP'] = df.index
+    fit_error = fit_error.set_index('MP')
+    fit_errorT = fit_error.T
+
+    df = fit_errorT 
+
+    # plotly figure
+    fig = go.Figure()
+
+    for column in df:
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df[column],
+                name= column,
+                mode = 'lines+markers',
+                marker_color = color_dict[column]
+            ))
+            
+    fig.update_layout(xaxis_title="Survey Date",
+                      yaxis_title="Anomaly from the Fit Plane [ft]")
+
+    # groups and trace visibilities
+    group = []
+    vis = []
+    visList = []
+    for m in mapsPods.keys():
+        for col in df.columns:
+            if col in mapsPods[m]:
+                vis.append(True)
+            else:
+                vis.append(False)
+        group.append(m)
+        visList.append(vis)
+        vis = []
+
+    # buttons for each group
+    buttons = []
+    for i, g in enumerate(group):
+        button =  dict(label=g,
+                    method = 'restyle',
+                        args = ['visible',visList[i]])
+        buttons.append(button)
+
+    # buttons
+    buttons = [{'label': 'All Points',
+                    'method': 'restyle',
+                    'args': ['visible', [True, True, True, True, True, True]]}] + buttons
+
+                
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        height = 600
+    )
+    return fig
+
+# Plot Floor Elevation Error - mean
+def plot_FloorElev_error_mean(floorElevPlot, color_dict, mapsPods):
+
+    df = floorElevPlot
+
+    fit_error = pd.DataFrame()
+
+    for col in df.columns[2:]:
+        # Extract coordinates
+        xs = df['mpX']
+        ys = df['mpY']
+        zs = df[col]
+
+        # Calculate mean of z values
+        Z_mean = zs.mean()
+
+        # # Fit plane 
+        # tmp_A = []
+        # tmp_b = []
+        # for i in range(len(xs)):
+        #     tmp_A.append([xs[i], ys[i], 1])
+        #     tmp_b.append(zs[i])
+        # b = np.matrix(tmp_b).T
+        # A = np.matrix(tmp_A)
+        # fit = (A.T * A).I * A.T * b
+        errors = zs - Z_mean
+
+        fit_error[col] = np.array(errors).flatten()
 
     fit_error['MP'] = df.index
     fit_error = fit_error.set_index('MP')
@@ -2969,6 +3066,102 @@ def plot_GradeBeamElev_error_fit(gradeBeamElevPlot, color_dict, mapsPods):
     )
     return fig
 
+# Plot Grade Beam Elevation Error - mean
+def plot_GradeBeamElev_error_mean(gradeBeamElevPlot, color_dict, mapsPods):
+
+    df = gradeBeamElevPlot
+
+    fit_error = pd.DataFrame()
+
+    for col in df.columns[2:]:
+        # Extract coordinates
+        xs = df['mpX']
+        ys = df['mpY']
+        zs = df[col]
+
+        # Calculate mean of z values
+        Z_mean = zs.mean()
+
+        # # Fit plane 
+        # tmp_A = []
+        # tmp_b = []
+        # for i in range(len(xs)):
+        #     tmp_A.append([xs[i], ys[i], 1])
+        #     tmp_b.append(zs[i])
+        # b = np.matrix(tmp_b).T
+        # A = np.matrix(tmp_A)
+        # fit = (A.T * A).I * A.T * b
+        errors = zs - Z_mean
+
+        fit_error[col] = np.array(errors).flatten()
+
+    fit_error['MP'] = df.index
+    fit_error = fit_error.set_index('MP')
+    fit_errorT = fit_error.T
+
+    df = fit_errorT 
+
+    # plotly figure
+    fig = go.Figure()
+
+    for column in df:
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df[column],
+                name= column,
+                mode = 'lines+markers',
+                marker_color = color_dict[column]
+            ))
+            
+    fig.update_layout(xaxis_title="Survey Date",
+                      yaxis_title="Anomaly from the Fit Plane [ft]")
+
+    # groups and trace visibilities
+    group = []
+    vis = []
+    visList = []
+    for m in mapsPods.keys():
+        for col in df.columns:
+            if col in mapsPods[m]:
+                vis.append(True)
+            else:
+                vis.append(False)
+        group.append(m)
+        visList.append(vis)
+        vis = []
+
+    # buttons for each group
+    buttons = []
+    for i, g in enumerate(group):
+        button =  dict(label=g,
+                    method = 'restyle',
+                        args = ['visible',visList[i]])
+        buttons.append(button)
+
+    # buttons
+    buttons = [{'label': 'All Points',
+                    'method': 'restyle',
+                    'args': ['visible', [True, True, True, True, True, True]]}] + buttons
+
+                
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        height = 600
+    )
+    return fig
 
 def plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, elevGBInfo3D, plot3dAnno):
     

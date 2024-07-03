@@ -138,10 +138,10 @@ if st.sidebar.button('Compute Settlement'):
     # Differental Settlement 3D
     tab1, tab2, tab3 = st.tabs(["Floor Elevation [ft]", "Grade Beam Elevation [ft]", "Station Foundation Elevation[ft]"])
     with tab1:
-        st.text("The observed floor elevations.  \nFloor elevations equal the survey lug elevation plus the distance to the bottom of floor joist, including shim pack height.  \nData is limited to the period where shim pack heights are known.") #\nForecasted elevations use settlement trend rates from the number of years specified.
+        st.text("The observed floor elevations and the mean and fitted floor elevation planes based on the monitoring point elevations in each pod. Least squares is used to fit the plane.  \nFloor elevations equal the survey lug elevation plus the distance to the bottom of floor joist, including shim pack height.  \nData is limited to the period where shim pack heights are known.") #\nForecasted elevations use settlement trend rates from the number of years specified.
         st.plotly_chart(fig_3d_floor)
     with tab2:
-        st.text("The observed grade beam elevations. \nGrade beam elevation is equal to the survey lug elevation minus 11.31 feet (As-Builts Sheet A5.1; column height = 12.31', lugs are ~1' below top of column). \nAll survey dates are included.")
+        st.text("The observed floor elevations and the mean and fitted floor elevation planes based on the monitoring point elevations in each pod. Least squares is used to fit the plane. \nGrade beam elevation is equal to the survey lug elevation minus 11.31 feet (As-Builts Sheet A5.1; column height = 12.31', lugs are ~1' below top of column). \nAll survey dates are included.")
         st.plotly_chart(fig_3d_gradeBeam) 
     with tab3:
         st.text("The observed grade beam and floor elevations of the station.  \nColumns are shown for clarity, opening between top of column and floor elevation includes variability in shim packs and distance between top of column and floor joists.  \nData is limited to the period where shim pack heights are known.")
@@ -150,16 +150,24 @@ if st.sidebar.button('Compute Settlement'):
     ## Plane Error PLOTTING
     fig_floorElev_errorFit = plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods)
     fig_gradeBeamElev_errorFit = plot_GradeBeamElev_error_fit(gradeBeamElevPlot, color_dict, mapsPods)
+    fig_floorElev_errorMean = plot_FloorElev_error_mean(floorElevPlot, color_dict, mapsPods)
+    fig_gradeBeamElev_errorMean = plot_GradeBeamElev_error_mean(gradeBeamElevPlot, color_dict, mapsPods)
 
     st.subheader("Anomaly Between Plane and Measured Elevation")
     # Differental Settlement 3D
-    tab1, tab2 = st.tabs(["Floor Elevation Error - Fitted [ft]", "Grade Beam Elevation Error - Fitted [ft]"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Floor Elevation Error - Least Squares Fit [ft]", "Floor Elevation Error - Mean [ft]", "Grade Beam Elevation Error - Least Squares Fit [ft]", "Grade Beam Elevation Error - Mean [ft]"])
     with tab1:
-        st.text(" ")
+        st.text("The anomaly between the least squares fitted floor elevation plane for each pod and the calculated floor elevations at each monitoring point.")
         st.plotly_chart(fig_floorElev_errorFit)
     with tab2:
-        st.text(" ")
-        st.plotly_chart(fig_gradeBeamElev_errorFit) 
+        st.text("The anomaly between the mean floor elevation plane for each pod and the calculated floor elevations at each monitoring point.")
+        st.plotly_chart(fig_floorElev_errorMean)
+    with tab3:
+        st.text("The anomaly between the least square fitted grade beam elevation plane for each pod and the calculated grade beam elevations at each monitoring point.")
+        st.plotly_chart(fig_gradeBeamElev_errorFit)
+    with tab4:
+        st.text("The anomaly between the mean grade beam elevation plane for each pod and the calculated grade beam elevations at each monitoring point.")
+        st.plotly_chart(fig_gradeBeamElev_errorMean) 
 
     st.subheader(" ")
 

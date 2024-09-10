@@ -75,7 +75,7 @@ if st.sidebar.button('Compute Settlement'):
     elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
     elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor)
     
-    ## PLAVIEW PLOTTING
+    ## PLANVIEW PLOTTING
     # Differental Settlement Planview
     fig_diff_plan = plot_DiffSettlement_plan(beamDiffplot, beamInfo, beamDiffColor, beamSymbol, beamDir, beamDiffAnno)
     # Differental Settlement Slope Planview

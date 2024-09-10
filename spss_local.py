@@ -24,7 +24,7 @@ xlfile = "C:/Users/RDCRLWKR/Documents/FileCloud/My Files/Active Projects/NSF USA
 
 # Set forecasting variables
 nsurvey = 6
-nyears = 2
+nyears = 5
 
 # Calculate data for plotting 
 ## DATA IMPORTING & ANALYSIS
@@ -43,7 +43,7 @@ elevProj, elevProj_trans, elevFloorProj, elevGradeBeamProj = calc_forecast_eleva
 # Calculate the floor elevation differences and slopes accounting for known lug to truss height (shim height)
 lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot = calc_plan_dataframe (survey_clean, truss_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo)
 # Calculate the differental settlement between column lugs
-beamDiff, beamDiffProj, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, floorDiffElev = calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans, elevFloorProj, floorElevPlot)
+beamDiff, beamDiffProj, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, floorDiffElev, floorDiffProj = calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans, elevFloorProj, floorElevPlot)
 # Create dataframe for Beam Plotting Styles
 beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProjColor = plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj)
 # Create dataframe for floor elevation plotting styles
@@ -54,10 +54,3 @@ beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_
 settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
 elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
 elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor)
-
-
-fig_error_mean_plane = plot_FloorElev_error_mean(floorElevPlot, color_dict, mapsPods)
-st.plotly_chart(fig_error_mean_plane)
-
-fig_error_fit_plane = plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods)
-st.plotly_chart(fig_error_fit_plane)

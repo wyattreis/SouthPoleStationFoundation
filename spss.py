@@ -63,7 +63,7 @@ if st.sidebar.button('Compute Settlement'):
     # Calculate the floor elevation differences and slopes accounting for known lug to truss height (shim height)
     lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot = calc_plan_dataframe (survey_clean, truss_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo)
     # Calculate the differental settlement between column lugs
-    beamDiff, beamDiffProj, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, floorDiffElev = calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans, elevFloorProj, floorElevPlot)
+    beamDiff, beamDiffProj, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, floorDiffElev, floorDiffProj = calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, beamInfo, settlementProj_trans, elevFloorProj, floorElevPlot)
     # Create dataframe for Beam Plotting Styles
     beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProjColor = plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj)
     # Create dataframe for floor elevation plotting styles
@@ -113,8 +113,8 @@ if st.sidebar.button('Compute Settlement'):
     fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
     # Settlement Rate
     fig_rate = plot_settlementRate(settlement_rate, color_dict, maps)
-    # Differential between columns Timeseries
-    floorDiff = floorDifferential(floorDiffElev, color_dictBeams, mapsBeams)
+    # Differential between columns timeseries
+    floorDiff = floorDifferential(floorDiffElev, floorElevPlot, color_dictBeams, mapsBeams)
     
     st.subheader("Time Series Plots")
     # Create Streamlit Plot objects - Plan Figure

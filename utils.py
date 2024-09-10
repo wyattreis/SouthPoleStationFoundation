@@ -118,7 +118,8 @@ def calc_settlement(survey_long, MPlocations):
 
 # Cumulative Settlement Forecasting
 def calc_forecast_settlement(settlement, nsurvey, nyears):
-    settlementInterp = settlement.iloc[(len(settlement.index)-(nsurvey)):(len(settlement.index))]
+    settlement_clean = settlement.drop("2022-01-07", axis=0)
+    settlementInterp = settlement_clean.iloc[(len(settlement_clean.index)-(nsurvey)):(len(settlement_clean.index))]
     currentYear = settlementInterp.index.year[-1]
 
     starting_settlement = settlementInterp.iloc[-1]
@@ -159,7 +160,8 @@ def calc_forecast_settlement(settlement, nsurvey, nyears):
     return settlementProj, settlementProj_trans
 
 def calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears):
-    elevInterp = elevation.iloc[(len(elevation.index)-(nsurvey)):(len(elevation.index))]
+    elev_clean = elevation.drop("2022-01-07", axis=0)
+    elevInterp = elev_clean.iloc[(len(elev_clean.index)-(nsurvey)):(len(elev_clean.index))]
     currentYear = elevInterp.index.year[-1]
 
     starting_elev = elevInterp.iloc[-1]
@@ -240,7 +242,12 @@ def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, 
     floorDiffElev = floorDiffElev[~floorDiffElev.index.duplicated(keep='last')].abs()
     floorDiffElev.columns = pd.to_datetime(floorDiffElev.columns).astype(str)
 
-    return beamDiff, beamDiffProj, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, floorDiffElev
+    floorElevProj = beamLength_long.join(elevFloorProj)
+    floorDiffProj = floorElevProj.set_index(['beamName']).sort_values(by=['beamName', 'beamEnd']).drop(columns=['beamEnd', 'beamLength']).groupby(['beamName']).diff().mul(12)
+    floorDiffProj = floorDiffProj[~floorDiffProj.index.duplicated(keep='last')].abs()
+    floorDiffProj.columns = pd.to_datetime(floorDiffProj.columns).astype(str)
+
+    return beamDiff, beamDiffProj, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, floorDiffElev, floorDiffProj
 
 # Create dataframes for planview plotting 
 # (lug and floor elevations, lug to truss measurement, differential settlement)
@@ -952,79 +959,124 @@ def plot_settlementRate(settlement_rate, color_dict, maps):
     return fig
 
 # Plot settlement rate between each survey
-def floorDifferential(floorDiffElev, color_dictBeams, mapsBeams):
+def floorDifferential(floorDiffElev, floorElevPlot, color_dictBeams, mapsBeams):
+    last_column = floorElevPlot.columns[-1]
+    date_break = pd.to_datetime(last_column, format='%Y-%m-%d')
+
     df = floorDiffElev.transpose()
-    df= df.drop('2022-01-07')
-    #Use these to only show specific columns or columns over a threshold
-    df = df[['A3-2 - A2-6','A1-2 - A1-1','A4-1 - A3-2','A2-6 - A2-5','A1-3 - A1-2','A4-3 - A4-2',
-             'B2-6 - B2-2','B1-1 - B2-1','B4-1 - B3-4','B2-6 - B2-5','B1-3 - B1-2','B4-3 - B4-2','B3-4 - B3-1','B3-1 - B2-2']]
-    #df = df[df.columns[df[specific_column].max() >= 2]]
+    df= df.drop('2022-01-07').drop(['B2-1 - A3-3', 'B2-4 - A3-4'], axis = 1)
+    df.index = pd.to_datetime(df.index)
+
+    # Split the data based on the date condition
+    before_date = df[df.index <= date_break]
+    after_date = df[df.index >= date_break]
+
+    plotGroups = {}
+    greater2 = df.columns[df.gt(2).any()]
+    df_filtered = df[greater2]
+    group_A = [col for col in df_filtered.columns if 'A' in col]
+    group_B = [col for col in df_filtered.columns if 'B' in col]
+    plotGroups['All > 2"'] = df_filtered.columns.tolist()
+    plotGroups['A Pod > 2"'] = group_A
+    plotGroups['B Pod > 2"'] = group_B
+
 
     fig = go.Figure()
 
     for column in df:
+            # Define line style based on date condition
+            line_style = ['solid' if date < date_break else 'dash' for date in df.index]
+
+            # Add trace for the solid line (before the break date)
             fig.add_trace(go.Scatter(
-                x=df.index,
-                y=df[column],
+                x=before_date.index,
+                y=before_date[column],
                 name= column,
-                mode = 'lines+markers',
-                marker_color = color_dictBeams[column]
+                mode='lines+markers',
+                line=dict(dash='solid'),  # Solid line
+                marker_color=color_dictBeams[column]
             ))
+
+            # Add trace for the dashed line (after the break date)
+            fig.add_trace(go.Scatter(
+                x=after_date.index,
+                y=after_date[column],
+                name=column,
+                mode='lines+markers',
+                line=dict(dash='dash'),  # Dashed line
+                marker_color=color_dictBeams[column],
+                marker = dict(
+                        size=7.5,
+                        symbol='star')
+            ))
+            
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=2,  # Start y position
+            y1=2,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='red',
+                width=5,
+                dash='dash',  # Dashed line
+            )
+        )
 
     fig.update_layout(
             xaxis_title="Survey Date",
-            yaxis_title="Differential Elevation [in]",
+            yaxis_title="Differential Floor Elevation [in]",
             #yaxis= dict(range=[0,6]),
             font=dict(
                 size=26,  # Set the font size here
                 color="Black"
             )
         )
-    
+
     fig.update_xaxes(linewidth=1, linecolor='black', mirror=True, ticks='inside', showline=True)
     fig.update_yaxes(linewidth=1, linecolor='black', mirror=True, ticks='inside', showline=True)
 
-    # # groups and trace visibilities
-    # group = []
-    # vis = []
-    # visList = []
-    # for m in mapsBeams.keys():
-    #     for col in df.columns:
-    #         if col in mapsBeams[m]:
-    #             vis.append(True)
-    #         else:
-    #             vis.append(False)
-    #     group.append(m)
-    #     visList.append(vis)
-    #     vis = []
+    # Initialize visibility lists
+    visList = []
 
-    # # buttons for each group
-    # buttons = []
-    # for i, g in enumerate(group):
-    #     button =  dict(label=g,
-    #                 method = 'restyle',
-    #                     args = ['visible',visList[i]])
-    #     buttons.append(button)
+    # Create visibility lists for each group based on filtered columns
+    for group_name in plotGroups.keys():
+        vis = [[True]*2 if col in plotGroups[group_name] else [False]*2 for col in df.columns]
+        visFlat = [item for sublist in vis for item in sublist]
+        visList.append(visFlat)
 
-    # buttons = [{'label': 'All Points',
-    #                 'method': 'restyle',
-    #                 'args': ['visible', [True, True, True, True, True, True]]}] + buttons
+    # Create buttons for each group
+    buttons = []
+    for i, group_name in enumerate(plotGroups.keys()):
+        button = dict(
+            label=group_name,
+            method='restyle',
+            args=['visible', visList[i]]
+        )
+        
+        buttons.append(button)
 
-    # # update layout with buttons                       
-    # fig.update_layout(
-    #     updatemenus=[
-    #         dict(
-    #         type="dropdown",
-    #         direction="down",
-    #         buttons = buttons,
-    #             pad={"r": 10, "t": 10},
-    #             showactive=True,
-    #             x=0.0,
-    #             xanchor="left",
-    #             y=1.01,
-    #             yanchor="bottom")
-    #     ]
-    # )
+    # Add "All Points" button
+    buttons = [{'label': 'All Points',
+                'method': 'restyle',
+                'args': ['visible', [True] * len(df.columns)]}] + buttons
+
+    # Update layout with buttons
+    fig.update_layout(
+        updatemenus=[
+            dict(
+                type="dropdown",
+                direction="down",
+                buttons=buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom"
+            )
+        ]
+    )
     return fig
 
 # Plot differental settlement in plan view
@@ -2446,7 +2498,7 @@ def plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods):
     fit_error = fit_error.set_index('MP')
     fit_errorT = fit_error.T
 
-    df = fit_errorT 
+    df = fit_errorT.drop("2022-01-07", axis=0).mul(12)
 
     # plotly figure
     fig = go.Figure()
@@ -2459,9 +2511,48 @@ def plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods):
                 mode = 'lines+markers',
                 marker_color = color_dict[column]
             ))
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=0,  # Start y position
+            y1=0,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='black',
+                width=2,
+                dash='solid', 
+            )
+        )
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=2,  # Start y position
+            y1=2,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='red',
+                width=2,
+                dash='dash', 
+            )
+        )
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=-2,  # Start y position
+            y1=-2,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='red',
+                width=2,
+                dash='dash', 
+            )
+        )
             
     fig.update_layout(xaxis_title="Survey Date",
-                      yaxis_title="Anomaly from the Fit Plane [ft]")
+                      yaxis_title="Anomaly from the Fit Plane [in]")
 
     # groups and trace visibilities
     group = []
@@ -2513,37 +2604,18 @@ def plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods):
 # Plot Floor Elevation Error - mean
 def plot_FloorElev_error_mean(floorElevPlot, color_dict, mapsPods):
 
-    df = floorElevPlot
+    pod_A = floorElevPlot.loc[floorElevPlot.index.str.contains('A')]
+    pod_B = floorElevPlot.loc[floorElevPlot.index.str.contains('B')]
+    mean_A = pod_A.iloc[:,2:].mean()
+    mean_B = pod_B.iloc[:,2:].mean()
 
-    fit_error = pd.DataFrame()
+    error_A = pod_A.iloc[:,2:] - mean_A
+    error_B = pod_B.iloc[:,2:] - mean_B
 
-    for col in df.columns[2:]:
-        # Extract coordinates
-        xs = df['mpX']
-        ys = df['mpY']
-        zs = df[col]
+    error = pd.concat([error_A, error_B])
+    fit_errorT = error.T
 
-        # Calculate mean of z values
-        Z_mean = zs.mean()
-
-        # # Fit plane 
-        # tmp_A = []
-        # tmp_b = []
-        # for i in range(len(xs)):
-        #     tmp_A.append([xs[i], ys[i], 1])
-        #     tmp_b.append(zs[i])
-        # b = np.matrix(tmp_b).T
-        # A = np.matrix(tmp_A)
-        # fit = (A.T * A).I * A.T * b
-        errors = zs - Z_mean
-
-        fit_error[col] = np.array(errors).flatten()
-
-    fit_error['MP'] = df.index
-    fit_error = fit_error.set_index('MP')
-    fit_errorT = fit_error.T
-
-    df = fit_errorT 
+    df = fit_errorT.drop("2022-01-07", axis=0).mul(12)
 
     # plotly figure
     fig = go.Figure()
@@ -2556,9 +2628,48 @@ def plot_FloorElev_error_mean(floorElevPlot, color_dict, mapsPods):
                 mode = 'lines+markers',
                 marker_color = color_dict[column]
             ))
+
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=0,  # Start y position
+            y1=0,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='black',
+                width=2,
+                dash='solid', 
+            )
+        )
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=2,  # Start y position
+            y1=2,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='red',
+                width=2,
+                dash='dash', 
+            )
+        )
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=-2,  # Start y position
+            y1=-2,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='red',
+                width=2,
+                dash='dash', 
+            )
+        )
             
     fig.update_layout(xaxis_title="Survey Date",
-                      yaxis_title="Anomaly from the Fit Plane [ft]")
+                      yaxis_title="Anomaly from the Mean Plane [in]")
 
     # groups and trace visibilities
     group = []
@@ -3002,7 +3113,7 @@ def plot_GradeBeamElev_error_fit(gradeBeamElevPlot, color_dict, mapsPods):
     fit_error = fit_error.set_index('MP')
     fit_errorT = fit_error.T
 
-    df = fit_errorT 
+    df = fit_errorT.drop("2022-01-07", axis=0).mul(12) 
 
     # plotly figure
     fig = go.Figure()
@@ -3015,9 +3126,48 @@ def plot_GradeBeamElev_error_fit(gradeBeamElevPlot, color_dict, mapsPods):
                 mode = 'lines+markers',
                 marker_color = color_dict[column]
             ))
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=0,  # Start y position
+            y1=0,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='black',
+                width=2,
+                dash='solid', 
+            )
+        )
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=2,  # Start y position
+            y1=2,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='red',
+                width=2,
+                dash='dash', 
+            )
+        )
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=-2,  # Start y position
+            y1=-2,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='red',
+                width=2,
+                dash='dash', 
+            )
+        )
             
     fig.update_layout(xaxis_title="Survey Date",
-                      yaxis_title="Anomaly from the Fit Plane [ft]")
+                      yaxis_title="Anomaly from the Fit Plane [in]")
 
     # groups and trace visibilities
     group = []
@@ -3069,37 +3219,18 @@ def plot_GradeBeamElev_error_fit(gradeBeamElevPlot, color_dict, mapsPods):
 # Plot Grade Beam Elevation Error - mean
 def plot_GradeBeamElev_error_mean(gradeBeamElevPlot, color_dict, mapsPods):
 
-    df = gradeBeamElevPlot
+    pod_A = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.str.contains('A')]
+    pod_B = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.str.contains('B')]
+    mean_A = pod_A.iloc[:,2:].mean()
+    mean_B = pod_B.iloc[:,2:].mean()
 
-    fit_error = pd.DataFrame()
+    error_A = pod_A.iloc[:,2:] - mean_A
+    error_B = pod_B.iloc[:,2:] - mean_B
 
-    for col in df.columns[2:]:
-        # Extract coordinates
-        xs = df['mpX']
-        ys = df['mpY']
-        zs = df[col]
+    error = pd.concat([error_A, error_B])
+    fit_errorT = error.T
 
-        # Calculate mean of z values
-        Z_mean = zs.mean()
-
-        # # Fit plane 
-        # tmp_A = []
-        # tmp_b = []
-        # for i in range(len(xs)):
-        #     tmp_A.append([xs[i], ys[i], 1])
-        #     tmp_b.append(zs[i])
-        # b = np.matrix(tmp_b).T
-        # A = np.matrix(tmp_A)
-        # fit = (A.T * A).I * A.T * b
-        errors = zs - Z_mean
-
-        fit_error[col] = np.array(errors).flatten()
-
-    fit_error['MP'] = df.index
-    fit_error = fit_error.set_index('MP')
-    fit_errorT = fit_error.T
-
-    df = fit_errorT 
+    df = fit_errorT.drop("2022-01-07", axis=0).mul(12)
 
     # plotly figure
     fig = go.Figure()
@@ -3112,9 +3243,48 @@ def plot_GradeBeamElev_error_mean(gradeBeamElevPlot, color_dict, mapsPods):
                 mode = 'lines+markers',
                 marker_color = color_dict[column]
             ))
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=0,  # Start y position
+            y1=0,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='black',
+                width=2,
+                dash='solid', 
+            )
+        )
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=2,  # Start y position
+            y1=2,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='red',
+                width=2,
+                dash='dash', 
+            )
+        )
+    
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=-2,  # Start y position
+            y1=-2,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='red',
+                width=2,
+                dash='dash', 
+            )
+        )
             
     fig.update_layout(xaxis_title="Survey Date",
-                      yaxis_title="Anomaly from the Fit Plane [ft]")
+                      yaxis_title="Anomaly from the Mean Plane [in]")
 
     # groups and trace visibilities
     group = []

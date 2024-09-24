@@ -115,10 +115,13 @@ if st.sidebar.button('Compute Settlement'):
     fig_rate = plot_settlementRate(settlement_rate, color_dict, maps)
     # Differential between columns timeseries
     floorDiff = floorDifferential(floorDiffElev, floorElevPlot, color_dictBeams, mapsBeams)
+    #Grade Beam Profiles
+    gradeBeamProfile = plot_GradeBeam_profiles(gradeBeamElevPlot)
     
     st.subheader("Time Series Plots")
     # Create Streamlit Plot objects - Plan Figure
-    tab1, tab2, tab3 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]", "Column Pair Floor Differential [in]"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]", "Column Pair Floor Differential [in]", 
+                                      "Grade Beam Elevation Profiles [ft]"])
     with tab1:
         st.text("The cumulative settlement (in feet) of the station based on the survey lugs.  \nAll survey dates are included.")
         st.plotly_chart(fig_cumulative, use_container_width=True, height=600)
@@ -128,6 +131,9 @@ if st.sidebar.button('Compute Settlement'):
     with tab3:
         st.text("The differential elevation (in inches) for each column pair for each survey date and using projected floor elevations.  \nData is limited to the period where shim pack heights are known and projected.  \nThe January 2022 Survey is not included due to significant errors.")
         st.plotly_chart(floorDiff, use_container_width=True, height=600)
+    with tab4:
+        st.text("The elevation (in feet) for each column base at the grade beams during each survey.")
+        st.plotly_chart(gradeBeamProfile, use_container_width=True, height=600)
 
     ## 3D PLOTTING
     fig_3d_floor = plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3D, plot3dAnno, floorElevPlot)
@@ -158,16 +164,16 @@ if st.sidebar.button('Compute Settlement'):
     tab1, tab2, tab3, tab4 = st.tabs(["Floor Elevation Error - Least Squares Fit [ft]", "Floor Elevation Error - Mean [ft]", "Grade Beam Elevation Error - Least Squares Fit [ft]", "Grade Beam Elevation Error - Mean [ft]"])
     with tab1:
         st.text("The anomaly between the least squares fitted floor elevation plane for each pod and the calculated floor elevations at each monitoring point.")
-        st.plotly_chart(fig_floorElev_errorFit)
+        st.plotly_chart(fig_floorElev_errorFit, use_container_width=True, height=600)
     with tab2:
         st.text("The anomaly between the mean floor elevation plane for each pod and the calculated floor elevations at each monitoring point.")
-        st.plotly_chart(fig_floorElev_errorMean)
+        st.plotly_chart(fig_floorElev_errorMean, use_container_width=True, height=600)
     with tab3:
         st.text("The anomaly between the least square fitted grade beam elevation plane for each pod and the calculated grade beam elevations at each monitoring point.")
-        st.plotly_chart(fig_gradeBeamElev_errorFit)
+        st.plotly_chart(fig_gradeBeamElev_errorFit, use_container_width=True, height=600)
     with tab4:
         st.text("The anomaly between the mean grade beam elevation plane for each pod and the calculated grade beam elevations at each monitoring point.")
-        st.plotly_chart(fig_gradeBeamElev_errorMean) 
+        st.plotly_chart(fig_gradeBeamElev_errorMean, use_container_width=True, height=600) 
 
     st.subheader(" ")
 

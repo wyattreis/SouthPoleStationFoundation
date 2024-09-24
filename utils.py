@@ -3508,3 +3508,176 @@ def plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, el
                         bgcolor = "white"
                         ))
     return fig
+
+def plot_GradeBeam_profiles(gradeBeamElevPlot):
+    #A Pod Grade Beams
+    # Grade Beam A3-4 - A2-1
+    GBelev_A3_4_A2_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A3-4', 'A3-1', 'A2-5', 'A2-3', 'A2-1'])].copy()
+    GBelev_A3_4_A2_1.sort_values(by='mpX', inplace=True)
+    startX = gradeBeamElevPlot.loc['A3-4', 'mpX']
+    GBelev_A3_4_A2_1['plotX'] = gradeBeamElevPlot['mpX'] - startX
+    GBelev_A3_4_A2_1['long_beam'] = 'A3-4 - A2-1'
+
+    # Grade Beam A3-3 - A2-2
+    GBelev_A3_3_A2_2 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A3-3', 'A3-2', 'A2-6', 'A2-4', 'A2-2'])].copy()
+    GBelev_A3_3_A2_2.sort_values(by='mpX', inplace=True)
+    startX = gradeBeamElevPlot.loc['A3-3', 'mpX']
+    GBelev_A3_3_A2_2['plotX'] = gradeBeamElevPlot['mpX'] - startX
+    GBelev_A3_3_A2_2['long_beam'] = 'A3-3 - A2-2'
+
+    # Grade Beam A1-2 - A2-1
+    GBelev_A1_2_A2_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A1-2', 'A1-1', 'A2-2', 'A2-1'])].copy()
+    GBelev_A1_2_A2_1.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['A1-2', 'mpY']
+    GBelev_A1_2_A2_1['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_A1_2_A2_1['long_beam'] = 'A1-2 - A2-1'
+
+    # Grade Beam A1-3 - A2-3
+    GBelev_A1_3_A2_3 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A1-3', 'A1-4', 'A2-4', 'A2-3'])].copy()
+    GBelev_A1_3_A2_3.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['A1-3', 'mpY']
+    GBelev_A1_3_A2_3['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_A1_3_A2_3['long_beam'] = 'A1-3 - A2-3'
+
+    # Grade Beam A4-2 - A3-31
+    GBelev_A4_2_A3_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A4-2', 'A4-1', 'A3-2', 'A3-1'])].copy()
+    GBelev_A4_2_A3_1.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['A4-2', 'mpY']
+    GBelev_A4_2_A3_1['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_A4_2_A3_1['long_beam'] = 'A4-2 - A3-1'
+
+    # Grade Beam A4-2 - A3-31
+    GBelev_A4_3_A3_4 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A4-3', 'A4-4', 'A3-3', 'A3-4'])].copy()
+    GBelev_A4_3_A3_4.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['A4-2', 'mpY']
+    GBelev_A4_3_A3_4['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_A4_3_A3_4['long_beam'] = 'A4-3 - A3-4'
+
+    #B Pod Grade Beams
+    # Grade Beam B3-4 - B2-4
+    GBelev_B3_4_B2_4 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B3-2', 'B3-1', 'B2-2', 'B2-3', 'B2-4'])].copy()
+    GBelev_B3_4_B2_4.sort_values(by='mpX', inplace=True)
+    startX = gradeBeamElevPlot.loc['B3-2', 'mpX']
+    GBelev_B3_4_B2_4['plotX'] = gradeBeamElevPlot['mpX'] - startX
+    GBelev_B3_4_B2_4['long_beam'] = 'B3-2 - B2-4'
+
+    # Grade Beam B3-3 - B2-1
+    GBelev_B3_3_B2_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B3-3', 'B3-4', 'B2-6', 'B2-5', 'B2-1'])].copy()
+    GBelev_B3_3_B2_1.sort_values(by='mpX', inplace=True)
+    startX = gradeBeamElevPlot.loc['B3-3', 'mpX']
+    GBelev_B3_3_B2_1['plotX'] = gradeBeamElevPlot['mpX'] - startX
+    GBelev_B3_3_B2_1['long_beam'] = 'B3-3 - B2-1'
+
+    # Grade Beam B1-2 - B2-4
+    GBelev_B1_2_B2_4 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B1-2', 'B1-1', 'B2-1', 'B2-4'])].copy()
+    GBelev_B1_2_B2_4.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['B1-2', 'mpY']
+    GBelev_B1_2_B2_4['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_B1_2_B2_4['long_beam'] = 'B1-2 - B2-4'
+
+    # Grade Beam B1-3 - B2-3
+    GBelev_B1_3_B2_3 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B1-3', 'B1-4', 'B2-5', 'B2-3'])].copy()
+    GBelev_B1_3_B2_3.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['B1-3', 'mpY']
+    GBelev_B1_3_B2_3['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_B1_3_B2_3['long_beam'] = 'B1-3 - B2-3'
+
+    # Grade Beam B4-2 - B3-1
+    GBelev_B4_2_B3_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B4-2', 'B4-1', 'B3-4', 'B3-1'])].copy()
+    GBelev_B4_2_B3_1.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['B4-2', 'mpY']
+    GBelev_B4_2_B3_1['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_B4_2_B3_1['long_beam'] = 'B4-2 - B3-1'
+
+    # Grade Beam B4-3 - B3-2
+    GBelev_B4_3_B3_2 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B4-3', 'B4-4', 'B3-3', 'B3-2'])].copy()
+    GBelev_B4_3_B3_2.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['B4-3', 'mpY']
+    GBelev_B4_3_B3_2['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_B4_3_B3_2['long_beam'] = 'B4-3 - B3-2'
+
+    # Grade Beam DF
+    df_GradeBeams = pd.concat([GBelev_A3_4_A2_1, GBelev_A3_3_A2_2, GBelev_A1_2_A2_1, GBelev_A1_3_A2_3, GBelev_A4_2_A3_1, GBelev_A4_3_A3_4,
+                            GBelev_B3_4_B2_4, GBelev_B3_3_B2_1, GBelev_B1_2_B2_4, GBelev_B1_3_B2_3, GBelev_B4_2_B3_1, GBelev_B4_3_B3_2])
+    df_GradeBeams = df_GradeBeams.drop(columns=['mpX', 'mpY'])
+    columns = ['long_beam', 'plotX'] + [col for col in df_GradeBeams.columns if col not in ['long_beam', 'plotX']]
+    df_GradeBeams = df_GradeBeams[columns]
+
+    # Create a color mapping for each unique long_beam
+    unique_beams = df_GradeBeams['long_beam'].unique()
+    colors = px.colors.qualitative.Plotly  # You can choose any color palette
+    color_mapping = {beam: colors[i % len(colors)] for i, beam in enumerate(unique_beams)}
+
+    # Create a figure
+    fig = go.Figure()
+
+    # Define year columns
+    year_columns = df_GradeBeams.columns[2:]
+
+    # Iterate through each unique long_beam
+    for beam in unique_beams:
+        # Filter the DataFrame for the current beam
+        beam_data = df_GradeBeams[df_GradeBeams['long_beam'] == beam]
+        
+        # Iterate through the columns representing years (excluding 'long_beam' and 'plotX')
+        for column in year_columns:
+            # Add a trace for each year with color mapping
+            fig.add_trace(go.Scatter(
+                mode='lines+markers',
+                x=beam_data['plotX'],                 # X-axis values
+                y=beam_data[column].values,           # Y-axis values for the specific year
+                name=beam,                             # Use only the beam name for the trace
+                # text=df_GradeBeams.index,
+                line=dict(color=color_mapping[beam]),  # Set the line color based on the long_beam
+                showlegend=True,
+                visible=(column == year_columns[-1])   # Only the last year column is visible by default
+            ))
+
+    # Create visibility lists for each year
+    visList = []
+    for i in range(len(year_columns)):
+        vis = [False] * len(fig.data)
+        for j in range(len(unique_beams)):
+            vis[i + j * len(year_columns)] = True  # Ensure the correct visibility for each beam-year combo
+        visList.append(vis)
+
+    # Update layout if necessary
+    fig.update_layout(
+        xaxis_title='Horizontal Distance (feet)',
+        yaxis_title='Elevation (feet)'
+    )
+
+    # Create buttons for each group
+    buttons = []
+    for idx, col in enumerate(year_columns):
+        buttons.append(
+            dict(
+                label=col,
+                method="update",
+                args=[{"visible": visList[idx]}]  # Set visibility for the selected year
+            )
+        )
+
+    buttons = [{'label': 'Select Survey Date',
+                'method': 'restyle',
+                'args': ['visible', [False] * len(fig.data)]}] + buttons
+
+    # Update layout with buttons
+    fig.update_layout(
+        updatemenus=[
+            dict(
+                type="dropdown",
+                direction="down",
+                buttons=buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom"
+            )
+        ],
+        # title='Profile of Grade Beam Elevations'
+    )
+
+    return fig

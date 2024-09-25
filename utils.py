@@ -342,6 +342,105 @@ def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeC
     elevGBInfo3D = elevGBInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
     return elevationGBStart, elevGBInfo3D
 
+def calc_GradeBeam_profiles(gradeBeamElevPlot):
+    #A Pod Grade Beams
+    # Grade Beam A3-4 - A2-1
+    GBelev_A3_4_A2_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A3-4', 'A3-1', 'A2-5', 'A2-3', 'A2-1'])].copy()
+    GBelev_A3_4_A2_1.sort_values(by='mpX', inplace=True)
+    startX = gradeBeamElevPlot.loc['A3-4', 'mpX']
+    GBelev_A3_4_A2_1['plotX'] = gradeBeamElevPlot['mpX'] - startX
+    GBelev_A3_4_A2_1['long_beam'] = 'A3-4 - A2-1'
+
+    # Grade Beam A3-3 - A2-2
+    GBelev_A3_3_A2_2 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A3-3', 'A3-2', 'A2-6', 'A2-4', 'A2-2'])].copy()
+    GBelev_A3_3_A2_2.sort_values(by='mpX', inplace=True)
+    startX = gradeBeamElevPlot.loc['A3-3', 'mpX']
+    GBelev_A3_3_A2_2['plotX'] = gradeBeamElevPlot['mpX'] - startX
+    GBelev_A3_3_A2_2['long_beam'] = 'A3-3 - A2-2'
+
+    # Grade Beam A1-2 - A2-1
+    GBelev_A1_2_A2_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A1-2', 'A1-1', 'A2-2', 'A2-1'])].copy()
+    GBelev_A1_2_A2_1.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['A1-2', 'mpY']
+    GBelev_A1_2_A2_1['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_A1_2_A2_1['long_beam'] = 'A1-2 - A2-1'
+
+    # Grade Beam A1-3 - A2-3
+    GBelev_A1_3_A2_3 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A1-3', 'A1-4', 'A2-4', 'A2-3'])].copy()
+    GBelev_A1_3_A2_3.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['A1-3', 'mpY']
+    GBelev_A1_3_A2_3['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_A1_3_A2_3['long_beam'] = 'A1-3 - A2-3'
+
+    # Grade Beam A4-2 - A3-31
+    GBelev_A4_2_A3_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A4-2', 'A4-1', 'A3-2', 'A3-1'])].copy()
+    GBelev_A4_2_A3_1.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['A4-2', 'mpY']
+    GBelev_A4_2_A3_1['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_A4_2_A3_1['long_beam'] = 'A4-2 - A3-1'
+
+    # Grade Beam A4-2 - A3-31
+    GBelev_A4_3_A3_4 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A4-3', 'A4-4', 'A3-3', 'A3-4'])].copy()
+    GBelev_A4_3_A3_4.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['A4-2', 'mpY']
+    GBelev_A4_3_A3_4['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_A4_3_A3_4['long_beam'] = 'A4-3 - A3-4'
+
+    #B Pod Grade Beams
+    # Grade Beam B3-4 - B2-4
+    GBelev_B3_4_B2_4 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B3-2', 'B3-1', 'B2-2', 'B2-3', 'B2-4'])].copy()
+    GBelev_B3_4_B2_4.sort_values(by='mpX', inplace=True)
+    startX = gradeBeamElevPlot.loc['B3-2', 'mpX']
+    GBelev_B3_4_B2_4['plotX'] = gradeBeamElevPlot['mpX'] - startX
+    GBelev_B3_4_B2_4['long_beam'] = 'B3-2 - B2-4'
+
+    # Grade Beam B3-3 - B2-1
+    GBelev_B3_3_B2_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B3-3', 'B3-4', 'B2-6', 'B2-5', 'B2-1'])].copy()
+    GBelev_B3_3_B2_1.sort_values(by='mpX', inplace=True)
+    startX = gradeBeamElevPlot.loc['B3-3', 'mpX']
+    GBelev_B3_3_B2_1['plotX'] = gradeBeamElevPlot['mpX'] - startX
+    GBelev_B3_3_B2_1['long_beam'] = 'B3-3 - B2-1'
+
+    # Grade Beam B1-2 - B2-4
+    GBelev_B1_2_B2_4 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B1-2', 'B1-1', 'B2-1', 'B2-4'])].copy()
+    GBelev_B1_2_B2_4.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['B1-2', 'mpY']
+    GBelev_B1_2_B2_4['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_B1_2_B2_4['long_beam'] = 'B1-2 - B2-4'
+
+    # Grade Beam B1-3 - B2-3
+    GBelev_B1_3_B2_3 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B1-3', 'B1-4', 'B2-5', 'B2-3'])].copy()
+    GBelev_B1_3_B2_3.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['B1-3', 'mpY']
+    GBelev_B1_3_B2_3['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_B1_3_B2_3['long_beam'] = 'B1-3 - B2-3'
+
+    # Grade Beam B4-2 - B3-1
+    GBelev_B4_2_B3_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B4-2', 'B4-1', 'B3-4', 'B3-1'])].copy()
+    GBelev_B4_2_B3_1.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['B4-2', 'mpY']
+    GBelev_B4_2_B3_1['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_B4_2_B3_1['long_beam'] = 'B4-2 - B3-1'
+
+    # Grade Beam B4-3 - B3-2
+    GBelev_B4_3_B3_2 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B4-3', 'B4-4', 'B3-3', 'B3-2'])].copy()
+    GBelev_B4_3_B3_2.sort_values(by='mpY', inplace=True)
+    startX = gradeBeamElevPlot.loc['B4-3', 'mpY']
+    GBelev_B4_3_B3_2['plotX'] = gradeBeamElevPlot['mpY'] - startX
+    GBelev_B4_3_B3_2['long_beam'] = 'B4-3 - B3-2'
+
+    # Grade Beam DF
+    df_GradeBeams = pd.concat([GBelev_A3_4_A2_1, GBelev_A3_3_A2_2, GBelev_A1_2_A2_1, GBelev_A1_3_A2_3, GBelev_A4_2_A3_1, GBelev_A4_3_A3_4,
+                            GBelev_B3_4_B2_4, GBelev_B3_3_B2_1, GBelev_B1_2_B2_4, GBelev_B1_3_B2_3, GBelev_B4_2_B3_1, GBelev_B4_3_B3_2])
+    df_GradeBeams = df_GradeBeams.drop(columns=['mpX', 'mpY'])
+    columns = ['long_beam', 'plotX'] + [col for col in df_GradeBeams.columns if col not in ['long_beam', 'plotX']]
+    df_GradeBeams = df_GradeBeams[columns]
+
+    # Grade Beam Elevation differences
+    gradeBeam_diff = df_GradeBeams.groupby('long_beam').apply(lambda x: x.iloc[:, 2:].max() - x.iloc[:, 2:].min()).mul(12)
+
+    return df_GradeBeams, gradeBeam_diff
+
 # Line styles for beam plots
 def plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj):
     #---------BEAM Plotting Styles--------------------------------
@@ -664,7 +763,12 @@ def plot_annotations():
                      'B4-2 - B4-1','B4-3 - B4-2','B4-3 - B4-4','B4-4 - B3-3','B4-4 - B4-1'],
                 'A-B':['B2-1 - A3-3', 'B2-4 - A3-4']}
     
-    return beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods
+    mapsGradeBeams = {'A':['A1-2 - A2-1', 'A1-3 - A2-3', 'A3-3 - A2-2', 
+                           'A3-4 - A2-1', 'A4-2 - A3-1', 'A4-3 - A3-4'],
+                    'B':['B1-2 - B2-4', 'B1-3 - B2-3', 'B3-2 - B2-4',
+                         'B3-3 - B2-1', 'B4-2 - B3-1', 'B4-3 - B3-2']}
+    
+    return beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods, mapsGradeBeams
 
 # Plot Cumulative Settlement
 def plot_cumulative_settlement(settlement, settlementProj, color_dict, maps):
@@ -1026,15 +1130,12 @@ def floorDifferential(floorDiffElev, floorElevPlot, color_dictBeams, mapsBeams):
     fig.update_layout(
             xaxis_title="Survey Date",
             yaxis_title="Differential Floor Elevation [in]",
-            #yaxis= dict(range=[0,6]),
-            font=dict(
-                size=26,  # Set the font size here
-                color="Black"
-            )
+            # #yaxis= dict(range=[0,6]),
+            # font=dict(
+            #     size=26,  # Set the font size here
+            #     color="Black"
+            # )
         )
-
-    fig.update_xaxes(linewidth=1, linecolor='black', mirror=True, ticks='inside', showline=True)
-    fig.update_yaxes(linewidth=1, linecolor='black', mirror=True, ticks='inside', showline=True)
 
     # Initialize visibility lists
     visList = []
@@ -3509,102 +3610,9 @@ def plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, el
                         ))
     return fig
 
-def plot_GradeBeam_profiles(gradeBeamElevPlot):
-    #A Pod Grade Beams
-    # Grade Beam A3-4 - A2-1
-    GBelev_A3_4_A2_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A3-4', 'A3-1', 'A2-5', 'A2-3', 'A2-1'])].copy()
-    GBelev_A3_4_A2_1.sort_values(by='mpX', inplace=True)
-    startX = gradeBeamElevPlot.loc['A3-4', 'mpX']
-    GBelev_A3_4_A2_1['plotX'] = gradeBeamElevPlot['mpX'] - startX
-    GBelev_A3_4_A2_1['long_beam'] = 'A3-4 - A2-1'
-
-    # Grade Beam A3-3 - A2-2
-    GBelev_A3_3_A2_2 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A3-3', 'A3-2', 'A2-6', 'A2-4', 'A2-2'])].copy()
-    GBelev_A3_3_A2_2.sort_values(by='mpX', inplace=True)
-    startX = gradeBeamElevPlot.loc['A3-3', 'mpX']
-    GBelev_A3_3_A2_2['plotX'] = gradeBeamElevPlot['mpX'] - startX
-    GBelev_A3_3_A2_2['long_beam'] = 'A3-3 - A2-2'
-
-    # Grade Beam A1-2 - A2-1
-    GBelev_A1_2_A2_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A1-2', 'A1-1', 'A2-2', 'A2-1'])].copy()
-    GBelev_A1_2_A2_1.sort_values(by='mpY', inplace=True)
-    startX = gradeBeamElevPlot.loc['A1-2', 'mpY']
-    GBelev_A1_2_A2_1['plotX'] = gradeBeamElevPlot['mpY'] - startX
-    GBelev_A1_2_A2_1['long_beam'] = 'A1-2 - A2-1'
-
-    # Grade Beam A1-3 - A2-3
-    GBelev_A1_3_A2_3 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A1-3', 'A1-4', 'A2-4', 'A2-3'])].copy()
-    GBelev_A1_3_A2_3.sort_values(by='mpY', inplace=True)
-    startX = gradeBeamElevPlot.loc['A1-3', 'mpY']
-    GBelev_A1_3_A2_3['plotX'] = gradeBeamElevPlot['mpY'] - startX
-    GBelev_A1_3_A2_3['long_beam'] = 'A1-3 - A2-3'
-
-    # Grade Beam A4-2 - A3-31
-    GBelev_A4_2_A3_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A4-2', 'A4-1', 'A3-2', 'A3-1'])].copy()
-    GBelev_A4_2_A3_1.sort_values(by='mpY', inplace=True)
-    startX = gradeBeamElevPlot.loc['A4-2', 'mpY']
-    GBelev_A4_2_A3_1['plotX'] = gradeBeamElevPlot['mpY'] - startX
-    GBelev_A4_2_A3_1['long_beam'] = 'A4-2 - A3-1'
-
-    # Grade Beam A4-2 - A3-31
-    GBelev_A4_3_A3_4 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['A4-3', 'A4-4', 'A3-3', 'A3-4'])].copy()
-    GBelev_A4_3_A3_4.sort_values(by='mpY', inplace=True)
-    startX = gradeBeamElevPlot.loc['A4-2', 'mpY']
-    GBelev_A4_3_A3_4['plotX'] = gradeBeamElevPlot['mpY'] - startX
-    GBelev_A4_3_A3_4['long_beam'] = 'A4-3 - A3-4'
-
-    #B Pod Grade Beams
-    # Grade Beam B3-4 - B2-4
-    GBelev_B3_4_B2_4 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B3-2', 'B3-1', 'B2-2', 'B2-3', 'B2-4'])].copy()
-    GBelev_B3_4_B2_4.sort_values(by='mpX', inplace=True)
-    startX = gradeBeamElevPlot.loc['B3-2', 'mpX']
-    GBelev_B3_4_B2_4['plotX'] = gradeBeamElevPlot['mpX'] - startX
-    GBelev_B3_4_B2_4['long_beam'] = 'B3-2 - B2-4'
-
-    # Grade Beam B3-3 - B2-1
-    GBelev_B3_3_B2_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B3-3', 'B3-4', 'B2-6', 'B2-5', 'B2-1'])].copy()
-    GBelev_B3_3_B2_1.sort_values(by='mpX', inplace=True)
-    startX = gradeBeamElevPlot.loc['B3-3', 'mpX']
-    GBelev_B3_3_B2_1['plotX'] = gradeBeamElevPlot['mpX'] - startX
-    GBelev_B3_3_B2_1['long_beam'] = 'B3-3 - B2-1'
-
-    # Grade Beam B1-2 - B2-4
-    GBelev_B1_2_B2_4 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B1-2', 'B1-1', 'B2-1', 'B2-4'])].copy()
-    GBelev_B1_2_B2_4.sort_values(by='mpY', inplace=True)
-    startX = gradeBeamElevPlot.loc['B1-2', 'mpY']
-    GBelev_B1_2_B2_4['plotX'] = gradeBeamElevPlot['mpY'] - startX
-    GBelev_B1_2_B2_4['long_beam'] = 'B1-2 - B2-4'
-
-    # Grade Beam B1-3 - B2-3
-    GBelev_B1_3_B2_3 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B1-3', 'B1-4', 'B2-5', 'B2-3'])].copy()
-    GBelev_B1_3_B2_3.sort_values(by='mpY', inplace=True)
-    startX = gradeBeamElevPlot.loc['B1-3', 'mpY']
-    GBelev_B1_3_B2_3['plotX'] = gradeBeamElevPlot['mpY'] - startX
-    GBelev_B1_3_B2_3['long_beam'] = 'B1-3 - B2-3'
-
-    # Grade Beam B4-2 - B3-1
-    GBelev_B4_2_B3_1 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B4-2', 'B4-1', 'B3-4', 'B3-1'])].copy()
-    GBelev_B4_2_B3_1.sort_values(by='mpY', inplace=True)
-    startX = gradeBeamElevPlot.loc['B4-2', 'mpY']
-    GBelev_B4_2_B3_1['plotX'] = gradeBeamElevPlot['mpY'] - startX
-    GBelev_B4_2_B3_1['long_beam'] = 'B4-2 - B3-1'
-
-    # Grade Beam B4-3 - B3-2
-    GBelev_B4_3_B3_2 = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.isin(['B4-3', 'B4-4', 'B3-3', 'B3-2'])].copy()
-    GBelev_B4_3_B3_2.sort_values(by='mpY', inplace=True)
-    startX = gradeBeamElevPlot.loc['B4-3', 'mpY']
-    GBelev_B4_3_B3_2['plotX'] = gradeBeamElevPlot['mpY'] - startX
-    GBelev_B4_3_B3_2['long_beam'] = 'B4-3 - B3-2'
-
-    # Grade Beam DF
-    df_GradeBeams = pd.concat([GBelev_A3_4_A2_1, GBelev_A3_3_A2_2, GBelev_A1_2_A2_1, GBelev_A1_3_A2_3, GBelev_A4_2_A3_1, GBelev_A4_3_A3_4,
-                            GBelev_B3_4_B2_4, GBelev_B3_3_B2_1, GBelev_B1_2_B2_4, GBelev_B1_3_B2_3, GBelev_B4_2_B3_1, GBelev_B4_3_B3_2])
-    df_GradeBeams = df_GradeBeams.drop(columns=['mpX', 'mpY'])
-    columns = ['long_beam', 'plotX'] + [col for col in df_GradeBeams.columns if col not in ['long_beam', 'plotX']]
-    df_GradeBeams = df_GradeBeams[columns]
-
+def plot_GradeBeam_profiles(df_GradeBeams):
     # Create a color mapping for each unique long_beam
-    unique_beams = df_GradeBeams['long_beam'].unique()
+    unique_beams = np.sort(df_GradeBeams['long_beam'].unique())
     colors = px.colors.qualitative.Plotly  # You can choose any color palette
     color_mapping = {beam: colors[i % len(colors)] for i, beam in enumerate(unique_beams)}
 
@@ -3680,4 +3688,91 @@ def plot_GradeBeam_profiles(gradeBeamElevPlot):
         # title='Profile of Grade Beam Elevations'
     )
 
+    return fig
+
+# Plot Floor Elevation Error - fitted
+def plot_GradeBeamElev_diff(gradeBeam_diff, mapsGradeBeams):
+    # Create a color mapping for each unique long_beam
+    unique_beams = gradeBeam_diff.index
+    colors = px.colors.qualitative.Plotly  # You can choose any color palette
+    color_mapping = {beam: colors[i % len(colors)] for i, beam in enumerate(unique_beams)}
+
+    df = gradeBeam_diff.T.drop("2022-01-07", axis=0)
+
+    # plotly figure
+    fig = go.Figure()
+
+    for column in df:
+            fig.add_trace(go.Scatter(
+                x=df.index,
+                y=df[column],
+                name= column,
+                mode = 'lines+markers',
+                marker_color = color_mapping[column]
+            ))
+    
+      
+    fig.add_shape(
+            type='line',
+            x0=df.index.min(),  # Start x position (use the min index)
+            x1=df.index.max(),  # End x position (use the max index)
+            y0=6,  # Start y position
+            y1=6,  # End y position (horizontal line at y=2)
+            line=dict(
+                color='red',
+                width=2,
+                dash='dash', 
+            )
+        )
+            
+    fig.update_layout(xaxis_title="Survey Date",
+                      yaxis_title="Grade Beam Elevation Difference (in)")
+    
+    
+
+    # groups and trace visibilities
+    group = []
+    vis = []
+    visList = []
+    for m in mapsGradeBeams.keys():
+        for col in df.columns:
+            if col in mapsGradeBeams[m]:
+                vis.append(True)
+            else:
+                vis.append(False)
+        group.append(m)
+        visList.append(vis)
+        vis = []
+
+    # buttons for each group
+    buttons = []
+    for i, g in enumerate(group):
+        button =  dict(label=g,
+                    method = 'restyle',
+                        args = ['visible',visList[i]])
+        buttons.append(button)
+
+    # buttons
+    buttons = [{'label': 'All Points',
+                    'method': 'restyle',
+                    'args': ['visible', [True, True, True, True, True, True]]}] + buttons
+
+                
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        height = 600
+    )
     return fig

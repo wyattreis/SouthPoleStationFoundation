@@ -69,11 +69,13 @@ if st.sidebar.button('Compute Settlement'):
     # Create dataframe for floor elevation plotting styles
     floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot = plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
     # Create dataframe for plot annotations
-    beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods = plot_annotations()
+    beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods, mapsGradeBeams = plot_annotations()
     # Create dataframe for 3D plotting
     settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
     elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
     elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor)
+    #Calculate Grade Beam Differental 
+    df_GradeBeams, gradeBeam_diff = calc_GradeBeam_profiles(gradeBeamElevPlot)
     
     ## PLANVIEW PLOTTING
     # Differental Settlement Planview
@@ -116,12 +118,14 @@ if st.sidebar.button('Compute Settlement'):
     # Differential between columns timeseries
     floorDiff = floorDifferential(floorDiffElev, floorElevPlot, color_dictBeams, mapsBeams)
     #Grade Beam Profiles
-    gradeBeamProfile = plot_GradeBeam_profiles(gradeBeamElevPlot)
+    gradeBeamProfile = plot_GradeBeam_profiles(df_GradeBeams)
+    # Max Grade Beam Elevation Difference 
+    gradeBeamProfile_diff = plot_GradeBeamElev_diff(gradeBeam_diff , mapsGradeBeams)
     
     st.subheader("Time Series Plots")
     # Create Streamlit Plot objects - Plan Figure
-    tab1, tab2, tab3, tab4 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]", "Column Pair Floor Differential [in]", 
-                                      "Grade Beam Elevation Profiles [ft]"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]", "Column Pair Floor Differential [in]", 
+                                      "Grade Beam Elevation Profiles [ft]", "Max Grade Beam Elevation Difference [in]"])
     with tab1:
         st.text("The cumulative settlement (in feet) of the station based on the survey lugs.  \nAll survey dates are included.")
         st.plotly_chart(fig_cumulative, use_container_width=True, height=600)
@@ -134,6 +138,9 @@ if st.sidebar.button('Compute Settlement'):
     with tab4:
         st.text("The elevation (in feet) for each column base at the grade beams during each survey.")
         st.plotly_chart(gradeBeamProfile, use_container_width=True, height=600)
+    with tab5:
+        st.text("The maximum elevation difference (in inches) for each grade beams during each survey.")
+        st.plotly_chart(gradeBeamProfile_diff, use_container_width=True, height=600)
 
     ## 3D PLOTTING
     fig_3d_floor = plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3D, plot3dAnno, floorElevPlot)

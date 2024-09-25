@@ -49,9 +49,17 @@ beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProj
 # Create dataframe for floor elevation plotting styles
 floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot = plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
 # Create dataframe for plot annotations
-beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods = plot_annotations()
+beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods, mapsGradeBeams = plot_annotations()
 # Create dataframe for 3D plotting
 settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
 elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor)
 elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor)
+#Calculate Grade Beam Differental 
+df_GradeBeams, gradeBeam_diff = calc_GradeBeam_profiles(gradeBeamElevPlot)
 
+
+unique_beams = np.sort(df_GradeBeams['long_beam'].unique())
+print(unique_beams)
+
+unique_beams = gradeBeam_diff.index
+print(unique_beams)

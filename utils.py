@@ -63,13 +63,25 @@ def read_xlTruss(xlfile):
     truss = pd.read_excel(
         xlfile,
         engine='openpyxl',
-        sheet_name='SHIM DATA',
+        sheet_name='TRUSS DATA',
         skiprows=[0,2,3], 
         nrows=36)
     # rename second 2010/11/2 survey to 2010/11/3
     truss_clean = truss.dropna(axis=1, how='all').drop(columns=["DESCRIPTION", "Shims", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
     truss_clean.columns = pd.to_datetime(truss_clean.columns).astype(str)
     return truss_clean
+
+def read_xlShim(xlfile):
+    shim = pd.read_excel(
+        xlfile,
+        engine='openpyxl',
+        sheet_name='SHIM DATA',
+        skiprows=[0,2,3], 
+        nrows=36)
+    # rename second 2010/11/2 survey to 2010/11/3
+    shim_clean = shim.dropna(axis=1, how='all').drop(columns=["DESCRIPTION", "Shims", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
+    shim_clean.columns = pd.to_datetime(shim_clean.columns).astype(str)
+    return shim_clean
 
 # import beam information and label location
 def read_beamInfo():
@@ -86,7 +98,7 @@ def read_beamInfo():
     return beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort
 
 # Calculate the cumulative settlement in feet for each column by survey data
-def calc_settlement(survey_long, MPlocations):
+def calc_settlement(survey_long, survey_clean, truss_clean, shim_clean, MPlocations):
     survey_long['dummy']= 1
     firstValue = survey_long.groupby('dummy').first()
     firstValue = firstValue.to_numpy()[0]
@@ -96,7 +108,8 @@ def calc_settlement(survey_long, MPlocations):
     elevation.index = pd.to_datetime(elevation.index)
 
     #create an elevation of the grade beams using the 12.31' listed in the SPS As-builts Sheet A5.1 minues 1' between top of column and survey point (11.31' below survey point)
-    gradeBeamElev = elevation.sub(11.31).transpose()
+    # gradeBeamElev = elevation.sub(11.31).transpose() #assuming lugs are 1' below top of column
+    gradeBeamElev = survey_clean.add(truss_clean).sub(shim_clean.div(12)).sub(12.31).dropna(axis=1, how='all') # Using the shimpack data to 
     gradeBeamElevPlot = gradeBeamElev
     gradeBeamElevPlot.columns = gradeBeamElevPlot.columns.astype(str)
     gradeBeamElevPlot = MPlocations.join(gradeBeamElevPlot)
@@ -251,9 +264,12 @@ def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, 
 
 # Create dataframes for planview plotting 
 # (lug and floor elevations, lug to truss measurement, differential settlement)
-def calc_plan_dataframe (survey_clean, truss_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo):
+def calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo):
     # Lug elevation for each survey date
     lugElevPlot = MPlocations.join(survey_clean)
+
+    # Lug elevation for each survey date
+    shimElevPlot = MPlocations.join(shim_clean).dropna(axis=1, how='all')
 
     # Lug to truss height for each survey date (shim stack)
     lugFloorPlot = MPlocations.join(truss_clean).dropna(axis=1, how='all')
@@ -274,7 +290,7 @@ def calc_plan_dataframe (survey_clean, truss_clean, MPlocations, beamLength_long
     floorSlope = beamLength_sort.join(floorDiff)
     floorSlope.iloc[:,1:] = floorSlope.iloc[:,1:].div(floorSlope.beamLength, axis=0)
     floorSlopeplot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['beamName']).join(floorSlope)
-    return lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot
+    return lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, shimElevPlot
 
 # Create dataframe for 3D plotting
 def calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor):
@@ -341,6 +357,138 @@ def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeC
     elevGBInfo3D = elevGBInfo3D[elevGB3D.index.notnull()]
     elevGBInfo3D = elevGBInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
     return elevationGBStart, elevGBInfo3D
+
+def calc_plane_error(floorElevPlot, gradeBeamElevPlot):
+    pods = ['A', 'B']
+    slopes_dict = {'Pod': [], 'Survey_date': [], 'X': [], 'Y': [], 'Max': []}
+    error_fitFloor = pd.DataFrame()
+    error_meanFloor = pd.DataFrame()
+    error_stdFloor = pd.DataFrame()
+
+    for pod in pods:
+        df = floorElevPlot[[pod in s for s in floorElevPlot.index]]
+
+        # Calculate the error from the mean plane - floor elevations
+        mean_pod = df.iloc[:, 2:].mean()
+        error_pod = df.iloc[:, 2:] - mean_pod
+        error_meanFloor = pd.concat([error_meanFloor, error_pod])
+
+        error_fitFloor_sub = pd.DataFrame()
+        for col in df.columns[2:]:
+            # Extract coordinates
+            xs = df['mpX']
+            ys = df['mpY']
+            zs = df[col]
+
+            # Fit plane 
+            tmp_A = []
+            tmp_b = []
+            for i in range(len(xs)):
+                tmp_A.append([xs[i], ys[i], 1])
+                tmp_b.append(zs[i])
+            b = np.matrix(tmp_b).T
+            A = np.matrix(tmp_A)
+            fit = (A.T * A).I * A.T * b
+            errors = b - A * fit
+            
+            error_fitFloor_sub[col] = np.array(errors).flatten()
+
+            # Extract X and Y slopes (the first two elements of 'fit')
+            x_slope = fit[0, 0]
+            y_slope = fit[1, 0]
+            max_slope = np.sqrt(x_slope**2 + y_slope**2)
+            
+            # Store the slopes in the dictionary
+            slopes_dict['X'].append(x_slope)
+            slopes_dict['Y'].append(y_slope)
+            slopes_dict['Max'].append(max_slope)
+            slopes_dict['Survey_date'].append(col)
+            slopes_dict['Pod'].append(pod)
+
+        # Combine the errors for each pod into one DF
+        error_fitFloor_sub['MP'] = df.index
+        error_fitFloor_sub = error_fitFloor_sub.set_index('MP')#.drop("2022-01-07", axis=1).mul(12)
+        error_fitFloor = pd.concat([error_fitFloor, error_fitFloor_sub])
+
+        #Calculate the standard deviation of the pod
+        pod_std_mean = error_pod.std()
+        pod_std_fit = error_fitFloor_sub.std()
+        error_stdFloor[f'Pod {pod} - Mean'] = pod_std_mean
+        error_stdFloor[f'Pod {pod} - Fitted'] = pod_std_fit
+
+    # Remove the 2022 survey from the data frames
+    error_meanFloor = error_meanFloor.drop("2022-01-07", axis=1).mul(12)
+    error_fitFloor = error_fitFloor.drop("2022-01-07", axis=1).mul(12)
+    error_stdFloor = error_stdFloor.drop("2022-01-07", axis=0).mul(12)
+    slopes_fitFloor = pd.DataFrame(slopes_dict)
+    slopes_fitFloor = slopes_fitFloor[~(slopes_fitFloor['Survey_date'] == "2022-01-07")]
+    slopes_fitFloor.iloc[:, 2:] *= 100
+  
+    ###########################################################################################################
+    error_fitGradeBeam = pd.DataFrame()
+    error_meanGradeBeam = pd.DataFrame()
+    error_stdGradeBeam = pd.DataFrame()
+
+    for pod in pods:
+        df = gradeBeamElevPlot[[pod in s for s in gradeBeamElevPlot.index]]
+
+        # Calculate the error from the mean plane - floor elevations
+        mean_pod = df.iloc[:, 2:].mean()
+        error_pod = df.iloc[:, 2:] - mean_pod
+        error_meanGradeBeam = pd.concat([error_meanGradeBeam, error_pod])
+
+        error_fitGB_sub = pd.DataFrame()
+        for col in df.columns[2:]:
+            # Extract coordinates
+            xs = df['mpX']
+            ys = df['mpY']
+            zs = df[col]
+
+            # Fit plane 
+            tmp_A = []
+            tmp_b = []
+            for i in range(len(xs)):
+                tmp_A.append([xs[i], ys[i], 1])
+                tmp_b.append(zs[i])
+            b = np.matrix(tmp_b).T
+            A = np.matrix(tmp_A)
+            fit = (A.T * A).I * A.T * b
+            errors = b - A * fit
+            
+            error_fitGB_sub[col] = np.array(errors).flatten()
+
+            # Extract X and Y slopes (the first two elements of 'fit')
+            x_slope = fit[0, 0]
+            y_slope = fit[1, 0]
+            max_slope = np.sqrt(x_slope**2 + y_slope**2)
+            
+            # Store the slopes in the dictionary
+            slopes_dict['X'].append(x_slope)
+            slopes_dict['Y'].append(y_slope)
+            slopes_dict['Max'].append(max_slope)
+            slopes_dict['Survey_date'].append(col)
+            slopes_dict['Pod'].append(pod)
+
+        # Combine the errors for each pod into one DF
+        error_fitGB_sub['MP'] = df.index
+        error_fitGB_sub = error_fitGB_sub.set_index('MP')#.drop("2022-01-07", axis=1).mul(12)
+        error_fitGradeBeam = pd.concat([error_fitGradeBeam, error_fitGB_sub])
+
+        #Calculate the standard deviation of the pod
+        pod_std_mean = error_pod.std()
+        pod_std_fit = error_fitGB_sub.std()
+        error_stdGradeBeam[f'{pod}-pod - Mean'] = pod_std_mean
+        error_stdGradeBeam[f'{pod}-pod - Fitted'] = pod_std_fit
+
+    # Remove the 2022 survey from the data frames
+    error_meanGradeBeam = error_meanGradeBeam.drop("2022-01-07", axis=1).mul(12)
+    error_fitGradeBeam = error_fitGradeBeam.drop("2022-01-07", axis=1).mul(12)
+    error_stdGradeBeam = error_stdGradeBeam.drop("2022-01-07", axis=0).mul(12)
+    slopes_fitGradeBeam = pd.DataFrame(slopes_dict)
+    slopes_fitGradeBeam = slopes_fitGradeBeam[~(slopes_fitGradeBeam['Survey_date'] == "2022-01-07")]
+    slopes_fitGradeBeam.iloc[:, 2:] *= 100
+  
+    return error_meanFloor, error_fitFloor, error_stdFloor, slopes_fitFloor, error_meanGradeBeam, error_fitGradeBeam, error_stdGradeBeam, slopes_fitGradeBeam
 
 def calc_GradeBeam_profiles(gradeBeamElevPlot):
     #A Pod Grade Beams
@@ -1680,6 +1828,127 @@ def plot_lugFloorHeight_plan(lugFloorPlot, beamInfo):
     fig.update_yaxes(range=[-15, 140])
     return fig
 
+# Lug to Floor Height at monitoring points (measurement of shims)
+def plot_shimHeight_plan(shimElevPlot, beamInfo):
+    df = shimElevPlot
+
+    fig = go.Figure()
+
+    buttons = []
+    dates = []
+    i = 0
+
+    # Plot the beam locations as lines
+    for (startX, endX, startY, endY) in zip(beamInfo['startX'], beamInfo['endX'], beamInfo['startY'], beamInfo['endY']):
+        fig.add_trace(go.Scatter(
+            x=[startX, endX],
+            y=[startY, endY],
+            mode='lines',
+            line = dict(
+                color = 'black',
+                width = 1.5,
+                dash = 'solid'),
+            hoverinfo='skip',
+            showlegend=False
+        ))
+
+    # Plot the Marker Point (MP) labels in grey
+    fig.add_trace(go.Scatter(
+        x=beamInfo['labelX'],
+        y=beamInfo['labelY'],
+        text=beamInfo['MP_W_S'],
+        mode = 'text',
+        textfont = dict(
+            size = 10,
+            color = 'grey'),
+        hoverinfo='skip',
+        showlegend=False
+    ))
+
+    # Create a list to store the visibility lists for each dataframe
+    all_args = []
+    vis = []
+    visList = []
+
+    #create custom color scale, red to blue through white
+    custom_colors = ['#0000FF', '#FFFFFF', '#FF0000']
+
+    #iterate through columns in dataframe (not including the year column)
+    for column in df.columns[2:]: 
+        # Floor Elevation 
+        fig.add_trace(go.Scatter(
+            mode = 'markers',
+            x=df['mpX'],
+            y=df['mpY'],
+            text=df.index,
+            name="",
+            marker=dict(
+                color = df[column].values,
+                colorscale=custom_colors,
+                colorbar=dict(title='Shim Height (in)'),
+                size = 10,
+                line=dict(
+                    color='black',
+                    width=1.5
+                )           
+            ),
+            hovertemplate=
+            "<b>%{text}</b><br>" +
+            "Shim Height: %{marker.color:,} in" ,
+            hoverlabel=dict(
+                bgcolor = "white"
+            ),
+            showlegend=False, 
+            #setting only the first dataframe to be visible as default
+            visible = (column==df.columns[len(df.columns)-1])
+        ))
+            
+
+    # groups and trace visibilities
+    vis = []
+    visList = []
+
+    for  i, col in enumerate(df.columns[2:]):
+        vis = [True]*(54) + ([False]*i + [True] + [False]*((54)-2-(i+1)))
+        visList.append(vis)
+        vis = []
+
+
+    # buttons for each group
+    buttons = []
+    for idx, col in enumerate(df.columns[2:]):
+        buttons.append(
+            dict(
+                label = col,
+                method = "update",
+                args=[{"visible": visList[idx]}])
+        )
+
+    buttons = [{'label': 'Select Survey Date',
+                    'method': 'restyle',
+                    'args': ['visible', [False]]}] + buttons
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+    )
+
+    # Set axes ranges
+    fig.update_xaxes(range=[-25, 415])
+    fig.update_yaxes(range=[-15, 140])
+    return fig
+
 # Differential Floor Elevations (inches) between monitoring points
 def plot_floorDiffElev_plan(floorDiffColorplot, beamInfo, floorDiffplot, floorSymbolplot, floorDir, floorElevPlot, diffAnno):
     df = floorDiffColorplot
@@ -2567,39 +2836,8 @@ def plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3
     return fig
 
 # Plot Floor Elevation Error - fitted
-def plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods):
-
-    df = floorElevPlot
-
-    fit_error = pd.DataFrame()
-
-    for col in df.columns[2:]:
-        # Extract coordinates
-        xs = df['mpX']
-        ys = df['mpY']
-        zs = df[col]
-
-        # Calculate mean of z values
-        Z_mean = zs.mean()
-
-        # Fit plane 
-        tmp_A = []
-        tmp_b = []
-        for i in range(len(xs)):
-            tmp_A.append([xs[i], ys[i], 1])
-            tmp_b.append(zs[i])
-        b = np.matrix(tmp_b).T
-        A = np.matrix(tmp_A)
-        fit = (A.T * A).I * A.T * b
-        errors = b - A * fit
-
-        fit_error[col] = np.array(errors).flatten()
-
-    fit_error['MP'] = df.index
-    fit_error = fit_error.set_index('MP')
-    fit_errorT = fit_error.T
-
-    df = fit_errorT.drop("2022-01-07", axis=0).mul(12)
+def plot_FloorElev_error_fit(error_fitFloor, color_dict, mapsPods):
+    df = error_fitFloor.T
 
     # plotly figure
     fig = go.Figure()
@@ -2703,20 +2941,20 @@ def plot_FloorElev_error_fit(floorElevPlot, color_dict, mapsPods):
     return fig
 
 # Plot Floor Elevation Error - mean
-def plot_FloorElev_error_mean(floorElevPlot, color_dict, mapsPods):
+def plot_FloorElev_error_mean(error_meanFloor, color_dict, mapsPods):
 
-    pod_A = floorElevPlot.loc[floorElevPlot.index.str.contains('A')]
-    pod_B = floorElevPlot.loc[floorElevPlot.index.str.contains('B')]
-    mean_A = pod_A.iloc[:,2:].mean()
-    mean_B = pod_B.iloc[:,2:].mean()
+    # pod_A = floorElevPlot.loc[floorElevPlot.index.str.contains('A')]
+    # pod_B = floorElevPlot.loc[floorElevPlot.index.str.contains('B')]
+    # mean_A = pod_A.iloc[:,2:].mean()
+    # mean_B = pod_B.iloc[:,2:].mean()
 
-    error_A = pod_A.iloc[:,2:] - mean_A
-    error_B = pod_B.iloc[:,2:] - mean_B
+    # error_A = pod_A.iloc[:,2:] - mean_A
+    # error_B = pod_B.iloc[:,2:] - mean_B
 
-    error = pd.concat([error_A, error_B])
-    fit_errorT = error.T
+    # error = pd.concat([error_A, error_B])
+    # fit_errorT = error.T
 
-    df = fit_errorT.drop("2022-01-07", axis=0).mul(12)
+    df = error_meanFloor.T
 
     # plotly figure
     fig = go.Figure()
@@ -2818,6 +3056,77 @@ def plot_FloorElev_error_mean(floorElevPlot, color_dict, mapsPods):
         height = 600
     )
     return fig
+
+def plot_error_std_floor(error_stdFloor):
+    
+    uniques_stats = error_stdFloor.columns
+    colors = px.colors.qualitative.Plotly  # You can choose any color palette
+    color_mapping = {beam: colors[i % len(colors)] for i, beam in enumerate(uniques_stats)}
+
+    # plotly figure
+    fig = go.Figure()
+    for column in error_stdFloor:
+            fig.add_trace(go.Scatter(
+                x=error_stdFloor.index,
+                y=error_stdFloor[column],
+                name= column,
+                mode = 'lines+markers',
+                marker_color = color_mapping[column]
+            ))
+        
+    fig.update_layout(xaxis_title="Survey Date",
+                        yaxis_title="Standard Deviation [in]")
+    
+    return fig
+
+def plot_fitted_slope_floor(slopes_fitFloor):
+    slopes_fitFloor['Survey_date'] = pd.to_datetime(slopes_fitFloor['Survey_date'])
+
+    # Create color mapping for unique statistics
+    uniques_stats = slopes_fitFloor.columns[2:]  # Assuming the first two columns are 'Pod' and 'Survey_date'
+    colors = px.colors.qualitative.Plotly  # Choose color palette
+    color_mapping = {stat: colors[i % len(colors)] for i, stat in enumerate(uniques_stats)}
+
+    # Create traces for each slope type
+    fig = go.Figure()
+
+    # Add traces
+    for pod in slopes_fitFloor['Pod'].unique():
+        pod_data = slopes_fitFloor[slopes_fitFloor['Pod'] == pod]
+
+        for column in uniques_stats:
+            fig.add_trace(go.Scatter(x=pod_data['Survey_date'], 
+                                    y=pod_data[column], 
+                                    mode='lines+markers',
+                                    marker_color = color_mapping[column],
+                                    name=f'Pod {pod} - {column}'))
+
+    # Create dropdown menu
+    dropdown_buttons = [
+        {'label': 'All Points', 'method': 'update', 'args': [{'visible': [True] * len(fig.data)}]},  # Show all
+        {'label': 'Pod A', 'method': 'update', 'args': [{'visible': [True if 'A' in trace.name else False for trace in fig.data]}]},  # Show only Pod A
+        {'label': 'Pod B', 'method': 'update', 'args': [{'visible': [True if 'B' in trace.name else False for trace in fig.data]}]}   # Show only Pod B
+    ]
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = dropdown_buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        height = 600
+    )
+
+    return fig
+
 
 def plot_3D_gradeBeamElev_slider_animated(elevationGBStart, elevGBInfo3D , plot3dAnno):
     
@@ -3182,39 +3491,8 @@ def plot_3D_gradeBeamElev_slider_animated_planes(elevationGBStart, elevGBInfo3D 
     return fig
 
 # Plot Floor Elevation Error
-def plot_GradeBeamElev_error_fit(gradeBeamElevPlot, color_dict, mapsPods):
-
-    df = gradeBeamElevPlot
-
-    fit_error = pd.DataFrame()
-
-    for col in df.columns[2:]:
-        # Extract coordinates
-        xs = df['mpX']
-        ys = df['mpY']
-        zs = df[col]
-
-        # Calculate mean of z values
-        Z_mean = zs.mean()
-
-        # Fit plane 
-        tmp_A = []
-        tmp_b = []
-        for i in range(len(xs)):
-            tmp_A.append([xs[i], ys[i], 1])
-            tmp_b.append(zs[i])
-        b = np.matrix(tmp_b).T
-        A = np.matrix(tmp_A)
-        fit = (A.T * A).I * A.T * b
-        errors_a = b - A * fit
-
-        fit_error[col] = np.array(errors_a).flatten()
-
-    fit_error['MP'] = df.index
-    fit_error = fit_error.set_index('MP')
-    fit_errorT = fit_error.T
-
-    df = fit_errorT.drop("2022-01-07", axis=0).mul(12) 
+def plot_GradeBeamElev_error_fit(error_fitGradeBeam, color_dict, mapsPods):
+    df = error_fitGradeBeam.T
 
     # plotly figure
     fig = go.Figure()
@@ -3318,20 +3596,8 @@ def plot_GradeBeamElev_error_fit(gradeBeamElevPlot, color_dict, mapsPods):
     return fig
 
 # Plot Grade Beam Elevation Error - mean
-def plot_GradeBeamElev_error_mean(gradeBeamElevPlot, color_dict, mapsPods):
-
-    pod_A = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.str.contains('A')]
-    pod_B = gradeBeamElevPlot.loc[gradeBeamElevPlot.index.str.contains('B')]
-    mean_A = pod_A.iloc[:,2:].mean()
-    mean_B = pod_B.iloc[:,2:].mean()
-
-    error_A = pod_A.iloc[:,2:] - mean_A
-    error_B = pod_B.iloc[:,2:] - mean_B
-
-    error = pd.concat([error_A, error_B])
-    fit_errorT = error.T
-
-    df = fit_errorT.drop("2022-01-07", axis=0).mul(12)
+def plot_GradeBeamElev_error_mean(error_meanGradeBeam, color_dict, mapsPods):
+    df = error_meanGradeBeam.T
 
     # plotly figure
     fig = go.Figure()
@@ -3432,6 +3698,76 @@ def plot_GradeBeamElev_error_mean(gradeBeamElevPlot, color_dict, mapsPods):
         ],
         height = 600
     )
+    return fig
+
+def plot_error_std_gradeBeam(error_stdGradeBeam):
+    
+    uniques_stats = error_stdGradeBeam.columns
+    colors = px.colors.qualitative.Plotly  # You can choose any color palette
+    color_mapping = {beam: colors[i % len(colors)] for i, beam in enumerate(uniques_stats)}
+
+    # plotly figure
+    fig = go.Figure()
+    for column in error_stdGradeBeam:
+            fig.add_trace(go.Scatter(
+                x=error_stdGradeBeam.index,
+                y=error_stdGradeBeam[column],
+                name= column,
+                mode = 'lines+markers',
+                marker_color = color_mapping[column]
+            ))
+        
+    fig.update_layout(xaxis_title="Survey Date",
+                        yaxis_title="Standard Deviation [in]")
+    
+    return fig
+
+def plot_fitted_slope_gradeBeam(slopes_fitGradeBeam):
+    slopes_fitGradeBeam['Survey_date'] = pd.to_datetime(slopes_fitGradeBeam['Survey_date'])
+
+    # Create color mapping for unique statistics
+    uniques_stats = slopes_fitGradeBeam.columns[2:]  # Assuming the first two columns are 'Pod' and 'Survey_date'
+    colors = px.colors.qualitative.Plotly  # Choose color palette
+    color_mapping = {stat: colors[i % len(colors)] for i, stat in enumerate(uniques_stats)}
+
+    # Create traces for each slope type
+    fig = go.Figure()
+
+    # Add traces
+    for pod in slopes_fitGradeBeam['Pod'].unique():
+        pod_data = slopes_fitGradeBeam[slopes_fitGradeBeam['Pod'] == pod]
+
+        for column in uniques_stats:
+            fig.add_trace(go.Scatter(x=pod_data['Survey_date'], 
+                                    y=pod_data[column], 
+                                    mode='lines+markers',
+                                    marker_color = color_mapping[column],
+                                    name=f'Pod {pod} - {column}'))
+
+    # Create dropdown menu
+    dropdown_buttons = [
+        {'label': 'All Points', 'method': 'update', 'args': [{'visible': [True] * len(fig.data)}]},  # Show all
+        {'label': 'Pod A', 'method': 'update', 'args': [{'visible': [True if 'A' in trace.name else False for trace in fig.data]}]},  # Show only Pod A
+        {'label': 'Pod B', 'method': 'update', 'args': [{'visible': [True if 'B' in trace.name else False for trace in fig.data]}]}   # Show only Pod B
+    ]
+
+    # update layout with buttons                       
+    fig.update_layout(
+        updatemenus=[
+            dict(
+            type="dropdown",
+            direction="down",
+            buttons = dropdown_buttons,
+                pad={"r": 10, "t": 10},
+                showactive=True,
+                x=0.0,
+                xanchor="left",
+                y=1.01,
+                yanchor="bottom")
+        ],
+        height = 600
+    )
+
     return fig
 
 def plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, elevGBInfo3D, plot3dAnno):

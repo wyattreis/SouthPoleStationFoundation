@@ -59,7 +59,3 @@ elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot
 elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor)
 #Calculate Grade Beam Differental 
 df_GradeBeams, gradeBeam_diff = calc_GradeBeam_profiles(gradeBeamElevPlot)
-
-
-print(slopes_fitFloor)
-print(slopes_fitGradeBeam)

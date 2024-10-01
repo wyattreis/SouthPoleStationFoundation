@@ -61,46 +61,5 @@ elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, 
 df_GradeBeams, gradeBeam_diff = calc_GradeBeam_profiles(gradeBeamElevPlot)
 
 
-def plot_fitted_slope_floor(slopes_fitFloor):
-    slopes_fitFloor['Survey_date'] = pd.to_datetime(slopes_fitFloor['Survey_date'])
-
-    # Create color mapping for unique statistics
-    uniques_stats = slopes_fitFloor.columns[2:]  # Assuming the first two columns are 'Pod' and 'Survey_date'
-    colors = px.colors.qualitative.Plotly  # Choose color palette
-    color_mapping = {stat: colors[i % len(colors)] for i, stat in enumerate(uniques_stats)}
-
-    # Create traces for each slope type
-    fig = go.Figure()
-
-    # Add traces
-    for pod in slopes_fitFloor['Pod'].unique():
-        pod_data = slopes_fitFloor[slopes_fitFloor['Pod'] == pod]
-
-        for column in uniques_stats:
-            fig.add_trace(go.Scatter(x=pod_data['Survey_date'], 
-                                    y=pod_data[column], 
-                                    mode='lines+markers',
-                                    marker_color = color_mapping[column],
-                                    name=f'Pod {pod} - {column}'))
-
-    # Create dropdown menu
-    dropdown_buttons = [
-        {'label': 'All', 'method': 'update', 'args': [{'visible': [True] * len(fig.data)}]},  # Show all
-        {'label': 'Pod A', 'method': 'update', 'args': [{'visible': [True if 'A' in trace.name else False for trace in fig.data]}]},  # Show only Pod A
-        {'label': 'Pod B', 'method': 'update', 'args': [{'visible': [True if 'B' in trace.name else False for trace in fig.data]}]}   # Show only Pod B
-    ]
-
-    # Update layout with dropdown
-    fig.update_layout(
-        xaxis_title='Survey Date',
-        yaxis_title='Slope [%]',
-        # legend_title='Slope Types',
-        # hovermode='x unified',
-        updatemenus=[{
-            'buttons': dropdown_buttons,
-            'direction': 'down',
-            'showactive': True,
-        }]
-    )
-
-    return fig
+print(slopes_fitFloor)
+print(slopes_fitGradeBeam)

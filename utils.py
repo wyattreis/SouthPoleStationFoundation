@@ -360,7 +360,7 @@ def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeC
 
 def calc_plane_error(floorElevPlot, gradeBeamElevPlot):
     pods = ['A', 'B']
-    slopes_dict = {'Pod': [], 'Survey_date': [], 'X': [], 'Y': [], 'Max': []}
+    slopes_dict_floor = {'Pod': [], 'Survey_date': [], 'X': [], 'Y': [], 'Max': []}
     error_fitFloor = pd.DataFrame()
     error_meanFloor = pd.DataFrame()
     error_stdFloor = pd.DataFrame()
@@ -394,16 +394,16 @@ def calc_plane_error(floorElevPlot, gradeBeamElevPlot):
             error_fitFloor_sub[col] = np.array(errors).flatten()
 
             # Extract X and Y slopes (the first two elements of 'fit')
-            x_slope = fit[0, 0]
-            y_slope = fit[1, 0]
+            x_slope = abs(fit[0, 0])
+            y_slope = abs(fit[1, 0])
             max_slope = np.sqrt(x_slope**2 + y_slope**2)
             
             # Store the slopes in the dictionary
-            slopes_dict['X'].append(x_slope)
-            slopes_dict['Y'].append(y_slope)
-            slopes_dict['Max'].append(max_slope)
-            slopes_dict['Survey_date'].append(col)
-            slopes_dict['Pod'].append(pod)
+            slopes_dict_floor['X'].append(x_slope)
+            slopes_dict_floor['Y'].append(y_slope)
+            slopes_dict_floor['Max'].append(max_slope)
+            slopes_dict_floor['Survey_date'].append(col)
+            slopes_dict_floor['Pod'].append(pod)
 
         # Combine the errors for each pod into one DF
         error_fitFloor_sub['MP'] = df.index
@@ -420,11 +420,12 @@ def calc_plane_error(floorElevPlot, gradeBeamElevPlot):
     error_meanFloor = error_meanFloor.drop("2022-01-07", axis=1).mul(12)
     error_fitFloor = error_fitFloor.drop("2022-01-07", axis=1).mul(12)
     error_stdFloor = error_stdFloor.drop("2022-01-07", axis=0).mul(12)
-    slopes_fitFloor = pd.DataFrame(slopes_dict)
+    slopes_fitFloor = pd.DataFrame(slopes_dict_floor)
     slopes_fitFloor = slopes_fitFloor[~(slopes_fitFloor['Survey_date'] == "2022-01-07")]
     slopes_fitFloor.iloc[:, 2:] *= 100
   
     ###########################################################################################################
+    slopes_dict_GB = {'Pod': [], 'Survey_date': [], 'X': [], 'Y': [], 'Max': []}
     error_fitGradeBeam = pd.DataFrame()
     error_meanGradeBeam = pd.DataFrame()
     error_stdGradeBeam = pd.DataFrame()
@@ -458,16 +459,16 @@ def calc_plane_error(floorElevPlot, gradeBeamElevPlot):
             error_fitGB_sub[col] = np.array(errors).flatten()
 
             # Extract X and Y slopes (the first two elements of 'fit')
-            x_slope = fit[0, 0]
-            y_slope = fit[1, 0]
+            x_slope = abs(fit[0, 0])
+            y_slope = abs(fit[1, 0])
             max_slope = np.sqrt(x_slope**2 + y_slope**2)
             
             # Store the slopes in the dictionary
-            slopes_dict['X'].append(x_slope)
-            slopes_dict['Y'].append(y_slope)
-            slopes_dict['Max'].append(max_slope)
-            slopes_dict['Survey_date'].append(col)
-            slopes_dict['Pod'].append(pod)
+            slopes_dict_GB['X'].append(x_slope)
+            slopes_dict_GB['Y'].append(y_slope)
+            slopes_dict_GB['Max'].append(max_slope)
+            slopes_dict_GB['Survey_date'].append(col)
+            slopes_dict_GB['Pod'].append(pod)
 
         # Combine the errors for each pod into one DF
         error_fitGB_sub['MP'] = df.index
@@ -484,7 +485,7 @@ def calc_plane_error(floorElevPlot, gradeBeamElevPlot):
     error_meanGradeBeam = error_meanGradeBeam.drop("2022-01-07", axis=1).mul(12)
     error_fitGradeBeam = error_fitGradeBeam.drop("2022-01-07", axis=1).mul(12)
     error_stdGradeBeam = error_stdGradeBeam.drop("2022-01-07", axis=0).mul(12)
-    slopes_fitGradeBeam = pd.DataFrame(slopes_dict)
+    slopes_fitGradeBeam = pd.DataFrame(slopes_dict_GB)
     slopes_fitGradeBeam = slopes_fitGradeBeam[~(slopes_fitGradeBeam['Survey_date'] == "2022-01-07")]
     slopes_fitGradeBeam.iloc[:, 2:] *= 100
   
@@ -3125,6 +3126,9 @@ def plot_fitted_slope_floor(slopes_fitFloor):
         height = 600
     )
 
+    fig.update_layout(xaxis_title="Survey Date",
+                        yaxis_title="Slope [%]")
+
     return fig
 
 
@@ -3767,6 +3771,9 @@ def plot_fitted_slope_gradeBeam(slopes_fitGradeBeam):
         ],
         height = 600
     )
+
+    fig.update_layout(xaxis_title="Survey Date",
+                        yaxis_title="Slope [%]")
 
     return fig
 

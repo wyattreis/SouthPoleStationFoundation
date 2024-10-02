@@ -63,7 +63,7 @@ if st.sidebar.button('Compute Settlement'):
     #Forecast the future floor elevations
     elevProj, elevProj_trans, elevFloorProj, elevGradeBeamProj = calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears)
     # Calculate the floor elevation differences and slopes accounting for known lug to truss height (shim height)
-    lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, shimElevPlot = calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo)
+    lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, shimElevPlot, gradeBeamDiff = calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo, gradeBeamElev)
     # Calculate the error between fitted planes and the column elevations
     error_meanFloor, error_fitFloor, error_stdFloor, slopes_fitFloor, error_meanGradeBeam, error_fitGradeBeam, error_stdGradeBeam, slopes_fitGradeBeam = calc_plane_error(floorElevPlot, gradeBeamElevPlot)
     # Calculate the differental settlement between column lugs
@@ -71,13 +71,13 @@ if st.sidebar.button('Compute Settlement'):
     # Create dataframe for Beam Plotting Styles
     beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProjColor = plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj, floorDiffElev)
     # Create dataframe for floor elevation plotting styles
-    floorDir, floorSymbolplot, floorDiffColor, floorDiffColorplot, floorSlopeColorplot = plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
+    floorDir, floorSymbolplot, floorDiffColor, floorDiffColorplot, floorSlopeColorplot, gradeBeamDiffColor = plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, gradeBeamDiff)
     # Create dataframe for plot annotations
     beamDiffAnno, beamSlopeAnno, diffAnno, plot3dAnnoDiff, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods, mapsGradeBeams = plot_annotations()
     # Create dataframe for 3D plotting
     settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
     elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, floorDiffColor, beamSlopeProjColor)
-    elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor)
+    elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, gradeBeamDiffColor, beamSlopeProjColor)
     #Calculate Grade Beam Differental 
     df_GradeBeams, gradeBeam_diff = calc_GradeBeam_profiles(gradeBeamElevPlot)
     
@@ -104,7 +104,7 @@ if st.sidebar.button('Compute Settlement'):
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["Differental Floor Elevation [in]", "Floor Slope [in/ft]", 
                                 "Lug Elevation [ft]", "Lug to Truss Height [ft]", "Shim Height [in]"])
     with tab1:
-        st.text("The differential elevations (in inches) of the floor between each column. The floor elevation includes the lug elevations and the shim pack height.  \nData is limited to the period where shim pack heights are known.")
+        st.text("The differential elevations (in inches) of the floor between each column. The floor elevation is calculated from the survey lug elevation plus the lug to truss height.  \nData is limited to the period where shim pack heights are known.")
         st.plotly_chart(fig_floorElev_plan, use_container_width=True, height=600)
     with tab2:
         st.text("The slope (in inches per foot) of the station floor between each column using the differental floor elevations at each column and the known distances between each column.  \nData is limited to the period where shim pack heights are known.")
@@ -124,6 +124,10 @@ if st.sidebar.button('Compute Settlement'):
     fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
     # Settlement Rate
     fig_rate = plot_settlementRate(settlement_rate, color_dict, maps)
+    # Floor Elevation 
+    fig_floorElev = plot_elev_timeseries(floorElevPlot, color_dict, maps)
+    #Grade Beam Elevation
+    fig_gradeBeamElev = plot_elev_timeseries(gradeBeamElevPlot, color_dict, maps)
     # Differential between columns timeseries
     floorDiff = floorDifferential(floorDiffElev, floorElevPlot, color_dictBeams, mapsBeams)
     #Grade Beam Profiles
@@ -133,37 +137,45 @@ if st.sidebar.button('Compute Settlement'):
     
     st.subheader("Time Series Plots")
     # Create Streamlit Plot objects - Plan Figure
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]", "Column Pair Floor Differential [in]", 
-                                      "Grade Beam Elevation Profiles [ft]", "Max Grade Beam Elevation Difference [in]"])
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs(["Cumulative Settlement [ft]", "Annualized Settlement Rate [in/yr]", 
+                                                        "Floor Elevation [ft]", "Grade Beam Elevation [ft]",
+                                                        "Column Pair Floor Differential [in]",
+                                                        "Grade Beam Elevation Profiles [ft]", "Max Grade Beam Elevation Difference [in]"])
     with tab1:
         st.text("The cumulative settlement (in feet) of the station based on the survey lugs.  \nAll survey dates are included.")
         st.plotly_chart(fig_cumulative, use_container_width=True, height=600)
     with tab2:
-        st.text("The rate of settlement (in inches per year) between each survey data annualized to account for variable periods between the surveys.  \nAll survey dates are included.")
+        st.text("The annualized rate of settlement (in inches per year) between each survey date.  \nAll survey dates are included.")
         st.plotly_chart(fig_rate, use_container_width=True, height=600)
     with tab3:
-        st.text("The differential elevation (in inches) for each column pair for each survey date and using projected floor elevations.  \nData is limited to the period where shim pack heights are known and projected.  \nThe January 2022 Survey is not included due to significant errors.")
-        st.plotly_chart(floorDiff, use_container_width=True, height=600)
+        st.text("The floor elevation (in feet) of the station.  \nData is limited to the period where shim pack heights are known.")
+        st.plotly_chart(fig_floorElev, use_container_width=True, height=600)
     with tab4:
-        st.text("The elevation (in feet) for each column base at the grade beams during each survey.")
-        st.plotly_chart(gradeBeamProfile, use_container_width=True, height=600)
+        st.text("The grade beam elevation (in feet) of the station.  \nData is limited to the period where shim pack heights are known.")
+        st.plotly_chart(fig_gradeBeamElev, use_container_width=True, height=600)
     with tab5:
-        st.text("The maximum elevation difference (in inches) for each grade beams during each survey.")
+        st.text("The differential elevation (in inches) for each column pair for each survey date and projected floor elevations.  \nData is limited to the period where shim pack heights are known and projected.  \nThe January 2022 Survey is not plotted or included in calculations due to errors.")
+        st.plotly_chart(floorDiff, use_container_width=True, height=600)
+    with tab6:
+        st.text("The elevation (in feet) profile of each grade beam at the columns for each survey.")
+        st.plotly_chart(gradeBeamProfile, use_container_width=True, height=600)
+    with tab7:
+        st.text("The maximum elevation difference (in inches) of the grade beam profiles during each survey.")
         st.plotly_chart(gradeBeamProfile_diff, use_container_width=True, height=600)
 
     ## 3D PLOTTING
     fig_3d_floor = plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3D, plot3dAnnoDiff, floorElevPlot)
     fig_3d_gradeBeam = plot_3D_gradeBeamElev_slider_animated_planes(elevationGBStart, elevGBInfo3D , plot3dAnnoDiff, gradeBeamElevPlot)
-    fig_3d_station = plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, elevGBInfo3D, plot3dAnno)
+    fig_3d_station = plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, elevGBInfo3D, plot3dAnnoDiff)
 
     st.subheader("3-Dimensional Animations of Settlement")
     # Differental Settlement 3D
     tab1, tab2, tab3 = st.tabs(["Floor Elevation [ft]", "Grade Beam Elevation [ft]", "Station Foundation Elevation[ft]"])
     with tab1:
-        st.text("The observed floor elevations and the mean and fitted floor elevation planes based on the monitoring point elevations in each pod. Least squares is used to fit the plane.  \nFloor elevations equal the survey lug elevation plus the distance to the bottom of floor joist, including shim pack height.  \nData is limited to the period where shim pack heights are known.") #\nForecasted elevations use settlement trend rates from the number of years specified.
+        st.text("The observed floor elevations and the mean and fitted floor elevation planes in each pod. Least squares is used to fit the plane.  \nFloor elevations equal the survey lug elevation plus the lug to truss heigh.  \nData is limited to the period where shim pack heights are known.") #\nForecasted elevations use settlement trend rates from the number of years specified.
         st.plotly_chart(fig_3d_floor)
     with tab2:
-        st.text("The observed floor elevations and the mean and fitted floor elevation planes based on the monitoring point elevations in each pod. Least squares is used to fit the plane. \nGrade beam elevation is equal to the survey lug elevation minus 11.31 feet (As-Builts Sheet A5.1; column height = 12.31', lugs are ~1' below top of column). \nAll survey dates are included.")
+        st.text("The observed floor elevations and the mean and fitted floor elevation planes based on the monitoring point elevations in each pod. Least squares is used to fit the plane. \nGrade beam elevation is equal to the survey lug elevation minus the grade beam to survey lug height (calculated using 2017 shim and lug to truss height data).  \nAll survey dates are included.")
         st.plotly_chart(fig_3d_gradeBeam) 
     with tab3:
         st.text("The observed grade beam and floor elevations of the station.  \nColumns are shown for clarity, opening between top of column and floor elevation includes variability in shim packs and distance between top of column and floor joists.  \nData is limited to the period where shim pack heights are known.")

@@ -44,7 +44,7 @@ settlementProj, settlementProj_trans = calc_forecast_settlement(settlement, nsur
 #Forecast the future floor elevations
 elevProj, elevProj_trans, elevFloorProj, elevGradeBeamProj = calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears)
 # Calculate the floor elevation differences and slopes accounting for known lug to truss height (shim height)
-lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, shimElevPlot = calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo)
+lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, shimElevPlot, gradeBeamDiff = calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo, gradeBeamElev)
 # Calculate the error between fitted planes and the column elevations
 error_meanFloor, error_fitFloor, error_stdFloor, slopes_fitFloor, error_meanGradeBeam, error_fitGradeBeam, error_stdGradeBeam, slopes_fitGradeBeam = calc_plane_error(floorElevPlot, gradeBeamElevPlot)
 # Calculate the differental settlement between column lugs
@@ -52,12 +52,20 @@ beamDiff, beamDiffProj, beamDiffplot, beamSlope, beamSlopeplot, beamSlopeProj, f
 # Create dataframe for Beam Plotting Styles
 beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProjColor = plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj, floorDiffElev)
 # Create dataframe for floor elevation plotting styles
-floorDir, floorSymbolplot, floorDiffColor, floorDiffColorplot, floorSlopeColorplot = plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot)
+floorDir, floorSymbolplot, floorDiffColor, floorDiffColorplot, floorSlopeColorplot, gradeBeamDiffColor = plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, gradeBeamDiff)
 # Create dataframe for plot annotations
 beamDiffAnno, beamSlopeAnno, diffAnno, plot3dAnnoDiff, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods, mapsGradeBeams = plot_annotations()
 # Create dataframe for 3D plotting
 settlementStart, beamInfo3D = calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor)
 elevationFloorStart, elevFloorInfo3D = calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, floorDiffColor, beamSlopeProjColor)
-elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor)
+elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, gradeBeamDiffColor, beamSlopeProjColor)
 #Calculate Grade Beam Differental 
 df_GradeBeams, gradeBeam_diff = calc_GradeBeam_profiles(gradeBeamElevPlot)
+
+#fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
+
+floorElev = plot_elev_timeseries(floorElevPlot, color_dict, maps)
+floorElev.show()
+
+gradeBeamElev = plot_elev_timeseries(gradeBeamElevPlot, color_dict, maps)
+gradeBeamElev.show()

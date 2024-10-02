@@ -234,7 +234,7 @@ def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, 
 
 # Create dataframes for planview plotting 
 # (lug and floor elevations, lug to truss measurement, differential settlement)
-def calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo):
+def calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo, gradeBeamElev):
     # Lug elevation for each survey date
     lugElevPlot = MPlocations.join(survey_clean)
 
@@ -260,7 +260,12 @@ def calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beam
     floorSlope = beamLength_sort.join(floorDiff)
     floorSlope.iloc[:,1:] = floorSlope.iloc[:,1:].div(floorSlope.beamLength, axis=0)
     floorSlopeplot = beamInfo[['beamName', 'beamX', 'beamY']].dropna().set_index(['beamName']).join(floorSlope)
-    return lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, shimElevPlot
+
+    gradeBeamDiff = beamLength_long.join(gradeBeamElev).set_index(['beamName']).sort_values(by=['beamName', 'beamEnd']).drop(columns=['beamEnd', 'beamLength']).groupby(['beamName']).diff().mul(12)
+    gradeBeamDiff = gradeBeamDiff[~gradeBeamDiff.index.duplicated(keep='last')]
+    gradeBeamDiff.columns = pd.to_datetime(gradeBeamDiff.columns).astype(str)
+
+    return lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, shimElevPlot, gradeBeamDiff
 
 # Create dataframe for 3D plotting
 def calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlopeColor, beamSlopeProjColor):
@@ -598,7 +603,7 @@ def plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj, floorDiffElev)
     return beamDirLabels, beamDir, beamSymbol, beamDiffColor, beamSlopeColor, beamSlopeProjColor
 
 # Line styles for floor plots
-def plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot):
+def plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, gradeBeamDiff):
     #-----------FLOOR ANNOTATIONS------------------------------
     # Calculate the direction of arrow of the floor
     floorDir = pd.DataFrame(np.where(floorDiff >= 0, 0, 180), index = floorDiff.index, columns = floorDiff.columns)
@@ -624,12 +629,16 @@ def plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlo
     floorDiffColor = pd.DataFrame(np.select(conditions, choices, default='blue'), index = floorDiff.index, columns = floorDiff.columns)#.replace('nan','blue')
     floorDiffColorplot = floorDiffplot.join(floorDiffColor, rsuffix='_color')
 
+    conditions = [abs(gradeBeamDiff)<1.5, (abs(gradeBeamDiff)>=1.5) & (abs(gradeBeamDiff)<2), abs(gradeBeamDiff)>=2]
+    choices = ['black', 'orange', 'red']
+    gradeBeamDiffColor = pd.DataFrame(np.select(conditions, choices, default='blue'), index = gradeBeamDiff.index, columns = gradeBeamDiff.columns)#.replace('nan','blue')
+
     # Create dataframe for conditional text color for differental settlement slope values
     conditions = [abs(floorSlope)<(1/32), ((abs(floorSlope)>=(1/32)) & (abs(floorSlope)<(1/16))), ((abs(floorSlope)>=(1/16)) & (abs(floorSlope)<(1/8))), abs(floorSlope)>=(1/8)]
     choices = ['black','gold', 'orange', 'red']
     floorSlopeColor = pd.DataFrame(np.select(conditions, choices, default='blue'), index = floorSlope.index, columns = floorSlope.columns)#.replace('nan','blue')
     floorSlopeColorplot = floorSlopeplot.join(floorSlopeColor, rsuffix='_color')
-    return floorDir, floorSymbolplot, floorDiffColor, floorDiffColorplot, floorSlopeColorplot
+    return floorDir, floorSymbolplot, floorDiffColor, floorDiffColorplot, floorSlopeColorplot, gradeBeamDiffColor
     
 # Plot annotations
 def plot_annotations():
@@ -999,9 +1008,8 @@ def plot_cumulative_settlement(settlement, settlementProj, color_dict, maps):
     )
     return fig
 
-def plot_floorElev_timeseries(floorElevPlot, elevFloorProj, color_dict, maps):
+def plot_elev_timeseries(floorElevPlot, color_dict, maps):
     df = floorElevPlot.drop(columns=['mpX', 'mpY']).transpose() 
-    df2 = elevFloorProj.transpose()
 
     # plotly figure
     fig = go.Figure()
@@ -1013,21 +1021,6 @@ def plot_floorElev_timeseries(floorElevPlot, elevFloorProj, color_dict, maps):
                 name= column,
                 mode = 'lines+markers',
                 marker_color = color_dict[column]
-            ))
-
-    for column in df2:
-            fig.add_trace(go.Scatter(
-                x=df2.index,
-                y=df2[column],
-                name= column + ' Projection',
-                mode = 'lines+markers',
-                marker_color = color_dict[column],
-                line = dict(
-                    width = 1.5,
-                    dash = 'dash'),
-                marker = dict(
-                    size=7.5,
-                    symbol='star'),
             ))
             
     fig.update_layout(xaxis_title="Survey Date",

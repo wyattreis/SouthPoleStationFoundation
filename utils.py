@@ -234,7 +234,7 @@ def calc_differental_settlement(beamLength_long, beamLength_sort, survey_clean, 
 
 # Create dataframes for planview plotting 
 # (lug and floor elevations, lug to truss measurement, differential settlement)
-def calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo, gradeBeamElev):
+def calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo):
     # Lug elevation for each survey date
     lugElevPlot = MPlocations.join(survey_clean)
 

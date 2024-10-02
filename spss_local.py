@@ -62,8 +62,6 @@ elevationGBStart, elevGBInfo3D = calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, 
 #Calculate Grade Beam Differental 
 df_GradeBeams, gradeBeam_diff = calc_GradeBeam_profiles(gradeBeamElevPlot)
 
-#fig_cumulative = plot_cumulative_settlement(settlement, settlementProj, color_dict, maps)
-
 floorElev = plot_elev_timeseries(floorElevPlot, color_dict, maps)
 floorElev.show()
 

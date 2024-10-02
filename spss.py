@@ -63,7 +63,7 @@ if st.sidebar.button('Compute Settlement'):
     #Forecast the future floor elevations
     elevProj, elevProj_trans, elevFloorProj, elevGradeBeamProj = calc_forecast_elevation(elevation, truss_clean, nsurvey, nyears)
     # Calculate the floor elevation differences and slopes accounting for known lug to truss height (shim height)
-    lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, shimElevPlot, gradeBeamDiff = calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo, gradeBeamElev)
+    lugElevPlot, lugFloorPlot, floorElevPlot, floorDiff, floorDiffplot, floorSlope, floorSlopeplot, shimElevPlot, gradeBeamDiff = calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beamLength_long, beamLength_sort, beamInfo)
     # Calculate the error between fitted planes and the column elevations
     error_meanFloor, error_fitFloor, error_stdFloor, slopes_fitFloor, error_meanGradeBeam, error_fitGradeBeam, error_stdGradeBeam, slopes_fitGradeBeam = calc_plane_error(floorElevPlot, gradeBeamElevPlot)
     # Calculate the differental settlement between column lugs

@@ -238,7 +238,7 @@ def calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beam
     # Lug elevation for each survey date
     lugElevPlot = MPlocations.join(survey_clean)
 
-    # Lug elevation for each survey date
+    # Shim height for each survey date
     shimElevPlot = MPlocations.join(shim_clean.mul(12)).dropna(axis=1, how='all')
 
     # Lug to truss height for each survey date (shim stack)

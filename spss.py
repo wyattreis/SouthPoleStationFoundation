@@ -153,7 +153,7 @@ if st.sidebar.button('Compute Settlement'):
 
     ## 3D PLOTTING
     fig_3d_floor = plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3D, plot3dAnnoDiff, floorElevPlot)
-    fig_3d_gradeBeam = plot_3D_gradeBeamElev_slider_animated_planes(elevationGBStart, elevGBInfo3D , plot3dAnno, gradeBeamElevPlot)
+    fig_3d_gradeBeam = plot_3D_gradeBeamElev_slider_animated_planes(elevationGBStart, elevGBInfo3D , plot3dAnnoDiff, gradeBeamElevPlot)
     fig_3d_station = plot_3D_fullStation_slider_animated(elevationFloorStart, elevFloorInfo3D, elevGBInfo3D, plot3dAnno)
 
     st.subheader("3-Dimensional Animations of Settlement")

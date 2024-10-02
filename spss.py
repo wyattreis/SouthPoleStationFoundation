@@ -142,7 +142,7 @@ if st.sidebar.button('Compute Settlement'):
                                                         "Column Pair Floor Differential [in]",
                                                         "Grade Beam Elevation Profiles [ft]", "Max Grade Beam Elevation Difference [in]"])
     with tab1:
-        st.text("The cumulative settlement (in feet) of the station based on the survey lugs.  \nAll survey dates are included.")
+        st.text("The cumulative settlement (in feet) of the station based on the survey lugs.  \nProjected settlement was calculated without including the 2022 survey.  \nAll survey dates are included.")
         st.plotly_chart(fig_cumulative, use_container_width=True, height=600)
     with tab2:
         st.text("The annualized rate of settlement (in inches per year) between each survey date.  \nAll survey dates are included.")

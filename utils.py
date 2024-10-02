@@ -1024,7 +1024,7 @@ def plot_elev_timeseries(floorElevPlot, color_dict, maps):
             ))
             
     fig.update_layout(xaxis_title="Survey Date",
-                    yaxis_title="Cumulative Settlement [ft]")
+                    yaxis_title="Elevation [ft]")
 
     # groups and trace visibilities
     group = []

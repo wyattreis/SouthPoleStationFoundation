@@ -21,67 +21,30 @@ import plotly.express as px
 import plotly.graph_objects as go
 import datetime as dt
 
-
-# import survey dataframe and return clean version
-# def read_survey(surveyfile):
-#     survey = pd.read_csv(surveyfile, skiprows=[1], nrows=36)
-    
-#     # rename second 2010/11/2 survey to 2010/11/3
-#     survey_clean = survey.drop(columns=["DESCRIPTION", "Shims\nNote 13", "Unnamed: 52", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"})
-#     survey_clean = survey_clean.set_index('MONITOR_POINT').rename_axis('date', axis=1)
-#     survey_clean.columns = pd.to_datetime(survey_clean.columns).astype(str)
-
-#     # Transpose so dates are in index column
-#     survey_long = pd.DataFrame.transpose(survey_clean)
-#     return survey_clean, survey_long
-
-# # import lug to truss measurements
-# def read_trussHeight(trussfile):
-#     truss = pd.read_csv(trussfile, skiprows=[1], nrows=36)
-#     # Clean up the imported truss to survey point file 
-#     truss_clean = truss.rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
-#     truss_clean.columns = pd.to_datetime(truss_clean.columns).astype(str)
-#     return truss_clean
-
 # import survey data from the excel
-def read_xlElev(xlfile):
-    survey = pd.read_excel(
-        xlfile,
-        engine='openpyxl',
+def read_xl(xlfile, sheet):
+    if sheet == 'SURVEY DATA':
+        data = pd.read_excel(
+            xlfile,
+            engine='openpyxl',
         sheet_name='SURVEY DATA',
         skiprows=[0,2,3], 
         nrows=36)
     # rename second 2010/11/2 survey to 2010/11/3
-    survey_clean = survey.dropna(axis=1, how='all').drop(columns=["DESCRIPTION", "Shims\nNote 13", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT", "2010-11-02 00:00:00.1":'2010-11-03 00:00:00'}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
-    survey_clean.columns = pd.to_datetime(survey_clean.columns).astype(str)
-
-    # Transpose so dates are in index column
-    survey_long = pd.DataFrame.transpose(survey_clean)
-    return survey_clean, survey_long
-
-def read_xlTruss(xlfile):
-    truss = pd.read_excel(
-        xlfile,
-        engine='openpyxl',
-        sheet_name='TRUSS DATA',
-        skiprows=[0,2,3], 
-        nrows=36)
-    # rename second 2010/11/2 survey to 2010/11/3
-    truss_clean = truss.dropna(axis=1, how='all').drop(columns=["DESCRIPTION", "Shims", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
-    truss_clean.columns = pd.to_datetime(truss_clean.columns).astype(str)
-    return truss_clean
-
-def read_xlShim(xlfile):
-    shim = pd.read_excel(
-        xlfile,
-        engine='openpyxl',
-        sheet_name='SHIM DATA',
-        skiprows=[0,2,3], 
-        nrows=36)
-    # rename second 2010/11/2 survey to 2010/11/3
-    shim_clean = shim.dropna(axis=1, how='all').drop(columns=["DESCRIPTION", "Shims", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
-    shim_clean.columns = pd.to_datetime(shim_clean.columns).astype(str)
-    return shim_clean
+        data_clean = data.dropna(axis=1, how='all').drop(columns=["DESCRIPTION", "Shims\nNote 13", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT", "2010-11-02 00:00:00.1":'2010-11-03 00:00:00'}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
+        data_clean.columns = pd.to_datetime(data_clean.columns).astype(str)
+    
+    else:
+        data = pd.read_excel(
+            xlfile,
+            engine='openpyxl',
+            sheet_name=sheet,
+            skiprows=[0,2,3], 
+            nrows=36)
+        
+        data_clean = data.dropna(axis=1, how='all').drop(columns=["DESCRIPTION", "Shims", "Delta"]).rename(columns={"MONITOR\nPOINT":"MONITOR_POINT"}).set_index('MONITOR_POINT').rename_axis('date', axis=1)
+        data_clean.columns = pd.to_datetime(data_clean.columns).astype(str)
+    return data_clean
 
 # import beam information and label location
 def read_beamInfo():
@@ -98,7 +61,8 @@ def read_beamInfo():
     return beamInfo, beamLength, MPlocations, beamLength_long, beamLength_sort
 
 # Calculate the cumulative settlement in feet for each column by survey data
-def calc_settlement(survey_long, survey_clean, truss_clean, shim_clean, MPlocations):
+def calc_settlement(survey_clean, truss_clean, shim_clean, MPlocations):
+    survey_long = survey_clean.T
     survey_long['dummy']= 1
     firstValue = survey_long.groupby('dummy').first()
     firstValue = firstValue.to_numpy()[0]
@@ -108,8 +72,14 @@ def calc_settlement(survey_long, survey_clean, truss_clean, shim_clean, MPlocati
     elevation.index = pd.to_datetime(elevation.index)
 
     #create an elevation of the grade beams using the 12.31' listed in the SPS As-builts Sheet A5.1 minues 1' between top of column and survey point (11.31' below survey point)
-    # gradeBeamElev = elevation.sub(11.31).transpose() #assuming lugs are 1' below top of column
-    gradeBeamElev = survey_clean.add(truss_clean).sub(shim_clean.div(12)).sub(12.31).dropna(axis=1, how='all') # Using the shimpack data to 
+    truss_2017 = truss_clean[['2017-12-01']]
+    shim_2017 = shim_clean[['2017-12-01']]
+    height = shim_2017.add(12.31).sub(truss_2017)
+    height_gradeBeam_lug = pd.Series(height['2017-12-01'].values, index=height.index)
+
+    #gradeBeamElev = elevation.sub(11.31).transpose() #assuming lugs are 1' below top of column
+    #gradeBeamElev = survey_clean.add(truss_clean).sub(shim_clean.div(12)).sub(12.31).dropna(axis=1, how='all') # Using the shimpack data to 
+    gradeBeamElev = survey_clean.sub(height_gradeBeam_lug, axis = 0)
     gradeBeamElevPlot = gradeBeamElev
     gradeBeamElevPlot.columns = gradeBeamElevPlot.columns.astype(str)
     gradeBeamElevPlot = MPlocations.join(gradeBeamElevPlot)
@@ -269,7 +239,7 @@ def calc_plan_dataframe(survey_clean, truss_clean, shim_clean, MPlocations, beam
     lugElevPlot = MPlocations.join(survey_clean)
 
     # Lug elevation for each survey date
-    shimElevPlot = MPlocations.join(shim_clean).dropna(axis=1, how='all')
+    shimElevPlot = MPlocations.join(shim_clean.mul(12)).dropna(axis=1, how='all')
 
     # Lug to truss height for each survey date (shim stack)
     lugFloorPlot = MPlocations.join(truss_clean).dropna(axis=1, how='all')
@@ -315,7 +285,7 @@ def calc_3d_dataframe(beamInfo, settlement_points, settlementProj_trans, beamSlo
     return settlementStart, beamInfo3D
 
 # Create dataframe for 3D plotting floor elevations
-def calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, beamSlopeProjColor):
+def calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, floorDiffColor, beamSlopeProjColor):
     beamStart = beamInfo[['MP_W_S', 'beamName']].set_index('MP_W_S')
     elevationFloorStart = beamStart.join(floorElevPlot.drop(columns=['mpX', 'mpY'])).set_index('beamName')
     elevationFloorStart.columns = pd.to_datetime(elevationFloorStart.columns).astype(str)
@@ -333,11 +303,11 @@ def calc_3d_floorElev(beamInfo, floorElevPlot, elevFloorProj, beamSlopeColor, be
     elevFloorInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
     elevFloorInfo3D = elevFloorInfo3D.join(elevFloor3D)
     elevFloorInfo3D = elevFloorInfo3D[elevFloor3D.index.notnull()]
-    elevFloorInfo3D = elevFloorInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
+    elevFloorInfo3D = elevFloorInfo3D.join(floorDiffColor)#.join(beamSlopeProjColor)
     return elevationFloorStart, elevFloorInfo3D
 
 # Create dataframe for 3D plotting floor elevations
-def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeColor, beamSlopeProjColor):
+def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamDiffColor, beamSlopeProjColor):
     beamStart = beamInfo[['MP_W_S', 'beamName']].set_index('MP_W_S')
     elevationGBStart = beamStart.join(gradeBeamElev).set_index('beamName')
     elevationGBStart.columns = pd.to_datetime(elevationGBStart.columns).astype(str)
@@ -355,7 +325,7 @@ def calc_3d_gradeBeamElev(beamInfo, gradeBeamElev, elevGradeBeamProj, beamSlopeC
     elevGBInfo3D = beamInfo.loc[:, ['beamName','MP_W_S','startX', 'startY', 'endX','endY','labelX', 'labelY']].set_index('beamName')
     elevGBInfo3D = elevGBInfo3D.join(elevGB3D)
     elevGBInfo3D = elevGBInfo3D[elevGB3D.index.notnull()]
-    elevGBInfo3D = elevGBInfo3D.join(beamSlopeColor).join(beamSlopeProjColor)
+    elevGBInfo3D = elevGBInfo3D.join(beamDiffColor)#.join(beamSlopeProjColor)
     return elevationGBStart, elevGBInfo3D
 
 def calc_plane_error(floorElevPlot, gradeBeamElevPlot):
@@ -591,7 +561,7 @@ def calc_GradeBeam_profiles(gradeBeamElevPlot):
     return df_GradeBeams, gradeBeam_diff
 
 # Line styles for beam plots
-def plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj):
+def plot_beamStyles(beamInfo, beamDiff, beamSlope, beamSlopeProj, floorDiffElev):
     #---------BEAM Plotting Styles--------------------------------
     # Calculate the direction of arrow of each beam
     beamDirLabels = beamInfo[['beamName','beamDir']].set_index(['beamName'])
@@ -659,7 +629,7 @@ def plot_floorStyles(beamDirLabels, beamInfo, floorDiff, floorDiffplot, floorSlo
     choices = ['black','gold', 'orange', 'red']
     floorSlopeColor = pd.DataFrame(np.select(conditions, choices, default='blue'), index = floorSlope.index, columns = floorSlope.columns)#.replace('nan','blue')
     floorSlopeColorplot = floorSlopeplot.join(floorSlopeColor, rsuffix='_color')
-    return floorDir, floorSymbolplot, floorDiffColorplot, floorSlopeColorplot
+    return floorDir, floorSymbolplot, floorDiffColor, floorDiffColorplot, floorSlopeColorplot
     
 # Plot annotations
 def plot_annotations():
@@ -850,7 +820,36 @@ def plot_annotations():
                 font = dict(
                     size = 14,
                     color = 'grey')
+            )])
+
+    plot3dAnnoDiff = list([
+        dict(text="Differental less than 1.5 inches",
+                x=0.6, xref="paper", xanchor="right",
+                y=-0.05, yref="paper", yanchor="bottom",
+                align="right",
+                showarrow=False, 
+                font = dict(
+                    size = 14,
+                    color = 'black')
             ),
+        dict(text="Differental between 1.5 and 2.0 inches",
+                x=1, xref="paper", xanchor="right",
+                y=-0.05, yref="paper", yanchor="bottom",
+                align="right",
+                showarrow=False, 
+                font = dict(
+                    size = 14,
+                    color = 'orange')
+            ),
+        dict(text="Differental greater than 2.0 inches",
+                x=.6, xref="paper", xanchor="right",
+                y=-0.08, yref="paper", yanchor="bottom",
+                align="right",
+                showarrow=False, 
+                font = dict(
+                    size = 14,
+                    color = 'red')
+            )
     ])
 
     # column: color - assign each monitor point a specifc color
@@ -917,7 +916,7 @@ def plot_annotations():
                     'B':['B1-2 - B2-4', 'B1-3 - B2-3', 'B3-2 - B2-4',
                          'B3-3 - B2-1', 'B4-2 - B3-1', 'B4-3 - B3-2']}
     
-    return beamDiffAnno, beamSlopeAnno, diffAnno, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods, mapsGradeBeams
+    return beamDiffAnno, beamSlopeAnno, diffAnno, plot3dAnnoDiff, slopeAnno, plot3dAnno, color_dict, color_dictBeams, maps, mapsBeams, mapsPods, mapsGradeBeams
 
 # Plot Cumulative Settlement
 def plot_cumulative_settlement(settlement, settlementProj, color_dict, maps):
@@ -2269,111 +2268,6 @@ def plot_floorSlopeElev_plan(floorSlopeColorplot, beamInfo, floorSlopeplot, floo
     fig.update_yaxes(range=[-15, 140])
     return fig
 
-# 3D Plot - settlement with a slider
-def plot_3D_settlement_slider(settlementStart, beamInfo3D):
-    fig = go.Figure()
-
-    for col in settlementStart.columns:
-        # Plot the beam locations as lines
-        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor, mpLabel) in zip(beamInfo3D['startX'], beamInfo3D['endX'], 
-                                                                                    beamInfo3D['startY'], beamInfo3D['endY'], 
-                                                                                    beamInfo3D['{0}_start'.format(col)], 
-                                                                                    beamInfo3D['{0}_end'.format(col)],
-                                                                                    beamInfo3D[col],beamInfo3D[col], beamInfo3D['MP_W_S']):
-            fig.add_trace(go.Scatter3d(
-                x=[startX, endX],
-                y=[startY, endY],
-                z = [startZ, endZ],
-                text = mpLabel,
-                line_color= [startColor, endColor],
-                name="",
-                mode='lines',
-                line = dict(
-                    color = 'black',
-                    width = 1.5,
-                    dash = 'solid'),
-                showlegend=False, 
-                #setting only the first dataframe to be visible as default
-                visible = (col==settlementStart.columns[len(settlementStart.columns)-1]),
-                hovertemplate="<br>".join([
-                    #"MP: %{mpLabel}",
-                    "Settlement [ft]: %{z}"])
-                ))
-                   
-            # Plot the Marker Point (MP) labels in grey
-            fig.add_trace(go.Scatter3d(
-                x=beamInfo3D['labelX'],
-                y=beamInfo3D['labelY'],
-                z=beamInfo3D['{0}_start'.format(col)],
-                text=beamInfo3D['MP_W_S'],
-                mode = 'text',
-                textfont = dict(
-                    size = 10,
-                    color = 'grey'),
-                hoverinfo='skip',
-                showlegend=False, 
-                #setting only the first dataframe to be visible as default
-                visible = (col==settlementStart.columns[len(settlementStart.columns)-1])
-                ))
-        
-    # groups and trace visibilities
-    vis = []
-    visList = []
-
-    for  i, col in enumerate(settlementStart.columns):
-        n = len(beamInfo3D.index)*2
-        vis = ([False]*i*n + [True]*n + [False]*(len(settlementStart.columns)-(i+1))*n)
-        visList.append(vis)
-        vis = []
-
-
-    # buttons for each group
-    steps = []
-    for idx, col in enumerate(settlementStart.columns):
-        steps.append(
-            dict(
-                label = col,
-                method = "update",
-                args=[{"visible": visList[idx]}])
-        )
-
-    sliders = [dict(
-        active=len(settlementStart.columns)-1,
-        currentvalue={"prefix": "Survey Date: "},
-        pad={"t": 20, "b":10},
-        len = 0.945,
-        x = 0.0,
-        steps=steps
-    )]
-
-    camera = dict(
-        up=dict(x=0, y=0, z=1),
-        center=dict(x=0, y=0, z=0),
-        eye=dict(x=0, y=4, z=3)
-    )
-
-    maxSettlement = settlementStart[settlementStart.columns[len(settlementStart.columns)-1]].max()
-    
-    fig.update_layout(
-        autosize=False,
-        margin=dict(l=0, r=0, b=0, t=0),
-        scene_camera=camera,
-        scene=dict(
-            xaxis_title='',
-            xaxis= dict(range=[400,-10]), 
-            yaxis_title='',
-            yaxis= dict(range=[130,-10]),
-            zaxis_title='Cumulative Settlement [ft]',
-            zaxis = dict(range = [maxSettlement,0])
-        ),
-        sliders=sliders,
-        width = 1100,
-        height = 500,
-        scene_aspectmode='manual',
-        scene_aspectratio=dict(x=7, y=2, z=1)
-    )
-    return fig
-
 def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
     # Calculate the maximum number of traces required for any frame
     max_traces_per_frame = len(beamInfo3D['startX']) + 1  # +1 for the label trace
@@ -2507,145 +2401,10 @@ def plot_3D_settlement_slider_animated(settlementStart, beamInfo3D, plot3dAnno):
                         ))
     return fig
 
-def plot_3D_floorElev_slider_animated(elevationFloorStart, elevFloorInfo3D, plot3dAnno):
+def plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3D, plot3dAnnoDiff, floorElevPlot):
     
     # Calculate the maximum number of traces required for any frame
-    max_traces_per_frame = len(elevFloorInfo3D['startX']) + 1  # +1 for the label trace
-
-    # Initialize the figure with the maximum number of empty traces
-    fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], mode='lines', showlegend=False) for _ in range(max_traces_per_frame)])
-
-    # Creating frames
-    frames = []
-    for col in elevationFloorStart.columns:
-        frame_traces = []  # List to hold all traces for this frame
-
-        # Create a separate trace for each line segment
-        for (startX, endX, startY, endY, startZ, endZ, startColor, endColor) in zip(elevFloorInfo3D['startX'], elevFloorInfo3D['endX'], 
-                                                                                    elevFloorInfo3D['startY'], elevFloorInfo3D['endY'], 
-                                                                                    elevFloorInfo3D['{0}_start'.format(col)], 
-                                                                                    elevFloorInfo3D['{0}_end'.format(col)],
-                                                                                    elevFloorInfo3D[col],elevFloorInfo3D[col]):
-
-            line_trace = go.Scatter3d(
-                x=[startX, endX],
-                y=[startY, endY],
-                z = [startZ, endZ],
-                text = elevFloorInfo3D['MP_W_S'],
-                line_color= [startColor, endColor],
-                name="",
-                mode='lines',
-                line = dict(
-                    color = 'black',
-                    width = 3,
-                    dash = 'solid'),
-                #hoverinfo='skip',
-                showlegend=False 
-            )
-            frame_traces.append(line_trace)
-
-        # Create the label trace for this frame
-        label_trace = go.Scatter3d(
-            x=elevFloorInfo3D['labelX'], 
-            y=elevFloorInfo3D['labelY'], 
-            z=elevFloorInfo3D[f'{col}_start'], 
-            text=elevFloorInfo3D['MP_W_S'], 
-            mode='text', 
-            textfont=dict(
-                size=12,
-                color='grey'), 
-            hoverinfo='skip', 
-            showlegend=False
-        )
-        frame_traces.append(label_trace)
-
-        # Ensure the frame has the same number of traces as the figure
-        while len(frame_traces) < max_traces_per_frame:
-            frame_traces.append(go.Scatter3d(x=[], y=[], z=[], mode=[]))
-
-        # Add the frame
-        frames.append(go.Frame(data=frame_traces, name=col))
-
-    fig.frames = frames
-
-    # Slider
-    sliders = [{"steps": [{"args": [[f.name], {"frame": {"duration": 0, "redraw": True}, "mode": "immediate"}],
-                            "label": col, "method": "animate"} for col, f in zip(elevationFloorStart.columns, fig.frames)],
-                "len": 0.95,
-                "x": 0.035,
-                "y": 0}]
-
-    camera = dict(
-        up=dict(x=0, y=0, z=1),
-        center=dict(x=0, y=0, z=0),
-        eye=dict(x=0.1, y=4, z=3)
-    )
-
-    # Define the play and pause buttons
-    play_button = dict(
-        label="&#9654;",
-        method="animate",
-        args=[None, {"frame": {"duration": 200, "redraw": True}, "fromcurrent": True, "transition": {"duration": 200, "easing": "quadratic-in-out"}}]
-    )
-
-    pause_button = dict(
-        label="&#9724;",
-        method="animate",
-        args=[[None], {"frame": {"duration": 0, "redraw": False}, "mode": "immediate", "transition": {"duration": 0}}]
-    )
-
-    maxElev = elevFloorInfo3D.loc[:, elevFloorInfo3D.columns.str.contains('_start')].max().max()
-    minElev = elevFloorInfo3D.loc[:, elevFloorInfo3D.columns.str.contains('_start')].min().min()
-
-    # Update layout for slider and set consistent y-axis range
-    fig.update_layout(
-        # Update layout with play and pause buttons
-        updatemenus=[dict(
-            type="buttons",
-            showactive=False,
-            buttons=[play_button, pause_button],
-            x=0,  # x and y determine the position of the buttons
-            y=-0.06,
-            xanchor="right",
-            yanchor="top",
-            direction="left"
-        )],
-        autosize=False,
-        margin=dict(l=0, r=0, b=100, t=0),
-        scene_camera=camera,
-        scene=dict(
-            xaxis_title='',
-            xaxis= dict(range=[400,-10]), 
-            yaxis_title='',
-            yaxis= dict(range=[130,-10]),
-            zaxis_title='Floor Elevation [ft]',
-            zaxis = dict(range = [minElev,maxElev])
-        ),
-        sliders=sliders,
-        width = 1100,
-        height = 600,
-        scene_aspectmode='manual',
-        scene_aspectratio=dict(x=7, y=2, z=1),
-        uniformtext_minsize=10,
-        annotations = plot3dAnno
-        )
-
-    # Set initial view, update hover mode
-    fig.update_traces(x=frames[0].data[0].x, 
-                    y=frames[0].data[0].y, 
-                    z=frames[0].data[0].z,
-                    hovertemplate="<br>".join([
-                        "Elevation [ft]: %{z}"
-                        ]),
-                    hoverlabel=dict(
-                        bgcolor = "white"
-                        ))
-    return fig
-
-def plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3D, plot3dAnno, floorElevPlot):
-    
-    # Calculate the maximum number of traces required for any frame
-    max_traces_per_frame = len(elevFloorInfo3D['startX']) + 1 + 4 # +1 for the label trace, +4 for two mean and two fitted traces
+    max_traces_per_frame = len(elevFloorInfo3D['startX']) + 1 + 4 #The added traces are: +1 for the label trace, +4 for two mean and two fitted traces
 
     # Initialize the figure with the maximum number of empty traces
     fig = go.Figure(data=[go.Scatter3d(x=[], y=[], z=[], mode='lines', showlegend=False) for _ in range(max_traces_per_frame)])
@@ -2815,7 +2574,7 @@ def plot_3D_floorElev_slider_animated_planes(elevationFloorStart, elevFloorInfo3
         scene_aspectmode='manual',
         scene_aspectratio=dict(x=7, y=2, z=1),
         uniformtext_minsize=10,
-        annotations = plot3dAnno,
+        annotations = plot3dAnnoDiff,
         legend = dict(
             xanchor = 'right',
             yanchor = 'top',
